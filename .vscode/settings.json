@@ -1,0 +1,3 @@
+{
+  "python.analysis.extraPaths": ["~/smartpy-cli-v0.16.0/smartpy.py"],
+}
