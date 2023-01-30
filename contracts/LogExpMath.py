@@ -1,5 +1,5 @@
 import smartpy as sp
-from contracts.SymmetricErrors import Errors
+from contracts.interfaces.SymmetricErrors import Errors
 
 # All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
 # two numbers, and multiply by ONE when dividing them.
