@@ -16,10 +16,12 @@ class TemporarilyPausable:
 
         pauseWindowEndTime = sp.now + pauseWindowDuration
 
-        _pauseWindowEndTime = pauseWindowEndTime
-        _bufferPeriodEndTime = pauseWindowEndTime + bufferPeriodDuration
-
-        pass
+        self.update_initial_storage(
+            _paused=sp.set_type_expr(False, sp.TBool),
+            _pauseWindowEndTime=sp.set_type_expr(pauseWindowEndTime, sp.TNat)
+            _bufferPeriodEndTime=sp.set_type_expr(
+                (pauseWindowEndTime + bufferPeriodDuration), sp.TNat)
+        )
 
     def whenNotpaused(self):
         self._ensureNitPaused(self)
