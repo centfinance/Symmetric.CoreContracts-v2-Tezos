@@ -17,7 +17,7 @@ class TemporarilyPausable(sp.Contract):
         pauseWindowEndTime = sp.utils.seconds_of_timestamp(
             sp.now) + pauseWindowDuration
 
-        self.update_initial_storage(_paused=sp.set_type_expr(False, sp.TBool), _pauseWindowEndTime=sp.set_type_expr(
+        self.update_initial_storage(_paused=sp.set_type_expr(sp.bool(False), sp.TBool), _pauseWindowEndTime=sp.set_type_expr(
             pauseWindowEndTime, sp.TNat), _bufferPeriodEndTime=sp.set_type_expr((pauseWindowEndTime + bufferPeriodDuration), sp.TNat))
 
     @sp.onchain_view()
@@ -30,7 +30,6 @@ class TemporarilyPausable(sp.Contract):
 
         sp.result(state)
 
-    @sp.private_lambda(with_storage="read-write", with_operations=True)
     def _setPaused(self, paused):
         with sp.if_(paused):
             sp.verify(sp.utils.seconds_of_timestamp(sp.now) < self.data._pauseWindowEndTime,
