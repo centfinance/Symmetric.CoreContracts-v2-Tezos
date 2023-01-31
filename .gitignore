@@ -4,3 +4,4 @@ artifacts
 .taq/config.local.*.json
 node_modules/
 .venv
+contracts/*/__pycache__
