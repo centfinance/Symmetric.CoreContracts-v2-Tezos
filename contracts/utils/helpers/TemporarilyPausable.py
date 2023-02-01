@@ -2,18 +2,13 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+MAX_PAUSE_WINDOW_DURATION = 23328000  # 270 days
+
+MAX_BUFFER_PERIOD_DURATION = 7776000  # 90 days
+
 
 class TemporarilyPausable(sp.Contract):
-    MAX_PAUSE_WINDOW_DURATION = 23328000  # 270 days
-
-    MAX_BUFFER_PERIOD_DURATION = 7776000  # 90 days
-
     def __init__(self, pauseWindowDuration, bufferPeriodDuration):
-        # sp.verify((pauseWindowDuration <= 23328000),
-        #           Errors.MAX_PAUSE_WINDOW_DURATION)
-        # sp.verify((bufferPeriodDuration <= 7776000),
-        #           Errors.MAX_BUFFER_PERIOD_DURATION)
-
         pauseWindowEndTime = sp.utils.seconds_of_timestamp(
             sp.now) + pauseWindowDuration
 
@@ -56,4 +51,4 @@ class TemporarilyPausable(sp.Contract):
 
 
 sp.add_compilation_target('TemporarilyPausable', TemporarilyPausable(
-    23328000, 7776000))
+    MAX_PAUSE_WINDOW_DURATION, MAX_BUFFER_PERIOD_DURATION))

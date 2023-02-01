@@ -4,6 +4,6 @@ artifacts
 .taq/config.local.*.json
 node_modules/
 .venv
-contracts/*/__pycache__
+__pycache__
 tests/*/__pycache__
 test-output
