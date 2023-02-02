@@ -16,7 +16,16 @@ class FA12_Error:
     TezSentToEntrypoint = make("TezSentToEntrypoint")
 
 
-class FA12_core(sp.Contract):
+class FA12_common:
+    def normalize_metadata(self, metadata):
+        meta = {}
+        for key in metadata:
+            meta[key] = sp.utils.bytes_of_string(metadata[key])
+
+        return meta
+
+
+class FA12_core(sp.Contract, FA12_common):
     def __init__(self, **extra_storage):
         self.init(
             balances=sp.big_map(
@@ -117,3 +126,22 @@ class FA12_core(sp.Contract):
         self.data.balances[params.address].balance = sp.as_nat(
             self.data.balances[params.address].balance - params.value)
         self.data.totalSupply = sp.as_nat(self.data.totalSupply - params.value)
+
+
+class FA12_token_metadata(FA12_core):
+    def set_token_metadata(self, metadata):
+        self.update_initial_storage(
+            token_metadata=sp.big_map(
+                {0: sp.record(
+                    token_id=0, token_info=self.normalize_metadata(metadata))},
+                tkey=sp.TNat,
+                tvalue=sp.TRecord(token_id=sp.TNat,
+                                  token_info=sp.TMap(sp.TString, sp.TBytes)),
+            )
+        )
+
+
+class FA12_contract_metadata(FA12_core):
+    def set_contract_metadata(self, metadata):
+        self.update_initial_storage(metadata=sp.big_map(
+            self.normalize_metadata(metadata)))
