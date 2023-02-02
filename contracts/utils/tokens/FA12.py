@@ -64,3 +64,18 @@ class FA12_core(sp.Contract):
     # this is not part of the standard but can be supported through inheritance.
     def is_administrator(self, sender):
         return sp.bool(False)
+
+    # this is not part of the standard but can be supported through inheritance.
+    def _mint(self, params):
+        sp.set_type(params, sp.TRecord(address=sp.TAddress, value=sp.TNat))
+        self.addAddressIfNecessary(params.address)
+        self.data.balances[params.address].balance += params.value
+        self.data.totalSupply += params.value
+
+    # this is not part of the standard but can be supported through inheritance.
+    def _burn(self, params):
+        sp.set_type(params, sp.TRecord(address=sp.TAddress, value=sp.TNat))
+        sp.verify(self.data.balances[params.address].balance >= params.value)
+        self.data.balances[params.address].balance = sp.as_nat(
+            self.data.balances[params.address].balance - params.value)
+        self.data.totalSupply = sp.as_nat(self.data.totalSupply - params.value)
