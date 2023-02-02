@@ -46,7 +46,7 @@ class FA12_core(sp.Contract, FA12_common):
         )
         sp.verify(
             (params.from_ == sp.sender)
-            | (self.data.balances[params.from_].approvals.get(sp.sender, 0) >= params.value),
+            | self.is_allowed(params.from_, sp.sender, params.value),
             FA12_Error.NotEnoughAllowance,
         )
 
@@ -82,6 +82,9 @@ class FA12_core(sp.Contract, FA12_common):
     def addAddressIfNecessary(self, address):
         with sp.if_(~ self.data.balances.contains(address)):
             self.data.balances[address] = sp.record(balance=0, approvals={})
+
+    def is_allowed(self, owner, spender, value):
+        return (self.data.balances[owner].approvals.get(spender, 0) >= value)
 
     @sp.onchain_view()
     def getBalance(self, params):

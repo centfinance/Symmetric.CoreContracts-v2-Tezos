@@ -8,7 +8,10 @@ CONTRACT_METADATA = {
 }
 
 
-class SymmetricPoolToken(FA12.FA12_core):
+class SymmetricPoolToken(
+        FA12.FA12_token_metadata,
+        FA12.FA12_contract_metadata,
+        FA12.FA12_core):
     def __init__(
         self,
         name,
@@ -29,3 +32,23 @@ class SymmetricPoolToken(FA12.FA12_core):
         }
         self.set_token_metadata(token_metadata)
         self.set_contract_metadata(contract_metadata)
+
+    @sp.onchain_view()
+    def getVault(self):
+        sp.result(self.data.vault)
+
+    def is_allowed(self, owner, spender, value):
+        result = sp.local("result", False)
+        with sp.if_(sp.sender == self.data.vault):
+            result.value = True
+        with sp.else_():
+            result.value = self.data.balances[owner].approvals.get(
+                spender, 0) >= value
+
+        return result.value
+
+    def _mintPoolTokens(self, recipient, amount):
+        self._mint(recipient, amount)
+
+    def _burnPoolTokens(self, sender, amount):
+        self._burn(sender, amount)
