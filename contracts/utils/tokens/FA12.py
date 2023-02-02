@@ -41,18 +41,18 @@ class FA12_core(sp.Contract):
         with sp.if_(~ self.data.balances.contains(address)):
             self.data.balances[address] = sp.record(balance=0, approvals={})
 
-    @sp.utils.view(sp.TNat)
+    @sp.onchain_view()
     def getBalance(self, params):
         with sp.if_(self.data.balances.contains(params)):
             sp.result(self.data.balances[params].balance)
         with sp.else_():
             sp.result(sp.nat(0))
 
-    @sp.utils.view(sp.TNat)
+    @sp.onchain_view()
     def getAllowance(self, params):
         sp.result(self.data.balances[params.owner].approvals[params.spender])
 
-    @sp.utils.view(sp.TNat)
+    @sp.onchain_view()
     def getTotalSupply(self, params):
         sp.set_type(params, sp.TUnit)
         sp.result(self.data.totalSupply)
