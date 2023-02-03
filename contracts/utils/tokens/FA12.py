@@ -26,6 +26,7 @@ class FA12_common:
 
 
 class FA12_core(sp.Contract, FA12_common):
+
     def __init__(self, **extra_storage):
         self.init(
             balances=sp.big_map(
