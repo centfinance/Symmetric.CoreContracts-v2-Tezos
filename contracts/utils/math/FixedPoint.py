@@ -1,6 +1,6 @@
 import smartpy as sp
 
-from contracts.SymmetricErrors import Errors
+from contracts.interfaces.SymmetricErrors import Errors
 
 ONE = 1e18
 
@@ -26,14 +26,14 @@ def sub(a,  b):
 
 def mulDown(a,  b):
     product = a * b
-    sp.verify(((a == 0) | (product / (a == b))), Errors.MUL_OVERFLOW)
+    sp.verify(((a == 0) | (product // (a == b))), Errors.MUL_OVERFLOW)
     result = sp.local('result', (product / ONE))
     return result.value
 
 
 def mulUp(a,  b):
     product = a * b
-    sp.verify((a == 0) | ((product / a) == b), Errors.MUL_OVERFLOW)
+    sp.verify((a == 0) | ((product // a) == b), Errors.MUL_OVERFLOW)
     # The traditional divUp formula is:
     # divUp(x, y) := (x + y - 1) / y
     # To avoid intermediate overflow in the addition, we distribute the division and get:
@@ -46,18 +46,16 @@ def mulUp(a,  b):
     with sp.if_(product == 0):
         result.value = 0
     with sp.else_():
-        result.value = (((product - 1) / ONE) + 1)
+        result.value = (((product - 1) // ONE) + 1)
 
     return result.value
-    # assembly
-    # := mul(iszero(iszero(product)), add(div(sub(product, 1), ONE), 1))
 
 
 def divDown(a,  b):
     sp.verify(b != 0, Errors.ZERO_DIVISION)
     aInflated = a * ONE
     # mul overflow
-    sp.verify((a == 0) | ((aInflated / a) == ONE), Errors.DIV_INTERNAL)
+    sp.verify((a == 0) | ((aInflated // a) == ONE), Errors.DIV_INTERNAL)
     result = sp.local('result', (aInflated / b))
     return result.value
 
@@ -66,7 +64,7 @@ def divUp(a,  b):
     sp.verify(b != 0, Errors.ZERO_DIVISION)
     aInflated = a * ONE
     # mul overflo
-    sp.verify((a == 0) | ((aInflated / a) == ONE), Errors.DIV_INTERNAL)
+    sp.verify((a == 0) | ((aInflated // a) == ONE), Errors.DIV_INTERNAL)
     # The traditional divUp formula is:
     # divUp(x, y) := (x + y - 1) / y
     # To avoid intermediate overflow in the addition, we distribute the division and get:
@@ -79,11 +77,9 @@ def divUp(a,  b):
     with sp.if_(a == 0):
         result.value = 0
     with sp.else_():
-        result.value = (a * ONE - 1) / b + 1
+        result.value = (a * ONE - 1) // b + 1
 
     return result.value
-    # assembly
-    # := mul(iszero(iszero(aInflated)), add(div(sub(aInflated, 1), b), 1))
 
 
 # /**
@@ -163,5 +159,5 @@ def complement(x):
         result.value = ONE - x
     with sp.else_():
         result.value = 0
-    # assembly
-    #      := mul(lt(x, ONE), sub(ONE, x))
+
+    return result.value

@@ -1,14 +1,15 @@
 {
-  "name": "symmetric-tezoz-contracts",
+  "name": "symmetric-tezos-contracts",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
+    "compile": "PYTHONPATH=\"./\" taq compile ${npm_config_file}",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Symmetric Finance",
+  "license": "GPL-3.0",
   "devDependencies": {
     "@taqueria/plugin-core": "^0.28.0",
     "@taqueria/plugin-flextesa": "^0.28.0",
