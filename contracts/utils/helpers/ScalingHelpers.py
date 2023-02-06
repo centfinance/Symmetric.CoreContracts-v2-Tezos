@@ -74,10 +74,10 @@ def _downscaleUpArray(amounts, scalingFactors):
     return downscaledAmounts.value.rev()
 
 
-def _computeScalingFactor(token):
-    # // Tokens that don't implement the `decimals` method are not supported.
-    tokenDecimals = ERC20(address(token)).decimals()
+# def _computeScalingFactor(token):
+#     # // Tokens that don't implement the `decimals` method are not supported.
+#     tokenDecimals = ERC20(address(token)).decimals()
 
-    # // Tokens with more than 18 decimals are not supported.
-    decimalsDifference = Math.sub(18, tokenDecimals)
-    return FixedPoint.ONE * 10**decimalsDifference
+#     # // Tokens with more than 18 decimals are not supported.
+#     decimalsDifference = Math.sub(18, tokenDecimals)
+#     return FixedPoint.ONE * 10**decimalsDifference

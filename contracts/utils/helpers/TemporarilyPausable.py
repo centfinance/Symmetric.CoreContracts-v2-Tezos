@@ -37,7 +37,7 @@ class TemporarilyPausable(sp.Contract):
         sp.emit(paused, with_type=True, tag='PauseStateChanged')
 
     def _ensureNotPaused(self):
-        sp.verify(_isNotPaused(), Errors.PAUSED)
+        sp.verify(self._isNotPaused(), Errors.PAUSED)
 
     def _isNotPaused(self):
         return (sp.utils.seconds_of_timestamp(
