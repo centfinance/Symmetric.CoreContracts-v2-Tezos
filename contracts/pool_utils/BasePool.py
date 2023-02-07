@@ -42,6 +42,8 @@ class BasePool:
               Contracts implementing this def should check that the caller is indeed the Vault before performing any
               state-changing operations, such as minting pool shares.
         """
+        # only vault and vailid pool id can call
+
         # ensureNotPaused
         self._beforeSwapJoinExit()
 
@@ -70,7 +72,7 @@ class BasePool:
             # // amountsIn are amounts entering the Pool, so we round up.
             ScalingHelpers._downscaleUpArray(amountsIn, scalingFactors)
 
-            # return (amountsIn, new uint256[](balances.length));
+            # return (amountsIn, new uint256[](balances.length))
         with sp.else_():
             ScalingHelpers._upscaleArray(balances, scalingFactors)
             (sptAmountOut, amountsIn) = self._onJoinPool(
@@ -82,7 +84,7 @@ class BasePool:
                 # // Protocol fees are disabled while in recovery mode
                 self.inRecoveryMode() ? 0: protocolSwapFeePercentage,
                 scalingFactors,
-                userData
+                userData,
             )
 
             # // Note we no longer use `balances` after calling `_onJoinPool`, which may mutate it.
@@ -93,9 +95,9 @@ class BasePool:
             ScalingHelpers._downscaleUpArray(amountsIn, scalingFactors)
 
             # // This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
-            # return (amountsIn, new uint256[](balances.length));
+           # return (amountsIn, new uint256[](balances.length));
 
-    @ sp.entry_point
+    @sp.entry_point
     def onExitPool(
         self,
         poolId,
@@ -155,4 +157,31 @@ class BasePool:
         * @dev  the scaling factors of each of the Pool's tokens. This is an implementation detail that is typically
         * not relevant for outside parties, but which might be useful for some types of Pools.
         """
+        pass
+
+###########
+# Internal Functions
+###########
+
+    def _onInitializePool(
+        self,
+        poolId,
+        sender,
+        receipient,
+        scalingFactors,
+        userData,
+    ):
+        pass
+
+    def _onJoinPool(
+        self,
+        poolId,
+        sender,
+        receipient,
+        balances,
+        lastchangeBlock,
+        protocolSwapFeePercentage,
+        scalingFactors,
+        userData,
+    ):
         pass
