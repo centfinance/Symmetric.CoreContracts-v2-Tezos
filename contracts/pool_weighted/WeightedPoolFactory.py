@@ -24,3 +24,4 @@ class WeightedPoolFactory(sp.contract):
 
     @sp.entry_point
     def create(self, params):
+        pool = self._create(self, params)
