@@ -1,51 +1,54 @@
 import smartpy as sp
 
-import contracts.pool_weighted.WeightedPool as WeightedPool
+from contracts.pool_weighted.WeightedPool import WeightedPool
 
-import contracts.pool_utils.BasePoolFactory as BasePoolFactory
-
-
-class Types:
-
-    CREATE_PARAMS = sp.TRecord(
-        name=sp.TString,
-        symbol=sp.TString,
-        tokens=sp.TList(t=sp.TAddress),
-        tokenIds=sp.TList(t=sp.TNat),
-        normalizedWeights=sp.TList(t=sp.TNat),
-        # Implement later
-        # rateProviders=sp.TList(t=sp.TNat)
-        swapFeePercentage=sp.TNat,
-        owner=sp.TAddress
-    )
+from contracts.pool_utils.BasePoolFactory import BasePoolFactory
 
 
-class WeightedPoolFactory(sp.contract):
+# class Types:
+
+#     CREATE_PARAMS = sp.TRecord(
+#         name=sp.TString,
+#         symbol=sp.TString,
+#         tokens=sp.TList(t=sp.TAddress),
+#         tokenIds=sp.TList(t=sp.TNat),
+#         normalizedWeights=sp.TList(t=sp.TNat),
+#         # Implement later
+#         # rateProviders=sp.TList(t=sp.TNat)
+#         swapFeePercentage=sp.TNat,
+#         owner=sp.TAddress
+#     )
+
+
+class WeightedPoolFactory(sp.Contract):
 
     def __init__(self, params):
         self.init_type(
-            params=sp.TRecord(
-                vault=sp.TAddress,
-                protocolFeeProvider=sp.TAddress,
+            sp.TRecord(
+                _vault=sp.TAddress,
+                _protocolFeeProvider=sp.TAddress,
+                _isPoolFromFactory=sp.TBigMap(sp.TAddress, sp.TUnit)
             )
         )
+        self._creationCode = WeightedPool(params)
 
         BasePoolFactory.__init__(
             self,
             params,
         )
 
-        self._creationCode = WeightedPool()
-
     @sp.entry_point
     def create(self, params):
         """
             Deploys a new WeightedPool
         """
-        sp.set_type(params, Types.CREATE_PARAMS)
-        weighted_pool_params = sp.record(
-            params,
-            vault=self.data.vault,
-            protocolFeeProvider=self.data.protocolFeeProvider,
-        )
-        self._create(self, weighted_pool_params)
+        # TODO: Add WeightedPool params type
+        # sp.set_type(params, Types.CREATE_PARAMS)
+        self._create(self, params)
+
+
+# CONTRACT_STORAGE = sp.record(
+#     vault=sp.address('KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5'),
+#     protocolFeeProvider=sp.address('KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN'),
+# )
+# sp.add_compilation_target('Test', WeightedPoolFactory(params=CONTRACT_STORAGE))

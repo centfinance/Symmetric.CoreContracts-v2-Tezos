@@ -1,7 +1,7 @@
 import smartpy as sp
 
 
-class BasePoolFactory(sp.contract):
+class BasePoolFactory:
 
     def __init__(self, params):
         self.update_initial_storage(
@@ -14,12 +14,13 @@ class BasePoolFactory(sp.contract):
             ),
         )
 
-    def _create(self, params):
-        pool = sp.create_contract(
-            contract=self._creationCode, storage=params)
+        def _create(self, params):
+            pool = sp.create_contract(
+                contract=self._creationCode, storage=params)
+            self.data._isPoolFromFactory[pool] = sp.unit
 
-        self._isPoolFromFactory[pool] = sp.unit
+            sp.emit(pool, with_type=True, tag='PoolCreated')
 
-        sp.emit(pool, with_type=True, tag='PoolCreated')
+            return pool
 
-        return pool
+        self._create = _create

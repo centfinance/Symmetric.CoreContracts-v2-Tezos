@@ -2,7 +2,7 @@ import smartpy as sp
 
 
 class WeightedPool(
-    sp.contract,
+    sp.Contract,
 ):
 
     def __init__(self, params):
