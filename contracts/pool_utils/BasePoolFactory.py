@@ -20,6 +20,6 @@ class BasePoolFactory(sp.contract):
 
         self._isPoolFromFactory[pool] = sp.unit
 
-        # emit PoolCreated( event
+        sp.emit(pool, with_type=True, tag='PoolCreated')
 
         return pool

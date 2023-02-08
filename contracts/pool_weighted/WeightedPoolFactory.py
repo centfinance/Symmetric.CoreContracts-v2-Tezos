@@ -15,7 +15,8 @@ class Types:
         normalizedWeights=sp.TList(t=sp.TNat),
         # Implement later
         # rateProviders=sp.TList(t=sp.TNat)
-        swapFeePercentage=sp.TNat
+        swapFeePercentage=sp.TNat,
+        owner=sp.TAddress
     )
 
 
@@ -38,5 +39,13 @@ class WeightedPoolFactory(sp.contract):
 
     @sp.entry_point
     def create(self, params):
+        """
+            Deploys a new WeightedPool
+        """
         sp.set_type(params, Types.CREATE_PARAMS)
-        self._create(self, params)
+        weighted_pool_params = sp.record(
+            params,
+            vault=self.data.vault,
+            protocolFeeProvider=self.data.protocolFeeProvider,
+        )
+        self._create(self, weighted_pool_params)
