@@ -1,6 +1,16 @@
 import smartpy as sp
 
 
+class Types:
+    TOKENS = sp.TList(sp.TRecord(address=sp.TAddress, id=sp.TNat))
+
+    REGISTER_TOKENS_PARAMS = sp.TRecord(
+        poolId=sp.TBytes,
+        tokens=TOKENS,
+        assetManagers=sp.TList(sp.TAddress),
+    )
+
+
 class PoolRegistrationLib:
 
     def registerPool(
@@ -9,7 +19,10 @@ class PoolRegistrationLib:
         specialization,
         tokens
     ):
-        return self.registerPoolWithAssetManagers(self, vault, specialization, tokens)
+        # Create empty list of size tokens.length as we don't need assetManagers
+        assetManagers = [sp.address(
+            'tz100000000000000000000000000000000000000')] * tokens.length
+        return self.registerPoolWithAssetManagers(self, vault, specialization, tokens, assetManagers)
 
     def registerPoolWithAssetManagers(
         self,
@@ -23,7 +36,8 @@ class PoolRegistrationLib:
         # //
         # // Note that for Pools which can register and deregister tokens after deployment, this property may not hold
         # // as tokens which are added to the Pool after deployment are always added to the end of the array.
-        InputHelpers.ensureArrayIsSorted(tokens)
+        # TODO: Decide if this is needed on Tezos
+        # InputHelpers.ensureListIsSorted(tokens)
 
         return self._registerPool(self, vault, specialization, tokens, assetManagers)
 
@@ -34,22 +48,18 @@ class PoolRegistrationLib:
         tokens,
         assetManagers
     ):
-        # call an onchain view on PoolRegistry to get the nonce for the next pool id
-        nonce = 0
-        # poolId = vault.registerPool(specialization)
+        nonce = sp.view('getNextNonce', vault, sp.unit, t=sp.TRecord(
+            nonce=sp.TNat)).open_some("Invalid view")
+
         poolId = self._toPoolId(sp.self_address, specialization, nonce)
+
         registerPool = sp.contract(sp.TNat, vault, "registerPool").open_some(
             "INTERFACE_MISMATCH")
         sp.transfer(specialization, sp.tez(0), registerPool)
         # We don't need to check that tokens and assetManagers have the same length, since the Vault already performs
         # that check.
         # vault.registerTokens(poolId, tokens, assetManagers)
-        tregister_tokens_params = sp.TRecord(
-            poolId=sp.TBytes,
-            tokens=sp.TList(sp.TAddress),
-            assetManagers=sp.TList(sp.TAddress),
-        )
-        registerTokens = sp.contract(tregister_tokens_params, vault, "registerTokens").open_some(
+        registerTokens = sp.contract(Types.REGISTER_TOKENS_PARAMS, vault, "registerTokens").open_some(
             "INTERFACE_MISMATCH")
         registerTokensParams = sp.record(poolId, tokens, assetManagers)
         sp.transfer(registerTokensParams, sp.tez(0), registerTokens)
@@ -70,6 +80,7 @@ class PoolRegistrationLib:
     #     return serialized;
     # }
 
+    #
     def _toPoolId(pool, specialization, nonce):
         return sp.pack(sp.record(
             nonce,
