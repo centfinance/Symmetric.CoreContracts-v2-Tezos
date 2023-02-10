@@ -17,7 +17,7 @@ class PoolRegistry:
         sp.set_type(specialization, sp.TNat)
 
         poolId = self._toPoolId(
-            self, sp.sender, specialization, self.data.nextPoolNonce)
+            sp.sender, specialization, self.data.nextPoolNonce)
 
         self.data._isPoolRegistered[poolId] = sp.unit
 
@@ -30,10 +30,14 @@ class PoolRegistry:
         )
         sp.emit(poolEvent, tag='PoolRegistered', with_type=True)
 
-    @sp.onchain_view()
-    def getNextNonce(self):
+    @sp.onchain_view(pure=True)
+    def getNextPoolNonce(self):
         sp.result(self.data.nextPoolNonce)
 
     def _toPoolId(self, pool, specialization, nonce):
-        pack = sp.record(nonce=nonce, pool=pool, specialization=specialization)
+        pack = sp.record(
+            nonce=nonce,
+            pool=pool,
+            specialization=specialization
+        )
         return sp.pack(pack)
