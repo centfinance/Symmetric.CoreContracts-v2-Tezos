@@ -35,20 +35,12 @@ class MinimalSwapInfoPoolsBalance:
 
     def _registerMinimalSwapInfoPoolTokens(self, params):
         sp.set_type(params, Types.REGISTER_MSI_POOL_TOKENS_PARAMS)
-        # poolTokens = sp.local('poolTokens', sp.set([]), sp.TSet(sp.TRecord(
-        #     address=sp.TAddress,
-        #     id=sp.TNat
-        # )))
-        # tokens = sp.list(l=[], t=Types.TOKEN)
-        # with sp.for_('t', params.tokens) as t:
-        #     sp.verify(list_contains(tokens, t) == False)
-        #     tokens.push(t)
 
-        # tokensSet = poolTokens.elements()
-        # with sp.if_(self.data._minimalSwapInfoPoolsTokens.contains(params.poolId)):
-        #     with sp.for_('t', params.tokens) as t:
-        #         sp.verify(list_contains(
-        #             self.data._minimalSwapInfoPoolsTokens[params.poolId], t) == False)
-        #         self.data._minimalSwapInfoPoolsTokens[params.poolId].push(t)
-        # with sp.else_():
-        #     self.data._minimalSwapInfoPoolsTokens[params.poolId] = params.tokens
+        with sp.if_(self.data._minimalSwapInfoPoolsTokens.contains(params.poolId)):
+            tokens = params.tokens.elements()
+            with sp.for_('t', tokens) as t:
+                sp.verify(
+                    self.data._minimalSwapInfoPoolsTokens[params.poolId].contains(t) == False)
+                self.data._minimalSwapInfoPoolsTokens[params.poolId].add(t)
+        with sp.else_():
+            self.data._minimalSwapInfoPoolsTokens[params.poolId] = params.tokens
