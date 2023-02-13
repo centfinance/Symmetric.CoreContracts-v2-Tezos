@@ -1,6 +1,6 @@
 import smartpy as sp
 
-import contracts.interfaces.SymmetricErrors as Errors
+# import contracts.interfaces.SymmetricErrors as Errors
 
 from contracts.vault.PoolRegistry import PoolRegistry
 
@@ -10,7 +10,7 @@ from contracts.vault.balances.MinimalSwapInfoPoolsBalance import MinimalSwapInfo
 class Types:
     REGISTER_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TBytes,
-        tokens=sp.TList(sp.TRecord(address=sp.TAddress, id=sp.TNat)),
+        tokens=sp.TSet(sp.TRecord(address=sp.TAddress, id=sp.TNat)),
         assetManagers=sp.TList(sp.TAddress)
     )
 
@@ -27,7 +27,7 @@ class PoolTokens(
     def registerTokens(self, params):
         sp.set_type(params, Types.REGISTER_TOKENS_PARAMS)
 
-        specialization = self._getSpecialization(self, params.poolId)
+        specialization = self._getSpecialization(params.poolId)
 
         # with sp.if_(specialization == sp.nat(2)):
         #     sp.verify(sp.len(params.tokens) == sp.nat(
@@ -35,7 +35,11 @@ class PoolTokens(
         #     self._registerTwoTokenPoolTokens(
         #         params.poolId, params.tokens[0], params.tokens[1])
         with sp.if_(specialization == sp.nat(1)):
-            self._registerMinimalSwapPool(params.poolId, params.tokens)
+            self._registerMinimalSwapInfoPoolTokens(
+                sp.record(
+                    poolId=params.poolId,
+                    tokens=params.tokens
+                ))
         # with sp.else_():
         #     self._registerGeneralPool(params.poolId, params.tokens)
 

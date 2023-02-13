@@ -50,7 +50,7 @@ class MockPool(sp.Contract):
             sp.TRecord(
                 vault=sp.TAddress,
                 specialization=sp.TNat,
-                tokens=sp.TList(sp.TRecord(address=sp.TAddress, id=sp.TNat)),
+                tokens=sp.TSet(sp.TRecord(address=sp.TAddress, id=sp.TNat)),
                 poolId=sp.TBytes
             )
         )
@@ -71,7 +71,7 @@ def test():
     v = MockVault()
     sc += v
 
-    tokens = sp.list([
+    tokens = sp.set([
         sp.record(address=sp.address('tz1'), id=sp.nat(0)),
     ], t=sp.TRecord(address=sp.TAddress, id=sp.TNat))
     p = MockPool(sp.record(
