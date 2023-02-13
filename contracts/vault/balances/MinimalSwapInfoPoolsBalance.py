@@ -13,7 +13,7 @@ class Types:
     )
 
 
-def list_contains(self, lst, elem):
+def list_contains(lst, elem):
     contains = sp.local("contains", False)
     with sp.for_('e' in lst) as e:
         with sp.if_(e == elem):
@@ -44,7 +44,7 @@ class MinimalSwapInfoPoolsBalance:
         with sp.if_(self.data._minimalSwapInfoPoolsTokens.contains(params.poolId)):
             with sp.for_('t' in tokensSet) as t:
                 sp.verify(list_contains(
-                    self, self.data._minimalSwapInfoPoolsTokens[params.poolId], t))
+                    self.data._minimalSwapInfoPoolsTokens[params.poolId], t))
                 self.data._minimalSwapInfoPoolsTokens[params.poolId].push(t)
         with sp.else_():
             self.data._minimalSwapInfoPoolsTokens[params.poolId] = tokensSet
