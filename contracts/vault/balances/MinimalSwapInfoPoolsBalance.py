@@ -1,5 +1,7 @@
 import smartpy as sp
 
+import contracts.utils.Utils as Utils
+
 
 class Types:
 
@@ -14,13 +16,6 @@ class Types:
         poolId=sp.TBytes,
         tokens=TOKENS_TYPE
     )
-
-
-def list_contains(lst, elem):
-    contains = sp.local("contains", False)
-    with sp.for_('e', lst) as e:
-        with sp.if_(e == elem):
-            contains.value = True
 
 
 class MinimalSwapInfoPoolsBalance:
@@ -44,7 +39,7 @@ class MinimalSwapInfoPoolsBalance:
             tokensAmount = sp.len(params.tokens)
             with sp.for_('i', sp.range(0, tokensAmount)) as i:
                 t = params.tokens[i]
-                sp.verify(list_contains(registeredTokens, t) == False)
+                sp.verify(Utils.list_contains(registeredTokens, t) == False)
                 self.data._minimalSwapInfoPoolsTokens[params.poolId][i + prevSize] = t
         with sp.else_():
             self.data._minimalSwapInfoPoolsTokens[params.poolId] = params.tokens
