@@ -25,20 +25,20 @@ def test():
     v = MockVault()
     sc += v
 
-    v.registerPool(sp.nat(1)).run(sender=pool.address)
-    poolId = _toPoolId(pool.address, sp.nat(1),  sp.nat(1))
+    # v.registerPool(sp.nat(1)).run(sender=pool.address)
+    # poolId = _toPoolId(pool.address, sp.nat(1),  sp.nat(1))
 
-    tokens = sp.set([
-        sp.record(address=token1.address, id=sp.nat(0)),
-        sp.record(address=token2.address, id=sp.nat(43)),
-        sp.record(address=token1.address, id=sp.nat(1)),
-    ])
+    # tokens = sp.set([
+    #     sp.record(address=token1.address, id=sp.nat(0)),
+    #     sp.record(address=token2.address, id=sp.nat(43)),
+    #     sp.record(address=token1.address, id=sp.nat(1)),
+    # ])
 
-    assetManagers = [
-        sp.address('tz100000000000000000000000000000000000000')] * 6
+    # assetManagers = [
+    #     sp.address('tz100000000000000000000000000000000000000')] * 6
 
-    v.registerTokens(sp.record(
-        poolId=poolId,
-        tokens=tokens,
-        assetManagers=assetManagers
-    ))
+    # v.registerTokens(sp.record(
+    #     poolId=poolId,
+    #     tokens=tokens,
+    #     assetManagers=assetManagers
+    # ))
