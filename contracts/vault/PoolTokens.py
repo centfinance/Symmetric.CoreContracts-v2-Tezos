@@ -45,12 +45,12 @@ class PoolTokens(
                 tokenX=params.tokens[0],
                 tokenY=params.tokens[1]
             ))
-        # with sp.if_(specialization == sp.nat(1)):
-        #     self._registerMinimalSwapInfoPoolTokens(
-        #         sp.record(
-        #             poolId=params.poolId,
-        #             tokens=params.tokens
-        #         ))
+        with sp.if_(specialization == sp.nat(1)):
+            self._registerMinimalSwapInfoPoolTokens(
+                sp.record(
+                    poolId=params.poolId,
+                    tokens=params.tokens
+                ))
         # with sp.else_():
         #     self._registerGeneralPool(params.poolId, params.tokens)
 
