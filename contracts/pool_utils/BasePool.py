@@ -7,6 +7,12 @@ import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 import contracts.pool_utils.lib.PoolRegistrationLib as PoolRegistrationLib
 
 _MIN_TOKENS = 2
+_DEFAULT_MINIMUM_BPT = 1e6
+_MIN_SWAP_FEE_PERCENTAGE = 1e12
+_MAX_SWAP_FEE_PERCENTAGE = 1e17
+_SWAP_FEE_PERCENTAGE_OFFSET = 1e12
+
+_SWAP_FEE_PERCENTAGE_BIT_LENGTH = 1e17
 
 
 class BasePool:
@@ -185,6 +191,15 @@ class BasePool:
 ###########
 # Internal Functions
 ###########
+    def _setSwapFeePercentage(self, swapFeePercentage):
+        sp.verify(swapFeePercentage >= self._getMinSwapFeePercentage(),
+                  Errors.MIN_SWAP_FEE_PERCENTAGE)
+        sp.verify(swapFeePercentage <= self._getMaxSwapFeePercentage(),
+                  Errors.MAX_SWAP_FEE_PERCENTAGE)
+
+        self.data._swapFeePercentage = swapFeePercentage
+
+        sp.emit(swapFeePercentage, 'SwapFeePercentageChanged')
 
     def _onInitializePool(
         self,
