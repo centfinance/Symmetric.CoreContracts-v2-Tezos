@@ -4,7 +4,11 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
+import contracts.utils.math.FixedPoint as FixedPoint
+
 import contracts.pool_utils.lib.PoolRegistrationLib as PoolRegistrationLib
+
+from contracts.pool_utils.SymmetricPoolToken import SymmetricPoolToken
 
 _MIN_TOKENS = 2
 _DEFAULT_MINIMUM_BPT = 1e6
@@ -15,25 +19,45 @@ _SWAP_FEE_PERCENTAGE_OFFSET = 1e12
 _SWAP_FEE_PERCENTAGE_BIT_LENGTH = 1e17
 
 
-class BasePool:
+class BasePool(
+    SymmetricPoolToken,
+):
 
-    def __init__(self, params):
-        pass
+    def __init__(
+        self,
+        vault,
+        name,
+        symbol,
+        owner,
+    ):
+        self.update_initial_storage(
+            poolId=sp.none,
+            swapFeePercentage=sp.nat(0),
+            protocolFeesCollector=sp.none
+        )
+        SymmetricPoolToken.__init__(self, name, symbol, vault)
 
     @sp.entry_point
-    def initialize(self, params):
+    def initialize(
+        self,
+        vault,
+        specialization,
+        tokens,
+        assetManagers,
+        swapFeePercentage,
+    ):
         sp.verify(self.data.initialized == False)
-        tokensAmount = sp.len(params.tokens)
+        tokensAmount = sp.len(tokens)
         sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)
         sp.verify(tokensAmount <= self.data.maxTokens, Errors.MAX_TOKENS)
 
-        self._setSwapFeePercentage(params.swapFeePercentage)
+        self._setSwapFeePercentage(swapFeePercentage)
 
         poolId = PoolRegistrationLib.registerPool(
-            vault=params.vault,
-            specialization=params.specialization,
-            tokens=params.tokens,
-            assetManagers=sp.none
+            vault=vault,
+            specialization=specialization,
+            tokens=tokens,
+            assetManagers=assetManagers
         )
 
         # Set immutable state variables - these cannot be read from during construction
@@ -204,6 +228,10 @@ class BasePool:
         self.data._swapFeePercentage = swapFeePercentage
 
         sp.emit(swapFeePercentage, 'SwapFeePercentageChanged')
+
+    def _computeScalingFactor(self, decimals):
+        decimalsDifference = 18 - decimals
+        return FixedPoint.ONE * 10**decimalsDifference
 
     def _onInitializePool(
         self,
