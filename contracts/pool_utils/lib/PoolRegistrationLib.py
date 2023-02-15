@@ -2,7 +2,7 @@ import smartpy as sp
 
 
 class Types:
-    TOKENS = sp.TSet(sp.TRecord(address=sp.TAddress, id=sp.TNat))
+    TOKENS = sp.TMap(sp.TNat, sp.TRecord(address=sp.TAddress, id=sp.TNat))
 
     REGISTER_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TBytes,
