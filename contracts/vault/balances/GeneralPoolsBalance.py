@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.utils.Utils as Utils
 
+import contracts.interfaces.SymmetricErrors as Errors
+
 
 class Types:
 
@@ -9,15 +11,10 @@ class Types:
         address=sp.TAddress,
         id=sp.TNat
     )
-    ENTRY = sp.TRecord(
-        token=TOKEN,
-        balance=sp.TBytes
-    )
 
     ENUMERABLE_MAP = sp.TRecord(
-        length=sp.TNat,
-        tokens=sp.Tmap(sp.TNat, ENTRY),
-        indexes=sp.TMap(TOKEN, sp.TNat)
+        balances=sp.Tmap(sp.TNat, sp.TOption(sp.TBytes)),
+        tokens=sp.TMap(TOKEN, sp.TNat)
     )
 
     TOKENS_TYPE = sp.TMap(sp.TNat, TOKEN)
@@ -45,15 +42,22 @@ class GeneralPoolsBalance:
     def _registerGeneralPoolTokens(self, params):
         sp.set_type(params, Types.REGISTER_G_POOL_TOKENS_PARAMS)
 
-        # with sp.if_(self.data._generalPoolsTokens.contains(params.poolId)):
-        #     registeredTokens = self.data._generalPoolsTokens[params.poolId].values(
-        #     )
-        #     prevSize = sp.len(
-        #         self.data._generalPoolsTokens[params.poolId])
-        #     tokensAmount = sp.len(params.tokens)
-        #     with sp.for_('i', sp.range(0, tokensAmount)) as i:
-        #         t = params.tokens[i]
-        #         sp.verify(Utils.list_contains(registeredTokens, t) == False)
-        #         self.data._generalPoolsTokens[params.poolId][i + prevSize] = t
-        # with sp.else_():
-        #     self.data._generalPoolsTokens[params.poolId] = params.tokens
+        with sp.if_(self.data._generalPoolsTokens.contains(params.poolId)):
+            registered = self.data._generalPoolsTokens[params.poolId]
+            with sp.for_('t', params.tokens.values()) as t:
+                sp.verify(registered.contains(t) == False,
+                          Errors.TOKEN_ALREADY_REGISTERED)
+                index = sp.len(registered.indexes)
+                registered.tokens[t] = index
+                # Initiailise Balance
+                registered.balances[index] = sp.none
+        with sp.else_():
+            registered = sp.record(
+                balances=sp.Tmap(tkey=sp.TNat, tvalue=sp.TOption(sp.TBytes)),
+                tokens=sp.TMap(tkey=Types.TOKEN, tvalue=sp.TNat)
+            )
+            tokensAmount = sp.len(params.tokens)
+            with sp.for_('i', sp.range(0, tokensAmount)) as i:
+                t = params.tokens[i]
+                registered.tokens[t] = i
+                registered.balances[i] = sp.none
