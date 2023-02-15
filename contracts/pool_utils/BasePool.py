@@ -22,9 +22,10 @@ class BasePool:
 
     @sp.entry_point
     def initialize(self, params):
+        sp.verify(self.data.initialized == False)
         tokensAmount = sp.len(params.tokens)
         sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)
-        sp.verify(tokensAmount <= self._getMaxTokens(), Errors.MAX_TOKENS)
+        sp.verify(tokensAmount <= self.data.maxTokens, Errors.MAX_TOKENS)
 
         self._setSwapFeePercentage(params.swapFeePercentage)
 
@@ -37,7 +38,10 @@ class BasePool:
 
         # Set immutable state variables - these cannot be read from during construction
         self.data._poolId = poolId
+
+        # TODO: Add protocolFeesCollector call to vault
         # self.data._protocolFeesCollector = vault.getProtocolFeesCollector();
+        self.data.initialized = True
 
     @sp.entry_point
     def onJoinPool(
