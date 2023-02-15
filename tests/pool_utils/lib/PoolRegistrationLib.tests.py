@@ -27,7 +27,8 @@ class MockVault(sp.Contract):
     def registerTokens(self, params):
         sp.set_type(params, sp.TRecord(
             poolId=sp.TBytes,
-            tokens=sp.TList(sp.TRecord(address=sp.TAddress, id=sp.TNat)),
+            tokens=sp.TMap(sp.TNat, sp.TRecord(
+                address=sp.TAddress, id=sp.TNat)),
             assetManagers=sp.TList(sp.TAddress)
         ))
         pass
@@ -50,7 +51,8 @@ class MockPool(sp.Contract):
             sp.TRecord(
                 vault=sp.TAddress,
                 specialization=sp.TNat,
-                tokens=sp.TList(sp.TRecord(address=sp.TAddress, id=sp.TNat)),
+                tokens=sp.TMap(sp.TNat, sp.TRecord(
+                    address=sp.TAddress, id=sp.TNat)),
                 poolId=sp.TBytes
             )
         )
@@ -58,7 +60,7 @@ class MockPool(sp.Contract):
     @sp.entry_point
     def initialize(self):
         assetManagers = [
-            'tz100000000000000000000000000000000000000'] * 1
+            sp.address('tz100000000000000000000000000000000000000')] * 1
         poolId = PoolRegistrationLib.registerPool(
             vault=self.data.vault, specialization=self.data.specialization, tokens=self.data.tokens, assetManagers=assetManagers)
         self.data.poolId = poolId
@@ -71,9 +73,9 @@ def test():
     v = MockVault()
     sc += v
 
-    tokens = sp.list([
-        sp.record(address=sp.address('tz1'), id=sp.nat(0)),
-    ], t=sp.TRecord(address=sp.TAddress, id=sp.TNat))
+    tokens = sp.map({
+        0: sp.record(address=sp.address('tz1'), id=sp.nat(0)),
+    })
     p = MockPool(sp.record(
         vault=v.address,
         specialization=sp.nat(2),

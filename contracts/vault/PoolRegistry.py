@@ -41,3 +41,13 @@ class PoolRegistry:
             specialization=specialization
         )
         return sp.pack(pack)
+
+    def _getSpecialization(self, poolId):
+        sp.set_type(poolId, sp.TBytes)
+
+        record = sp.unpack(poolId, sp.TRecord(
+            nonce=sp.TNat,
+            pool=sp.TAddress,
+            specialization=sp.TNat
+        )).open_some(message="Invalid poolId")
+        return record.specialization
