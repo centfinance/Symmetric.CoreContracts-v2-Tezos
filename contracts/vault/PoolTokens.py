@@ -8,6 +8,8 @@ from contracts.vault.balances.MinimalSwapInfoPoolsBalance import MinimalSwapInfo
 
 from contracts.vault.balances.TwoTokenPoolsBalance import TwoTokenPoolsBalance
 
+from contracts.vault.balances.GeneralPoolsBalance import GeneralPoolsBalance
+
 
 class Types:
     TOKEN = sp.TRecord(
@@ -24,12 +26,14 @@ class Types:
 class PoolTokens(
     PoolRegistry,
     MinimalSwapInfoPoolsBalance,
-    TwoTokenPoolsBalance
+    TwoTokenPoolsBalance,
+    GeneralPoolsBalance
 ):
     def __init__(self):
         PoolRegistry.__init__(self)
         MinimalSwapInfoPoolsBalance.__init__(self)
         TwoTokenPoolsBalance.__init__(self)
+        GeneralPoolsBalance.__init__(self)
 
     @sp.entry_point
     def registerTokens(self, params):
@@ -51,8 +55,11 @@ class PoolTokens(
                     poolId=params.poolId,
                     tokens=params.tokens
                 ))
-        # with sp.else_():
-        #     self._registerGeneralPool(params.poolId, params.tokens)
+        with sp.if_((specialization != sp.nat(2)) & (specialization != sp.nat(1))):
+            self._registerGeneralPoolTokens(sp.record(
+                poolId=params.poolId,
+                tokens=params.tokens
+            ))
 
         poolEvent = sp.record(
             poolId=params.poolId,

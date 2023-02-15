@@ -13,7 +13,7 @@ class Types:
     )
 
     ENUMERABLE_MAP = sp.TRecord(
-        balances=sp.Tmap(sp.TNat, sp.TOption(sp.TBytes)),
+        balances=sp.TMap(sp.TNat, sp.TOption(sp.TBytes)),
         tokens=sp.TMap(TOKEN, sp.TNat)
     )
 
@@ -41,23 +41,25 @@ class GeneralPoolsBalance:
     #
     def _registerGeneralPoolTokens(self, params):
         sp.set_type(params, Types.REGISTER_G_POOL_TOKENS_PARAMS)
-
-        with sp.if_(self.data._generalPoolsTokens.contains(params.poolId)):
-            registered = self.data._generalPoolsTokens[params.poolId]
+      # TODO: Refactor to use only one loop
+        with sp.if_(self.data._generalPoolsBalances.contains(params.poolId)):
+            registered = self.data._generalPoolsBalances[params.poolId]
             with sp.for_('t', params.tokens.values()) as t:
-                sp.verify(registered.contains(t) == False,
+                sp.verify(registered.tokens.contains(t) == False,
                           Errors.TOKEN_ALREADY_REGISTERED)
-                index = sp.len(registered.indexes)
+                index = sp.len(registered.tokens)
                 registered.tokens[t] = index
                 # Initiailise Balance
                 registered.balances[index] = sp.none
         with sp.else_():
-            registered = sp.record(
-                balances=sp.Tmap(tkey=sp.TNat, tvalue=sp.TOption(sp.TBytes)),
-                tokens=sp.TMap(tkey=Types.TOKEN, tvalue=sp.TNat)
-            )
-            tokensAmount = sp.len(params.tokens)
-            with sp.for_('i', sp.range(0, tokensAmount)) as i:
+            record = sp.compute(sp.record(
+                balances=sp.map(l={}, tkey=sp.TNat,
+                                tvalue=sp.TOption(sp.TBytes)),
+                tokens=sp.map(l={}, tkey=Types.TOKEN, tvalue=sp.TNat)
+            ))
+            tokensAmount = sp.range(0, sp.len(params.tokens))
+            with sp.for_('i', tokensAmount) as i:
                 t = params.tokens[i]
-                registered.tokens[t] = i
-                registered.balances[i] = sp.none
+                record.tokens[t] = i
+                record.balances[i] = sp.none
+            self.data._generalPoolsBalances[params.poolId] = record

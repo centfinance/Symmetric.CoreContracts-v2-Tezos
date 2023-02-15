@@ -19,26 +19,54 @@ def test():
         ))
     sc = sp.test_scenario()
     pool = sp.test_account("Pool")
+    pool2 = sp.test_account("Pool2")
+    pool3 = sp.test_account("Pool3")
     token1 = sp.test_account('token1')
     token2 = sp.test_account('token2')
 
     v = MockVault()
     sc += v
 
-    # v.registerPool(sp.nat(1)).run(sender=pool.address)
-    # poolId = _toPoolId(pool.address, sp.nat(1),  sp.nat(1))
+    # Test MinimalSwapInfo
+    v.registerPool(sp.nat(1)).run(sender=pool.address)
+    poolId = _toPoolId(pool.address, sp.nat(1),  sp.nat(1))
 
-    # tokens = sp.set([
-    #     sp.record(address=token1.address, id=sp.nat(0)),
-    #     sp.record(address=token2.address, id=sp.nat(43)),
-    #     sp.record(address=token1.address, id=sp.nat(1)),
-    # ])
+    tokens = sp.map({
+        0: sp.record(address=token1.address, id=sp.nat(0)),
+        1: sp.record(address=token2.address, id=sp.nat(43)),
+        2: sp.record(address=token1.address, id=sp.nat(1)),
+    })
 
-    # assetManagers = [
-    #     sp.address('tz100000000000000000000000000000000000000')] * 6
+    assetManagers = [
+        sp.address('tz100000000000000000000000000000000000000')] * 3
 
-    # v.registerTokens(sp.record(
-    #     poolId=poolId,
-    #     tokens=tokens,
-    #     assetManagers=assetManagers
-    # ))
+    v.registerTokens(sp.record(
+        poolId=poolId,
+        tokens=tokens,
+        assetManagers=assetManagers
+    ))
+
+   # Test TwoTokensPool
+    v.registerPool(sp.nat(2)).run(sender=pool2.address)
+    tokens2 = sp.map({
+        0: sp.record(address=token1.address, id=sp.nat(0)),
+        1: sp.record(address=token2.address, id=sp.nat(43)),
+    })
+    poolId2 = _toPoolId(pool2.address, sp.nat(2),  sp.nat(2))
+
+    v.registerTokens(sp.record(
+        poolId=poolId2,
+        tokens=tokens2,
+        assetManagers=assetManagers
+    ))
+
+    # Test GeneralPool
+    v.registerPool(sp.nat(0)).run(sender=pool3.address)
+
+    poolId3 = _toPoolId(pool3.address, sp.nat(0),  sp.nat(3))
+
+    v.registerTokens(sp.record(
+        poolId=poolId3,
+        tokens=tokens,
+        assetManagers=assetManagers
+    ))
