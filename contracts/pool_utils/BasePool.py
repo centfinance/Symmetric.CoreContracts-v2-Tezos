@@ -4,11 +4,34 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
+import contracts.pool_utils.lib.PoolRegistrationLib as PoolRegistrationLib
+
+_MIN_TOKENS = 2
+
 
 class BasePool:
 
     def __init__(self, params):
         pass
+
+    @sp.entry_point
+    def initialize(self, params):
+        tokensAmount = sp.len(params.tokens)
+        sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)
+        sp.verify(tokensAmount <= self._getMaxTokens(), Errors.MAX_TOKENS)
+
+        self._setSwapFeePercentage(params.swapFeePercentage)
+
+        poolId = PoolRegistrationLib.registerPool(
+            vault=params.vault,
+            specialization=params.specialization,
+            tokens=params.tokens,
+            assetManagers=sp.none
+        )
+
+        # Set immutable state variables - these cannot be read from during construction
+        self.data._poolId = poolId
+        # self.data._protocolFeesCollector = vault.getProtocolFeesCollector();
 
     @sp.entry_point
     def onJoinPool(
