@@ -23,6 +23,8 @@ def test():
     pool3 = sp.test_account("Pool3")
     token1 = sp.test_account('token1')
     token2 = sp.test_account('token2')
+    token3 = sp.test_account('token3')
+    token4 = sp.test_account('token4')
 
     v = MockVault()
     sc += v
@@ -43,6 +45,17 @@ def test():
     v.registerTokens(sp.record(
         poolId=poolId,
         tokens=tokens,
+        assetManagers=assetManagers
+    ))
+
+    newTokens = sp.map({
+        0: sp.record(address=token3.address, id=sp.nat(0)),
+        1: sp.record(address=token4.address, id=sp.nat(0))
+    })
+
+    v.registerTokens(sp.record(
+        poolId=poolId,
+        tokens=newTokens,
         assetManagers=assetManagers
     ))
 
@@ -68,5 +81,11 @@ def test():
     v.registerTokens(sp.record(
         poolId=poolId3,
         tokens=tokens,
+        assetManagers=assetManagers
+    ))
+
+    v.registerTokens(sp.record(
+        poolId=poolId3,
+        tokens=newTokens,
         assetManagers=assetManagers
     ))
