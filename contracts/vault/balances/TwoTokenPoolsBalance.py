@@ -20,8 +20,6 @@ class Types:
         balances=sp.TOption(sp.TMap(sp.TBytes, TWO_TOKEN_POOL_BALANCES))
     )
 
-    TOKENS_TYPE = sp.TSet(TOKEN)
-
     REGISTER_TT_POOL_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TBytes,
         tokenX=TOKEN,
