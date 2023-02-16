@@ -101,6 +101,8 @@ class WeightedPool(
         sp.verify(normalizedSum.value == FixedPoint.ONE,
                   Errors.NORMALIZED_WEIGHT_INVARIANT)
 
+        self.data.normalizedWeights = params.normalizedWeights
+
         with sp.for_('i', sp.range(0, numTokens)) as i:
             self.data.scalingFactors[i] = self._computeScalingFactor(
                 params.tokenDecimals[i])
