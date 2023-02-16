@@ -9,9 +9,25 @@ from contracts.pool_weighted.BaseWeightedPool import BaseWeightedPool
 from contracts.pool_weighted.WeightedMath import WeightedMath
 
 
+class Types:
+
+    TOKEN = sp.TRecord(
+        address=sp.TAddress,
+        id=sp.TNat,
+    )
+
+    INITIALIZE_PARAMS = sp.TRecord(
+        tokens=sp.TMap(sp.TNat, TOKEN),
+        normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+        tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
+        swapFeePercentage=sp.TNat,
+    )
+
+
 class WeightedPool(
     BaseWeightedPool
 ):
+    MAX_TOKENS = 8
 
     def __init__(
         self,
@@ -23,22 +39,36 @@ class WeightedPool(
         owner,
     ):
         self.init(
-            tokens=tokens,
-            scalingFactors=sp.none,
-            normalizedWeights=normalizedWeights,
+            tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
+            scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
+            normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             totalTokens=sp.nat(0),
-            maxTokens=sp.nat(8),
             initialized=sp.bool(False),
         )
-        self.init_type(
-            sp.TRecord(
-                tokens=sp.TMap(sp.TNat, sp.TRecord(
-                    address=sp.TAddress, id=sp.TNat)),
-                scalingFactors=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
-                normalizedWeights=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
-                totalTokens=sp.TNat
-            )
-        )
+        # self.init_type(
+        #     sp.TRecord(
+        #         normalizedWeights=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
+        #         scalingFactors=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
+        #         tokens=sp.TMap(sp.TNat, sp.TRecord(
+        #             address=sp.TAddress,
+        #             id=sp.TNat)),
+        #         totalTokens=sp.TNat,
+        #         balances=sp.TBigMap(sp.TAddress, sp.TRecord(
+        #             approvals=sp.TMap(sp.TAddress, sp.TNat),
+        #             balance=sp.TNat)),
+        #         initialized=sp.TBool,
+        #         maxTokens=sp.TNat,
+        #         metadata=sp.TBigMap(sp.TString, sp.TBytes),
+        #         poolId=sp.TOption(sp.TUnknown()),
+        #         protocolFeesCollector=sp.TOption(sp.TUnknown()),
+        #         swapFeePercentage=sp.TNat,
+        #         token_metadata=sp.TBigMap(sp.TNat, sp.TRecord(
+        #             token_id=sp.TNat,
+        #             token_info=sp.TMap(sp.TString, sp.TBytes))),
+        #         totalSupply=sp.TIntOrNat,
+        #         vault=sp.TAddress
+        #     )
+        # )
         # TODO: ProtocolFeeCache
 
         # TODO: WeightedPoolProtocolFees
@@ -51,52 +81,49 @@ class WeightedPool(
             owner,
         )
 
-    @sp.entry_point
-    def initialize(
-        self,
-        vault,
-        tokens,
-        tokenDecimals,
-        normalizedWeights,
-        assetManagers,
-        swapFeePercentage,
-    ):
+    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS)
+    def initialize(self, params):
+
         sp.verify(self.data.initialized == False)
 
-        numTokens = sp.len(tokens)
-        sp.verify((numTokens == sp.len(normalizedWeights))
-                  & (numTokens == sp.len(tokenDecimals)))
+        numTokens = sp.len(params.tokens)
+        sp.verify((numTokens == sp.len(params.normalizedWeights))
+                  & (numTokens == sp.len(params.tokenDecimals)))
 
-        self.data._totalTokens = numTokens
+        self.data.tokens = params.tokens
+        self.data.totalTokens = numTokens
 
         # // Ensure each normalized weight is above the minimum
-        normalizedSum = 0
+        normalizedSum = sp.local('normalizedSum', 0)
         with sp.for_('i', sp.range(0, numTokens)) as i:
-            normalizedWeight = normalizedWeights[i]
+            normalizedWeight = params.normalizedWeights[i]
 
             sp.verify(normalizedWeight >=
                       WeightedMath._MIN_WEIGHT, Errors.MIN_WEIGHT)
-            normalizedSum = sp.compute(normalizedSum + normalizedWeight)
+            normalizedSum.value = normalizedSum.value + normalizedWeight
 
         # // Ensure that the normalized weights sum to ONE
-        sp.verify(normalizedSum == FixedPoint.ONE,
+        sp.verify(normalizedSum.value == FixedPoint.ONE,
                   Errors.NORMALIZED_WEIGHT_INVARIANT)
 
         with sp.for_('i', sp.range(0, numTokens)) as i:
             self.data.scalingFactors[i] = self._computeScalingFactor(
-                tokenDecimals[i])
-        specialization = sp.compute(sp.nat(1)
-                                    )
+                params.tokenDecimals[i])
+
+        specialization = sp.local('specialization', sp.nat(1))
         with sp.if_(numTokens == sp.nat(2)):
-            specialization = sp.compute(sp.nat(1))
+            specialization.value = sp.nat(2)
 
         super().initialize.f(
             self,
-            vault,
-            specialization,
-            tokens,
-            assetManagers,
-            swapFeePercentage,
+            sp.record(
+                vault=self.data.vault,
+                specialization=specialization.value,
+                tokens=self.data.tokens,
+                assetManagers=sp.none,
+                swapFeePercentage=params.swapFeePercentage,
+            )
+
         )
 
         self.data.initialized = True
