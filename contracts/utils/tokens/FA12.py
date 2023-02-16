@@ -28,7 +28,7 @@ class FA12_common:
 class FA12_core(sp.Contract, FA12_common):
 
     def __init__(self, **extra_storage):
-        self.init(
+        self.update_initial_storage(
             balances=sp.big_map(
                 tvalue=sp.TRecord(approvals=sp.TMap(
                     sp.TAddress, sp.TNat), balance=sp.TNat),

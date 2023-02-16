@@ -1,8 +1,8 @@
 import smartpy as sp
 
-from contracts.interfaces.SymmetricErrors import Errors
+# from contracts.interfaces.SymmetricErrors import Errors
 
-ONE = 1e18
+ONE = 1000000000000000000
 
 TWO = 2 * ONE
 
