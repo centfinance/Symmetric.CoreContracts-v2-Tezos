@@ -43,8 +43,6 @@ class MockWeightedPool(WeightedPool):
     def __init__(
         self,
         vault,
-        tokens,
-        normalizedWeights,
         name,
         symbol,
         owner,
@@ -52,8 +50,6 @@ class MockWeightedPool(WeightedPool):
         WeightedPool.__init__(
             self,
             vault,
-            tokens,
-            normalizedWeights,
             name,
             symbol,
             owner,
@@ -81,8 +77,6 @@ def test():
 
     p = MockWeightedPool(
         vault=v.address,
-        tokens=tokens,
-        normalizedWeights=weights,
         name="Symm Liqudidty Pool Token",
         symbol="SYMMLP",
         owner=sp.address("tz1"),

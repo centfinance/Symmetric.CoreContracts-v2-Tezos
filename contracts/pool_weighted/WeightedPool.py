@@ -16,11 +16,31 @@ class Types:
         id=sp.TNat,
     )
 
-    INITIALIZE_PARAMS = sp.TRecord(
-        tokens=sp.TMap(sp.TNat, TOKEN),
+    STORAGE = sp.TRecord(
         normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
-        tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
+        scalingFactors=sp.TMap(sp.TNat, sp.TNat),
+        tokens=sp.TMap(sp.TNat, TOKEN),
+        totalTokens=sp.TNat,
+        balances=sp.TBigMap(sp.TAddress, sp.TRecord(
+            approvals=sp.TMap(sp.TAddress, sp.TNat),
+            balance=sp.TNat)),
+        initialized=sp.TBool,
+        metadata=sp.TBigMap(sp.TString, sp.TBytes),
+        poolId=sp.TOption(sp.TBytes),
+        protocolFeesCollector=sp.TOption(sp.TAddress),
         swapFeePercentage=sp.TNat,
+        token_metadata=sp.TBigMap(sp.TNat, sp.TRecord(
+            token_id=sp.TNat,
+            token_info=sp.TMap(sp.TString, sp.TBytes))),
+        totalSupply=sp.TNat,
+        vault=sp.TAddress
+    )
+
+    INITIALIZE_PARAMS = sp.TRecord(
+        tokens=STORAGE.tokens,
+        normalizedWeights=STORAGE.normalizedWeights,
+        tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
+        swapFeePercentage=STORAGE.swapFeePercentage,
     )
 
 
@@ -32,8 +52,6 @@ class WeightedPool(
     def __init__(
         self,
         vault,
-        tokens,
-        normalizedWeights,
         name,
         symbol,
         owner,
@@ -45,30 +63,7 @@ class WeightedPool(
             totalTokens=sp.nat(0),
             initialized=sp.bool(False),
         )
-        # self.init_type(
-        #     sp.TRecord(
-        #         normalizedWeights=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
-        #         scalingFactors=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
-        #         tokens=sp.TMap(sp.TNat, sp.TRecord(
-        #             address=sp.TAddress,
-        #             id=sp.TNat)),
-        #         totalTokens=sp.TNat,
-        #         balances=sp.TBigMap(sp.TAddress, sp.TRecord(
-        #             approvals=sp.TMap(sp.TAddress, sp.TNat),
-        #             balance=sp.TNat)),
-        #         initialized=sp.TBool,
-        #         maxTokens=sp.TNat,
-        #         metadata=sp.TBigMap(sp.TString, sp.TBytes),
-        #         poolId=sp.TOption(sp.TUnknown()),
-        #         protocolFeesCollector=sp.TOption(sp.TUnknown()),
-        #         swapFeePercentage=sp.TNat,
-        #         token_metadata=sp.TBigMap(sp.TNat, sp.TRecord(
-        #             token_id=sp.TNat,
-        #             token_info=sp.TMap(sp.TString, sp.TBytes))),
-        #         totalSupply=sp.TIntOrNat,
-        #         vault=sp.TAddress
-        #     )
-        # )
+        self.init_type(Types.STORAGE)
         # TODO: ProtocolFeeCache
 
         # TODO: WeightedPoolProtocolFees
@@ -119,7 +114,7 @@ class WeightedPool(
             sp.record(
                 vault=self.data.vault,
                 specialization=specialization.value,
-                tokens=self.data.tokens,
+                tokens=params.tokens,
                 assetManagers=sp.none,
                 swapFeePercentage=params.swapFeePercentage,
             )

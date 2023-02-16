@@ -55,10 +55,10 @@ class BasePool(
             assetManagers=params.assetManagers
         )
 
-        self.data.poolId = poolId
+        self.data.poolId = sp.some(poolId)
 
         # TODO: Add protocolFeesCollector call to vault
-        # self.data._protocolFeesCollector = vault.getProtocolFeesCollector();
+        # self.data.protocolFeesCollector = vault.getProtocolFeesCollector();
 
     # @sp.entry_point
     # def onJoinPool(
