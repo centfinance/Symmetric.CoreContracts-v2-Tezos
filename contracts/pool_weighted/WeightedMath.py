@@ -17,3 +17,12 @@ class WeightedMath:
     _MAX_INVARIANT_RATIO = 3000000000000000000  # 3e18
     # Invariant shrink limit: non-proportional exits cannot cause the invariant to decrease by less than this ratio.
     _MIN_INVARIANT_RATIO = 700000000000000000  # 0.7e18
+
+    def _calculateInvariant(normalizedWeights, balances):
+        invariant = sp.compute(FixedPoint.ONE)
+
+        with sp.for_('i', sp.range(0, sp.len(normalizedWeights))) as i:
+            invariant = FixedPoint.mulDown(
+                invariant, FixedPoint.powDown(balances[i], normalizedWeights[i]))
+
+        sp.verify(invariant > 0)
