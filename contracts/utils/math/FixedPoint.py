@@ -1,8 +1,8 @@
 import smartpy as sp
 
-from contracts.interfaces.SymmetricErrors import Errors
+# from contracts.interfaces.SymmetricErrors import Errors
 
-ONE = 1e18
+ONE = 1000000000000000000
 
 TWO = 2 * ONE
 
@@ -117,7 +117,8 @@ def pow(x, y):
         with sp.if_((exponent.value % 2) != 0):
             result.value *= base.value
 
-        exponent.value = exponent.value >> 1  # Equivalent to exponent.value / 2
+        exponent.value = exponent.value >> sp.nat(
+            1)  # Equivalent to exponent.value / 2
         base.value *= base.value
 
     return result.value

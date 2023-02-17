@@ -7,7 +7,7 @@ class Types:
     REGISTER_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TBytes,
         tokens=TOKENS,
-        assetManagers=sp.TList(sp.TAddress),
+        assetManagers=sp.TOption(sp.TMap(sp.TNat, sp.TAddress)),
     )
 
 
@@ -40,7 +40,10 @@ def registerPool(vault, specialization, tokens, assetManagers):
     registerTokens = sp.contract(Types.REGISTER_TOKENS_PARAMS, vault, "registerTokens").open_some(
         "INTERFACE_MISMATCH")
     registerTokensParams = sp.record(
-        poolId=poolId, tokens=tokens, assetManagers=assetManagers)
+        poolId=poolId,
+        tokens=tokens,
+        assetManagers=assetManagers
+    )
     sp.transfer(registerTokensParams, sp.tez(0), registerTokens)
 
     return poolId
