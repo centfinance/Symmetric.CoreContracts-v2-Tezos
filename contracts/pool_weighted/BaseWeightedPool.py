@@ -91,9 +91,9 @@ class BaseWeightedPool(
     def _doJoin(self, params):
         doJoin = sp.local('doJoin', sp.none)
         with sp.if_(params.userData.kind == 'EXACT_TOKENS_IN_FOR_BPT_OUT'):
-            doJoin.value = self._joinExactTokensInForBPTOut(params)
+            doJoin.value = self._joinExactTokensInForSPTOut(params)
         with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_BPT_OUT'):
-            doJoin.value = self._joinTokenInForExactBPTOut(
+            doJoin.value = self._joinTokenInForExactSPTOut(
                 sp.record(
                     balances=params.balances,
                     normalizedWeights=params.normalizedWeights,
@@ -102,7 +102,7 @@ class BaseWeightedPool(
                 )
             )
         with sp.if_(params.userData.kind == 'ALL_TOKENS_IN_FOR_EXACT_BPT_OUT'):
-            doJoin.value = self._joinAllTokensInForExactBPTOut(
+            doJoin.value = self._joinAllTokensInForExactSPTOut(
                 sp.record(
                     balances=params.balances,
                     totalSupply=params.totalSupply,
@@ -110,26 +110,26 @@ class BaseWeightedPool(
                 )
             )
 
-    def _joinExactTokensInForBPTOut(
+    def _joinExactTokensInForSPTOut(
         self,
         params,
     ):
-        (amountsIn, minBPTAmountOut) = params.userData.exactTokensInForBptOut()
-        sp.verify(sp.len(params.balances) == sp.len(amountsIn))
+        sp.verify(sp.len(params.balances) == sp.len(params.userData.amountsIn))
 
-        self._upscaleArray(amountsIn, params.scalingFactors)
+        self._upscaleArray(params.userData.amountsIn, params.scalingFactors)
 
-        bptAmountOut = WeightedMath._calcBptOutGivenExactTokensIn(
-            balances,
-            normalizedWeights,
-            amountsIn,
-            totalSupply,
-            getSwapFeePercentage()
+        sptAmountOut = WeightedMath._calcSptOutGivenExactTokensIn(
+            balances=params.balances,
+            normalizedWeights=params.noramlizedWeights,
+            amountsIn=params.userData.amountsIn,
+            totalSupply=params.totalSupply,
+            swapFeePercentage=self.data.swapFeePercentage,
         )
 
-        sp.verify(bptAmountOut >= minBPTAmountOut, Errors.BPT_OUT_MIN_AMOUNT)
+        sp.verify(sptAmountOut >= params.userData.minSPTAmountOut,
+                  Errors.SPT_OUT_MIN_AMOUNT)
 
-        return (bptAmountOut, amountsIn)
+        return (sptAmountOut, params.userData.amountsIn)
 
     def _joinTokenInForExactBPTOut(
         self,
