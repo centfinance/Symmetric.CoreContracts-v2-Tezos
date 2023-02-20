@@ -91,19 +91,24 @@ class BaseWeightedPool(
     def _doJoin(self, params):
         doJoin = sp.local('doJoin', sp.none)
         with sp.if_(params.userData.kind == 'EXACT_TOKENS_IN_FOR_BPT_OUT'):
-            doJoin.value = self._joinExactTokensInForBPTOut(sp.record(
-                balances,
-                normalizedWeights,
-                scalingFactors,
-                totalSupply,
-                userData
-            ))
+            doJoin.value = self._joinExactTokensInForBPTOut(params)
         with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_BPT_OUT'):
             doJoin.value = self._joinTokenInForExactBPTOut(
-                balances, normalizedWeights, totalSupply, userData)
+                sp.record(
+                    balances=params.balances,
+                    normalizedWeights=params.normalizedWeights,
+                    totalSupply=params.totalSupply,
+                    userData=params.userData
+                )
+            )
         with sp.if_(params.userData.kind == 'ALL_TOKENS_IN_FOR_EXACT_BPT_OUT'):
             doJoin.value = self._joinAllTokensInForExactBPTOut(
-                balances, totalSupply, userData)
+                sp.record(
+                    balances=params.balances,
+                    totalSupply=params.totalSupply,
+                    userData=params.userData
+                )
+            )
 
     def _joinExactTokensInForBPTOut(
         self,
