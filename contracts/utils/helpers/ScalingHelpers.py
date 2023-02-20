@@ -33,14 +33,15 @@ def _downscaleUp(amount, scalingFactor):
 #  * the `amounts` array.
 #  */
 def _upscaleArray(amounts, scalingFactors):
-    length = amounts.length
-    InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
-    upscaledAmounts = sp.local('upscaledAmounts', [])
-    with sp.for_('i' in sp.range(0, length)) as i:
-        upscaledAmounts.value.push(
-            FixedPoint.mulDown(amounts[i], scalingFactors[i]))
+    length = sp.len(amounts)
+    # InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
+    upscaledAmounts = sp.compute(sp.map(
+        {}, tkey=sp.TNat, tvalue=sp.TNat))
+    with sp.for_('i', sp.range(0, length)) as i:
+        upscaledAmounts[i] = FixedPoint.mulDown(
+            amounts[i], scalingFactors[i])
 
-    return upscaledAmounts.value.rev()
+    return upscaledAmounts
 
 
 # /**
@@ -48,14 +49,15 @@ def _upscaleArray(amounts, scalingFactors):
 #  * *mutates* the `amounts` array.
 #  */
 def _downscaleDownArray(amounts, scalingFactors):
-    length = amounts.length
-    InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
-    downscaledAmounts = sp.local('downscaledAmounts', [])
-    with sp.for_('i' in sp.range(0, length)) as i:
-        downscaledAmounts.value.push(
-            FixedPoint.divDown(amounts[i], scalingFactors[i]))
+    length = sp.len(amounts)
+    # InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
+    downscaledAmounts = sp.compute(sp.map(
+        {}, tkey=sp.TNat, tvalue=sp.TNat))
+    with sp.for_('i', sp.range(0, length)) as i:
+        downscaledAmounts[i] = FixedPoint.divDown(
+            amounts[i], scalingFactors[i])
 
-    return downscaledAmounts.value.rev()
+    return downscaledAmounts
 
 # /**
 #  * @dev Same as `_downscaleUp`, but for an entire array. This function does not return anything, but instead
@@ -64,14 +66,14 @@ def _downscaleDownArray(amounts, scalingFactors):
 
 
 def _downscaleUpArray(amounts, scalingFactors):
-    length = amounts.length
-    InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
-    downscaledAmounts = sp.local('downscaledAmounts', [])
-    with sp.for_('i' in sp.range(0, length)) as i:
-        downscaledAmounts.value.push(
-            FixedPoint.divUp(amounts[i], scalingFactors[i]))
+    length = sp.len(amounts)
+    # InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
+    downscaledAmounts = sp.compute(sp.map(
+        {}, tkey=sp.TNat, tvalue=sp.TNat))
+    with sp.for_('i', sp.range(0, length)) as i:
+        downscaledAmounts[i] = FixedPoint.divUp(amounts[i], scalingFactors[i])
 
-    return downscaledAmounts.value.rev()
+    return downscaledAmounts
 
 
 # def _computeScalingFactor(token):

@@ -1,5 +1,11 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricErrors as Errors
+
+import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
+
+from contracts.pool_weighted.WeightedMath import WeightedMath
+
 from contracts.pool_utils.BasePool import BasePool
 
 
@@ -20,3 +26,50 @@ class BaseWeightedPool(
             symbol,
             owner,
         )
+
+    def _onInitializePool(self, params):
+        sp.set_type(params, sp.TRecord(
+            userData=sp.TRecord(
+                amountsIn=sp.TMap(sp.TNat, sp.TNat),
+                kind=sp.TString,
+            ),
+            scalingFactors=sp.TMap(sp.TNat, sp.TNat),
+        ))
+        kind = params.userData.kind
+        # TODO: Use an enum
+        sp.verify(kind == 'INIT', Errors.UNINITIALIZED)
+
+        amountsIn = params.userData.amountsIn
+
+        length = sp.len(amountsIn)
+        sp.verify(length == sp.len(params.scalingFactors))
+
+        upscaledAmounts = ScalingHelpers._upscaleArray(
+            amountsIn, params.scalingFactors)
+
+        invariantAfterJoin = WeightedMath._calculateInvariant(
+            self.data.normalizedWeights, upscaledAmounts)
+
+        # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
+        # consistent in Pools with similar compositions but different number of tokens.
+        # sptAmountOut = Math.mul(invariantAfterJoin, amountsIn.length)
+        sptAmountOut = invariantAfterJoin * length
+
+        # Initialization is still a join, so we need to do post-join work. Since we are not paying protocol fees,
+        # and all we need to do is update the invariant, call `_updatePostJoinExit` here instead of `_afterJoinExit`.
+        # TODO: Used for protocol Fees
+        # self._updatePostJoinExit(invariantAfterJoin)
+
+        return (sptAmountOut, amountsIn)
+
+    # def _onJoinPool(self, params):
+    #     pass
+
+    # def _doJoin(self, params):
+    #     doJoin = sp.local('doJoin', sp.none)
+    #     with sp.if_(params.userData.kind == 'EXACT_TOKENS_IN_FOR_BPT_OUT'):
+    #         doJoin.value = self._joinExactTokensInForBPTOut(balances, normalizedWeights, scalingFactors, totalSupply, userData);
+    #     with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_BPT_OUT'):
+    #         doJoin.value = self._joinTokenInForExactBPTOut(balances, normalizedWeights, totalSupply, userData);
+    #     with sp.if_(params.userData.kind == 'ALL_TOKENS_IN_FOR_EXACT_BPT_OUT'):
+    #         doJoin.value = self._joinAllTokensInForExactBPTOut(balances, totalSupply, userData);

@@ -17,3 +17,34 @@ class WeightedMath:
     _MAX_INVARIANT_RATIO = 3000000000000000000  # 3e18
     # Invariant shrink limit: non-proportional exits cannot cause the invariant to decrease by less than this ratio.
     _MIN_INVARIANT_RATIO = 700000000000000000  # 0.7e18
+
+    def _calculateInvariant(normalizedWeights, balances):
+        """Calculates the invariant of normalized weights and balances
+
+        Args:
+            normalizedWeights (map):  The normalized weights
+            balances (map): A map of balances 
+
+        Returns:
+            Fixed Point: The calculated invariant value
+
+        """
+        # Set the type of the variables
+        sp.set_type(normalizedWeights, sp.TMap(sp.TNat, sp.TNat))
+        sp.set_type(balances, sp.TMap(sp.TNat, sp.TNat))
+
+        # Create an initial invariant
+        invariant = sp.local('invariant', FixedPoint.ONE)
+
+        # Iterate through each index in the normalized weights
+        with sp.for_('i', sp.range(0, sp.len(normalizedWeights))) as i:
+            # Calculate the power of down from the balance and normalized weight
+            powDown = FixedPoint.powDown(balances[i], normalizedWeights[i])
+            # Multiply the previous invariant to give a new invariant
+            invariant.value = FixedPoint.mulDown(
+                invariant.value, powDown)
+
+        # Verify that the new invariant is larger 0
+        sp.verify(invariant.value > 0)
+        # Return the new invariant
+        return invariant.value
