@@ -48,3 +48,64 @@ class WeightedMath:
         sp.verify(invariant.value > 0)
         # Return the new invariant
         return invariant.value
+
+    def _calcSptOutGivenExactTokensIn(balances, normalizedWeights, amountsIn, totalSupply, swapFeePercentage):
+        # SPT out, so we round down overall.
+
+        balanceRatiosWithFee = sp.map({}, tkey=sp.TNat, tvalue=sp.TNat)
+
+        invariantRatioWithFees = sp.local('invariantRatioWithFees', 0)
+
+        with sp.for_('i', sp.range(0, sp.len(balances))) as i:
+            balanceRatiosWithFee[i] = FixedPoint.divDown(
+                FixedPoint.add(balances[i], amountsIn[i]), balances[i])
+            invariantRatioWithFees.value = FixedPoint.add(invariantRatioWithFees.value,
+                                                          FixedPoint.mulDown(balanceRatiosWithFee[i], normalizedWeights[i]))
+
+        invariantRatio = WeightedMath._computeJoinExactTokensInInvariantRatio(
+            balances,
+            normalizedWeights,
+            amountsIn,
+            balanceRatiosWithFee,
+            invariantRatioWithFees.value,
+            swapFeePercentage
+        )
+
+        sptOut = sp.local('sptOut', 0)
+
+        with sp.if_(invariantRatio > FixedPoint.ONE):
+            sptOut.value = FixedPoint.mulDown(
+                totalSupply, (invariantRatio - FixedPoint.ONE))
+
+        return sptOut
+
+    def _computeJoinExactTokensInInvariantRatio(
+        balances,
+        normalizedWeights,
+        amountsIn,
+        balanceRatiosWithFee,
+        invariantRatioWithFees,
+        swapFeePercentage,
+    ):
+        invariantRatio = sp.local('invariantRatio', FixedPoint.ONE)
+
+        with sp.for_('i', sp.range(0, sp.len(balances))) as i:
+            amountInWithoutFee = sp.local('amountInWithoutFee', 0)
+            with sp.if_(balanceRatiosWithFee[i] > invariantRatioWithFees):
+                nonTaxableAmount = sp.local('nonTaxableAmount', 0)
+                with sp.if_(invariantRatioWithFees > FixedPoint.ONE):
+                    nonTaxableAmount.value = FixedPoint.mulDown(
+                        balances[i], sp.as_nat(invariantRatioWithFees - FixedPoint.ONE))
+                    swapFee = FixedPoint.mulUp(
+                        sp.as_nat(amountsIn[i] - nonTaxableAmount), swapFeePercentage)
+                    amountInWithoutFee.value = sp.as_nat(
+                        amountsIn[i] - swapFee)
+                with sp.else_():
+                    amountInWithoutFee.value = amountsIn[i]
+
+                balanceRatio = FixedPoint.divDown(
+                    (balances[i] + amountInWithoutFee), balances[i])
+                invariantRatio.value = FixedPoint.mulDown(
+                    invariantRatio.value, FixedPoint.powDown(balanceRatio, normalizedWeights[i]))
+
+        return invariantRatio.value

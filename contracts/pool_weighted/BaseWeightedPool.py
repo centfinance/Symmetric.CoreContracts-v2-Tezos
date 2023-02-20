@@ -66,7 +66,7 @@ class BaseWeightedPool(
         # TODO: Implement protocol fees
         # (preJoinExitSupply,  preJoinExitInvariant) = self._beforeJoinExit(params.balances, params.normalizedWeights);
 
-        (bptAmountOut, amountsIn) = self._doJoin(
+        (sptAmountOut, amountsIn) = self._doJoin(
             sp.record(
                 sender=params.sender,
                 balances=params.balances,
@@ -86,13 +86,13 @@ class BaseWeightedPool(
         #     preJoinExitSupply.add(bptAmountOut)
         # );
 
-        return (bptAmountOut, amountsIn)
+        return (sptAmountOut, amountsIn)
 
     def _doJoin(self, params):
         doJoin = sp.local('doJoin', sp.none)
-        with sp.if_(params.userData.kind == 'EXACT_TOKENS_IN_FOR_BPT_OUT'):
+        with sp.if_(params.userData.kind == 'EXACT_TOKENS_IN_FOR_SPT_OUT'):
             doJoin.value = self._joinExactTokensInForSPTOut(params)
-        with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_BPT_OUT'):
+        with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_SPT_OUT'):
             doJoin.value = self._joinTokenInForExactSPTOut(
                 sp.record(
                     balances=params.balances,
@@ -101,7 +101,7 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
-        with sp.if_(params.userData.kind == 'ALL_TOKENS_IN_FOR_EXACT_BPT_OUT'):
+        with sp.if_(params.userData.kind == 'ALL_TOKENS_IN_FOR_EXACT_SPT_OUT'):
             doJoin.value = self._joinAllTokensInForExactSPTOut(
                 sp.record(
                     balances=params.balances,
@@ -131,22 +131,21 @@ class BaseWeightedPool(
 
         return (sptAmountOut, params.userData.amountsIn)
 
-    def _joinTokenInForExactBPTOut(
+    def _joinTokenInForExactSPTOut(
         self,
         params
     ):
-        (bptAmountOut, tokenIndex) = params.userData.tokenInForExactBptOut()
         # Note that there is no maximum amountIn parameter: this is handled by `IVault.joinPool`.
 
-        sp.verify(params.tokenIndex < sp.len(
+        sp.verify(params.userData.tokenIndex < sp.len(
             params.balances), Errors.OUT_OF_BOUNDS)
 
-        amountIn = WeightedMath._calcTokenInGivenExactBptOut(
-            balances[tokenIndex],
-            normalizedWeights[tokenIndex],
-            bptAmountOut,
-            totalSupply,
-            self.getSwapFeePercentage()
+        amountIn = WeightedMath._calcTokenInGivenExactSptOut(
+            params.balances[params.userData.tokenIndex],
+            params.normalizedWeights[params.userData.tokenIndex],
+            params.userData.sptAmountOut,
+            self.data.totalSupply,
+            self.data.swapFeePercentage
         )
 
         # // We join in a single token, so we initialize amountsIn with zeros
@@ -154,16 +153,16 @@ class BaseWeightedPool(
         # // And then assign the result to the selected token
         amountsIn[params.tokenIndex] = amountIn
 
-        return (bptAmountOut, amountsIn)
+        return (params.userData.sptAmountOut, amountsIn)
 
-    def _joinAllTokensInForExactBPTOut(
+    def _joinAllTokensInForExactSPTOut(
         self,
         params
     ):
-        bptAmountOut = params.userData.allT
+        sptAmountOut = params.userData.allT
         # // Note that there is no maximum amountsIn parameter: this is handled by `IVault.joinPool`.
 
         amountsIn = BasePoolMath.computeProportionalAmountsIn(
-            balances, totalSupply, bptAmountOut)
+            params.balances, params.totalSupply, sptAmountOut)
 
-        return (bptAmountOut, amountsIn)
+        return (sptAmountOut, amountsIn)
