@@ -61,3 +61,15 @@ class BaseWeightedPool(
         # self._updatePostJoinExit(invariantAfterJoin)
 
         return (sptAmountOut, amountsIn)
+
+    # def _onJoinPool(self, params):
+    #     pass
+
+    # def _doJoin(self, params):
+    #     doJoin = sp.local('doJoin', sp.none)
+    #     with sp.if_(params.userData.kind == 'EXACT_TOKENS_IN_FOR_BPT_OUT'):
+    #         doJoin.value = self._joinExactTokensInForBPTOut(balances, normalizedWeights, scalingFactors, totalSupply, userData);
+    #     with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_BPT_OUT'):
+    #         doJoin.value = self._joinTokenInForExactBPTOut(balances, normalizedWeights, totalSupply, userData);
+    #     with sp.if_(params.userData.kind == 'ALL_TOKENS_IN_FOR_EXACT_BPT_OUT'):
+    #         doJoin.value = self._joinAllTokensInForExactBPTOut(balances, totalSupply, userData);

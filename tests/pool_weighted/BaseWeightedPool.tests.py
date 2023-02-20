@@ -74,3 +74,5 @@ def test():
     c.onInitializePool(
         params
     )
+
+    sc.verify(sp.fst(c.data.result) == 2)
