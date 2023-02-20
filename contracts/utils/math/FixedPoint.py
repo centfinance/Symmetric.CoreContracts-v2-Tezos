@@ -79,7 +79,7 @@ def divUp(a,  b):
     with sp.if_(a == 0):
         result.value = 0
     with sp.else_():
-        result.value = (sp.as_nat((a * ONE) - 1)) // b + 1
+        result.value = (sp.as_nat(aInflated - 1)) // b + 1
 
     return result.value
 
