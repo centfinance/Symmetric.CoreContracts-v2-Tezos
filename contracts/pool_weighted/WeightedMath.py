@@ -1,5 +1,7 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricErrors as Errors
+
 import contracts.utils.math.FixedPoint as FixedPoint
 
 
@@ -78,6 +80,48 @@ class WeightedMath:
                 totalSupply, (invariantRatio - FixedPoint.ONE))
 
         return sptOut
+
+    def _calcTokenInGivenExactSptOut(
+        balance,
+        normalizedWeight,
+        sptAmountOut,
+        sptTotalSupply,
+        swapFeePercentage
+    ):
+        # ******************************************************************************************
+        #  tokenInForExactSPTOut
+        #  a = amountIn
+        #  b = balance                      /  /    totalSPT + sptOut      \    (1 / w)       \
+        #  bptOut = bptAmountOut   a = b * |  | --------------------------  | ^          - 1  |
+        #  bpt = totalSPT                   \  \       totalSPT            /                  /
+        #  w = weight
+        # ******************************************************************************************
+
+        #  Token in, so we round up overall.
+
+        #  Calculate the factor by which the invariant will increase after minting SPTAmountOut
+        invariantRatio = FixedPoint.divUp(
+            (sptTotalSupply + sptAmountOut), sptTotalSupply)
+        sp.verify(invariantRatio <= WeightedMath._MAX_INVARIANT_RATIO,
+                  Errors.MAX_OUT_SPT_FOR_TOKEN_IN)
+
+        #  Calculate by how much the token balance has to increase to match the invariantRatio
+        balanceRatio = invariantRatio.powUp(
+            FixedPoint.ONE.divUp(normalizedWeight))
+
+        amountInWithoutFee = FixedPoint.mulUp(
+            balance, (balanceRatio - FixedPoint.ONE))
+
+        #  We can now compute how much extra balance is being deposited and used in virtual swaps, and charge swap fees
+        #  accordingly.
+        taxableAmount = FixedPoint.mulUp(
+            amountInWithoutFee, FixedPoint.complement(normalizedWeight))
+        nonTaxableAmount = sp.as_nat(amountInWithoutFee - taxableAmount)
+
+        taxableAmountPlusFees = FixedPoint.divUp(
+            taxableAmount, FixedPoint.complement(swapFeePercentage))
+
+        return (nonTaxableAmount + taxableAmountPlusFees)
 
     def _computeJoinExactTokensInInvariantRatio(
         balances,

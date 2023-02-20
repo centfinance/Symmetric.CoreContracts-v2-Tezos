@@ -185,10 +185,8 @@ def powUp(x,  y):
 def complement(x):
     # Equivalent to:
     #  = (x < ONE) ? (ONE - x) : 0;
-    result = sp.local("result", 1)
+    result = sp.local("result", 0)
     with sp.if_(x < ONE):
         result.value = ONE - x
-    with sp.else_():
-        result.value = 0
 
     return result.value
