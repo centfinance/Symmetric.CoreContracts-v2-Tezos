@@ -38,21 +38,18 @@ def test():
     sc = sp.test_scenario()
 
     weights = sp.map({
-        0: sp.nat(330000000000000000),
-        1: sp.nat(330000000000000000),
-        2: sp.nat(340000000000000000),
+        0: sp.nat(500000000000000000),
+        1: sp.nat(500000000000000000),
     })
 
     amounts = sp.map({
-        0: sp.nat(1000000000000000000),
-        1: sp.nat(1000000000000000000),
-        2: sp.nat(1000000000000000000)
+        0: sp.nat(1538475648000000000),
+        1: sp.nat(700000000000000000),
     })
 
     scalingFactors = sp.map({
         0: sp.nat(1000000000000000000),
         1: sp.nat(1000000000000000000),
-        2: sp.nat(1000000000000000000)
     })
 
     c = MockBaseWeightedPool(
@@ -65,15 +62,15 @@ def test():
 
     sc += c
 
-    # userData = sp.record(
-    #     amountsIn=amounts,
-    #     kind='INIT',
-    # )
+    userData = sp.record(
+        amountsIn=amounts,
+        kind='INIT',
+    )
 
-    # params = sp.record(
-    #     userData=userData,
-    #     scalingFactors=scalingFactors,
-    # )
-    # c.onInitializePool(
-    #     params
-    # )
+    params = sp.record(
+        userData=userData,
+        scalingFactors=scalingFactors,
+    )
+    c.onInitializePool(
+        params
+    )

@@ -3,6 +3,8 @@ import smartpy as sp
 # from contracts.interfaces.SymmetricErrors import Errors
 import contracts.utils.math.LogExpMath as LogExpMath
 
+HALF = 500000000000000000
+
 ONE = 1000000000000000000
 
 TWO = 2 * ONE
@@ -82,7 +84,7 @@ def divUp(a,  b):
     return result.value
 
 
-def square_root(self, x):
+def square_root(x):
     """Calculates the square root of a given integer
 
     Args:
@@ -101,7 +103,7 @@ def square_root(self, x):
 
     sp.verify((y.value * y.value <= x) & (x < (y.value + 1) * (y.value + 1)))
 
-    sp.result(y.value)
+    return y.value
 
 # /**
 #  * @dev Returns x^y, assuming both are fixed point numbers, rounding down. The  is guaranteed to not be above
@@ -114,7 +116,8 @@ def powDown(x,  y):
     # and 80/20 Weighted Pools
     # def mulDown(x, y): return (x*y)//ONE
     powDown = sp.local('powDown', sp.nat(0))
-
+    with sp.if_(y == HALF):
+        powDown.value = square_root(x)
     with sp.if_(y == ONE):
         powDown.value = x
     with sp.if_(y == TWO):
@@ -122,14 +125,14 @@ def powDown(x,  y):
     with sp.if_(y == FOUR):
         powDown.value = mulDown(mulDown(x, x), mulDown(x, x))
 
-    with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
-        raw = LogExpMath.pow(x, y)
-        # raw = sp.nat(5)
-        maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
-        with sp.if_(raw < maxError):
-            powDown.value = 0
-        with sp.else_():
-            powDown.value = sub(raw, maxError)
+    # with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
+    #     raw = LogExpMath.pow(x, y)
+    #     # raw = sp.nat(5)
+    #     maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
+    #     with sp.if_(raw < maxError):
+    #         powDown.value = 0
+    #     with sp.else_():
+    #         powDown.value = sub(raw, maxError)
 
     return powDown.value
 
@@ -158,6 +161,8 @@ def powUp(x,  y):
     # Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple to implement and occur often in 50/50
     # and 80/20 Weighted Pools
     result = sp.local("result", 1)
+    with sp.if_(y == HALF):
+        result.value = square_root(x)
     with sp.if_(y == ONE):
         result.value = x
     with sp.if_(y == TWO):
@@ -165,10 +170,10 @@ def powUp(x,  y):
     with sp.if_(y == FOUR):
         square = mulUp(x, x)
         result.value = mulUp(square, square)
-    with sp.else_():
-        raw = pow(x, y)
-        maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
-        result.value = add(raw, maxError)
+    # with sp.else_():
+    #     raw = pow(x, y)
+    #     maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
+    #     result.value = add(raw, maxError)
 
 
 # /**

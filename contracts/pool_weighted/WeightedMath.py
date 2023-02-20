@@ -34,7 +34,7 @@ class WeightedMath:
         sp.set_type(balances, sp.TMap(sp.TNat, sp.TNat))
 
         # Create an initial invariant
-        invariant = sp.local('inavariant', FixedPoint.ONE)
+        invariant = sp.local('invariant', FixedPoint.ONE)
 
         # Iterate through each index in the normalized weights
         with sp.for_('i', sp.range(0, sp.len(normalizedWeights))) as i:

@@ -57,6 +57,7 @@ class BaseWeightedPool(
 
         # Initialization is still a join, so we need to do post-join work. Since we are not paying protocol fees,
         # and all we need to do is update the invariant, call `_updatePostJoinExit` here instead of `_afterJoinExit`.
+        # TODO: Used for protocol Fees
         # self._updatePostJoinExit(invariantAfterJoin)
 
         return (sptAmountOut, amountsIn)
