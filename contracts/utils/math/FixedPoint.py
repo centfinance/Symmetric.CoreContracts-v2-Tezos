@@ -1,6 +1,7 @@
 import smartpy as sp
 
 # from contracts.interfaces.SymmetricErrors import Errors
+import contracts.utils.math.LogExpMath as LogExpMath
 
 ONE = 1000000000000000000
 
@@ -13,27 +14,26 @@ MAX_POW_RELATIVE_ERROR = 10000
 
 def add(a, b):
     c = a + b
-    sp.verify(c > + a)
+    sp.verify(c >= a)
     return c
 
 
 def sub(a,  b):
     # Fixed Point addition is the same as regular checked addition
-    sp.verify(b <= a, Errors.SUB_OVERFLOW)
+    sp.verify(b <= a)
     c = a - b
-    return c
+    return sp.as_nat(c)
 
 
 def mulDown(a,  b):
     product = a * b
-    sp.verify(((a == 0) | (product // (a == b))), Errors.MUL_OVERFLOW)
-    result = sp.local('result', (product / ONE))
-    return result.value
+    sp.verify(((a == 0) | ((product // a) == b)))
+    return product // ONE
 
 
 def mulUp(a,  b):
     product = a * b
-    sp.verify((a == 0) | ((product // a) == b), Errors.MUL_OVERFLOW)
+    sp.verify((a == 0) | ((product // a) == b))
     # The traditional divUp formula is:
     # divUp(x, y) := (x + y - 1) / y
     # To avoid intermediate overflow in the addition, we distribute the division and get:
@@ -42,29 +42,29 @@ def mulUp(a,  b):
     #
     # Equivalent to:
     #  = product == 0 ? 0 : ((product - 1) / FixedPoint.ONE) + 1;
-    result = sp.local("result", 1)
+    mulUp = sp.local('mulUp', 0)
     with sp.if_(product == 0):
-        result.value = 0
+        mulUp.value = 0
     with sp.else_():
-        result.value = (((product - 1) // ONE) + 1)
+        mulUp.value = (((sp.as_nat(product - 1)) // ONE) + 1)
 
-    return result.value
+    return mulUp.value
 
 
 def divDown(a,  b):
-    sp.verify(b != 0, Errors.ZERO_DIVISION)
+    sp.verify(b != 0)
     aInflated = a * ONE
     # mul overflow
-    sp.verify((a == 0) | ((aInflated // a) == ONE), Errors.DIV_INTERNAL)
+    sp.verify((a == 0) | ((aInflated // a) == ONE))
     result = sp.local('result', (aInflated / b))
     return result.value
 
 
 def divUp(a,  b):
-    sp.verify(b != 0, Errors.ZERO_DIVISION)
+    sp.verify(b != 0)
     aInflated = a * ONE
     # mul overflo
-    sp.verify((a == 0) | ((aInflated // a) == ONE), Errors.DIV_INTERNAL)
+    sp.verify((a == 0) | ((aInflated // a) == ONE))
     # The traditional divUp formula is:
     # divUp(x, y) := (x + y - 1) / y
     # To avoid intermediate overflow in the addition, we distribute the division and get:
@@ -77,51 +77,76 @@ def divUp(a,  b):
     with sp.if_(a == 0):
         result.value = 0
     with sp.else_():
-        result.value = (a * ONE - 1) // b + 1
+        result.value = (sp.as_nat((a * ONE) - 1)) // b + 1
 
     return result.value
 
+
+def square_root(self, x):
+    """Calculates the square root of a given integer
+
+    Args:
+        x : integer whose square root is to be determined
+    Returns:
+        square root of x
+    """
+
+    sp.verify(x >= 0, "Negative_Value")
+
+    y = sp.local('y', x)
+
+    with sp.while_(y.value * y.value > x):
+
+        y.value = (x // y.value + y.value) // 2
+
+    sp.verify((y.value * y.value <= x) & (x < (y.value + 1) * (y.value + 1)))
+
+    sp.result(y.value)
 
 # /**
 #  * @dev Returns x^y, assuming both are fixed point numbers, rounding down. The  is guaranteed to not be above
 #  * the true value (that is, the error def expected - actual is always positive).
 #  */
+
+
 def powDown(x,  y):
     # Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple to implement and occur often in 50/50
     # and 80/20 Weighted Pools
-    result = sp.local("result", 1)
+    # def mulDown(x, y): return (x*y)//ONE
+    powDown = sp.local('powDown', sp.nat(0))
+
     with sp.if_(y == ONE):
-        result.value = x
+        powDown.value = x
     with sp.if_(y == TWO):
-        result.value = mulDown(x, x)
+        powDown.value = mulDown(x, x)
     with sp.if_(y == FOUR):
-        square = (mulDown(x, x))
-        result.value = mulDown(square, square)
-    with sp.else_():
-        raw = pow(x, y)
+        powDown.value = mulDown(mulDown(x, x), mulDown(x, x))
+
+    with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
+        raw = LogExpMath.pow(x, y)
+        # raw = sp.nat(5)
         maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
         with sp.if_(raw < maxError):
-            result.value = 0
+            powDown.value = 0
         with sp.else_():
-            result.value = sub(raw, maxError)
+            powDown.value = sub(raw, maxError)
 
-    return result.value
+    return powDown.value
 
 
-def pow(x, y):
-    result = sp.local("result", 1)
-    base = sp.local("base", x)
-    exponent = sp.local("exponent", y)
+# def pow(x, y):
+#     powResult = sp.local('powResult', 0)
+#     base = sp.local('base', x)
+#     exponent = sp.local('exponent', y)
 
-    with sp.while_(exponent.value != 0):
-        with sp.if_((exponent.value % 2) != 0):
-            result.value *= base.value
+#     with sp.while_(exponent.value != 0):
+#         with sp.if_((exponent.value % 2) != 0):
+#             powResult.value *= base.value
 
-        exponent.value = exponent.value >> sp.nat(
-            1)  # Equivalent to exponent.value / 2
-        base.value *= base.value
+#         exponent.value = exponent.value >> 1  # Equivalent to exponent.value / 2
+#         base.value *= base.value
 
-    return result.value
+#     return powResult.value
 
 # /**
 #  * @dev Returns x^y, assuming both are fixed point numbers, rounding up. The  is guaranteed to not be below

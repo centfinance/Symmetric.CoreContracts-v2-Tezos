@@ -4,7 +4,7 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
-import contracts.pool_weighted.WeightedMath as WeightedMath
+from contracts.pool_weighted.WeightedMath import WeightedMath
 
 from contracts.pool_utils.BasePool import BasePool
 
@@ -28,6 +28,13 @@ class BaseWeightedPool(
         )
 
     def _onInitializePool(self, params):
+        sp.set_type(params, sp.TRecord(
+            userData=sp.TRecord(
+                amountsIn=sp.TMap(sp.TNat, sp.TNat),
+                kind=sp.TString,
+            ),
+            scalingFactors=sp.TMap(sp.TNat, sp.TNat),
+        ))
         kind = params.userData.kind
         # TODO: Use an enum
         sp.verify(kind == 'INIT', Errors.UNINITIALIZED)
@@ -50,6 +57,6 @@ class BaseWeightedPool(
 
         # Initialization is still a join, so we need to do post-join work. Since we are not paying protocol fees,
         # and all we need to do is update the invariant, call `_updatePostJoinExit` here instead of `_afterJoinExit`.
-        self._updatePostJoinExit(invariantAfterJoin)
+        # self._updatePostJoinExit(invariantAfterJoin)
 
         return (sptAmountOut, amountsIn)

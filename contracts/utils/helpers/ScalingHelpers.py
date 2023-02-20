@@ -37,11 +37,11 @@ def _upscaleArray(amounts, scalingFactors):
     # InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
     upscaledAmounts = sp.compute(sp.map(
         {}, tkey=sp.TNat, tvalue=sp.TNat))
-    with sp.for_('i' in sp.range(0, length)) as i:
+    with sp.for_('i', sp.range(0, length)) as i:
         upscaledAmounts[i] = FixedPoint.mulDown(
             amounts[i], scalingFactors[i])
 
-    return upscaledAmounts.value
+    return upscaledAmounts
 
 
 # /**
@@ -53,7 +53,7 @@ def _downscaleDownArray(amounts, scalingFactors):
     # InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
     downscaledAmounts = sp.compute(sp.map(
         {}, tkey=sp.TNat, tvalue=sp.TNat))
-    with sp.for_('i' in sp.range(0, length)) as i:
+    with sp.for_('i', sp.range(0, length)) as i:
         downscaledAmounts[i] = FixedPoint.divDown(
             amounts[i], scalingFactors[i])
 
@@ -70,7 +70,7 @@ def _downscaleUpArray(amounts, scalingFactors):
     # InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
     downscaledAmounts = sp.compute(sp.map(
         {}, tkey=sp.TNat, tvalue=sp.TNat))
-    with sp.for_('i' in sp.range(0, length)) as i:
+    with sp.for_('i', sp.range(0, length)) as i:
         downscaledAmounts[i] = FixedPoint.divUp(amounts[i], scalingFactors[i])
 
     return downscaledAmounts
