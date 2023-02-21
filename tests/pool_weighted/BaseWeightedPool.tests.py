@@ -32,6 +32,11 @@ class MockBaseWeightedPool(BaseWeightedPool):
         result = self._onInitializePool(params)
         self.data.result = result
 
+    @sp.entry_point
+    def onJoinPool(self, params):
+        result = self._onJoinPool(params)
+        self.data.result = result
+
 
 @sp.add_test(name="BaseWeightedPoolTest_1", profile=True)
 def test():
@@ -76,3 +81,15 @@ def test():
     )
 
     sc.verify(sp.fst(c.data.result) == 2)
+
+    params2 = sp.record(
+        balances='',
+        scalingFactors=scalingFactors,
+        userData=sp.record(
+            kind='INIT',
+            amountsIn=amounts,
+            minSPTAmountOut=0,
+        )
+    )
+
+    c.onJoinPool(params2)

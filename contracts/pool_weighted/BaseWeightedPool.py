@@ -8,6 +8,8 @@ from contracts.pool_weighted.WeightedMath import WeightedMath
 
 from contracts.pool_utils.BasePool import BasePool
 
+from contracts.pool_utils.lib.BasePoolMath import BasePoolMath
+
 
 class BaseWeightedPool(
     BasePool
@@ -66,13 +68,12 @@ class BaseWeightedPool(
         # TODO: Implement protocol fees
         # (preJoinExitSupply,  preJoinExitInvariant) = self._beforeJoinExit(params.balances, params.normalizedWeights);
 
-        (sptAmountOut, amountsIn) = self._doJoin(
+        pair = self._doJoin(
             sp.record(
-                sender=params.sender,
                 balances=params.balances,
                 normalizedWeights=self.data.normalizedWeights,
                 scalingFactors=params.scalingFactors,
-                preJoinExitSupply=self.data.totalSupply,
+                totalSupply=self.data.totalSupply,
                 userData=params.userData
             )
         )
@@ -86,10 +87,10 @@ class BaseWeightedPool(
         #     preJoinExitSupply.add(bptAmountOut)
         # );
 
-        return (sptAmountOut, amountsIn)
+        return (0, {})
 
     def _doJoin(self, params):
-        doJoin = sp.local('doJoin', sp.none)
+        doJoin = sp.local('doJoin', (0, {}))
         with sp.if_(params.userData.kind == 'EXACT_TOKENS_IN_FOR_SPT_OUT'):
             doJoin.value = self._joinExactTokensInForSPTOut(params)
         with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_SPT_OUT'):
@@ -109,6 +110,7 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
+        return doJoin.value
 
     def _joinExactTokensInForSPTOut(
         self,
@@ -116,11 +118,12 @@ class BaseWeightedPool(
     ):
         sp.verify(sp.len(params.balances) == sp.len(params.userData.amountsIn))
 
-        self._upscaleArray(params.userData.amountsIn, params.scalingFactors)
+        ScalingHelpers._upscaleArray(
+            params.userData.amountsIn, params.scalingFactors)
 
         sptAmountOut = WeightedMath._calcSptOutGivenExactTokensIn(
             balances=params.balances,
-            normalizedWeights=params.noramlizedWeights,
+            normalizedWeights=params.normalizedWeights,
             amountsIn=params.userData.amountsIn,
             totalSupply=params.totalSupply,
             swapFeePercentage=self.data.swapFeePercentage,
@@ -129,7 +132,7 @@ class BaseWeightedPool(
         sp.verify(sptAmountOut >= params.userData.minSPTAmountOut,
                   Errors.SPT_OUT_MIN_AMOUNT)
 
-        return (sptAmountOut, params.userData.amountsIn)
+        return (0, params.userData.amountsIn)
 
     def _joinTokenInForExactSPTOut(
         self,
@@ -144,14 +147,14 @@ class BaseWeightedPool(
             params.balances[params.userData.tokenIndex],
             params.normalizedWeights[params.userData.tokenIndex],
             params.userData.sptAmountOut,
-            self.data.totalSupply,
+            params.totalSupply,
             self.data.swapFeePercentage
         )
 
         # // We join in a single token, so we initialize amountsIn with zeros
         amountsIn = sp.map({}, tkey=sp.TNat, tvalue=sp.TNat)
         # // And then assign the result to the selected token
-        amountsIn[params.tokenIndex] = amountIn
+        amountsIn[params.userData.tokenIndex] = amountIn
 
         return (params.userData.sptAmountOut, amountsIn)
 
