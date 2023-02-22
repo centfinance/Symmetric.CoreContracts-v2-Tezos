@@ -68,7 +68,7 @@ class BaseWeightedPool(
         # TODO: Implement protocol fees
         # (preJoinExitSupply,  preJoinExitInvariant) = self._beforeJoinExit(params.balances, params.normalizedWeights);
 
-        pair = self._doJoin(
+        (sptAmpountOut, amountsIn) = self._doJoin(
             sp.record(
                 balances=params.balances,
                 normalizedWeights=self.data.normalizedWeights,
@@ -87,7 +87,7 @@ class BaseWeightedPool(
         #     preJoinExitSupply.add(bptAmountOut)
         # );
 
-        return (0, {})
+        return (sptAmpountOut, amountsIn)
 
     def _doJoin(self, params):
         doJoin = sp.local('doJoin', (0, {}))
@@ -110,7 +110,7 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
-        return doJoin.value
+        return (sp.fst(doJoin.value), sp.snd(doJoin.value))
 
     def _joinExactTokensInForSPTOut(
         self,
@@ -118,21 +118,21 @@ class BaseWeightedPool(
     ):
         sp.verify(sp.len(params.balances) == sp.len(params.userData.amountsIn))
 
-        ScalingHelpers._upscaleArray(
+        upscaledAmounts = ScalingHelpers._upscaleArray(
             params.userData.amountsIn, params.scalingFactors)
 
         sptAmountOut = WeightedMath._calcSptOutGivenExactTokensIn(
             balances=params.balances,
             normalizedWeights=params.normalizedWeights,
-            amountsIn=params.userData.amountsIn,
+            amountsIn=upscaledAmounts,
             totalSupply=params.totalSupply,
             swapFeePercentage=self.data.swapFeePercentage,
         )
 
-        sp.verify(sptAmountOut >= params.userData.minSPTAmountOut,
-                  Errors.SPT_OUT_MIN_AMOUNT)
+        # sp.verify(sptAmountOut >= params.userData.minSPTAmountOut,
+        #           Errors.SPT_OUT_MIN_AMOUNT)
 
-        return (0, params.userData.amountsIn)
+        return (sptAmountOut, upscaledAmounts)
 
     def _joinTokenInForExactSPTOut(
         self,
@@ -152,7 +152,7 @@ class BaseWeightedPool(
         )
 
         # // We join in a single token, so we initialize amountsIn with zeros
-        amountsIn = sp.map({}, tkey=sp.TNat, tvalue=sp.TNat)
+        amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         # // And then assign the result to the selected token
         amountsIn[params.userData.tokenIndex] = amountIn
 

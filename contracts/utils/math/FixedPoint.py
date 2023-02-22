@@ -42,19 +42,18 @@ def mulUp(a,  b):
     #
     # Equivalent to:
     #  = product == 0 ? 0 : ((product - 1) / FixedPoint.ONE) + 1;
-    mulUp = sp.local('mulUp', 0)
-    with sp.if_(product != 0):
-        mulUp.value = (((sp.as_nat(product - 1)) // ONE) + 1)
+    # mulUp = sp.local('mulUp', 0)
+    # with sp.if_(product != 0):
+    #     mulUp.value = (((sp.as_nat(product - 1)) // ONE) + 1)
 
-    return mulUp.value
+    return sp.as_nat(sp.fst(sp.ediv((product - 1), ONE).open_some()) + 1)
 
 
 def divDown(a,  b):
     sp.verify(b != 0)
     aInflated = a * ONE
     # mul overflow
-    result = sp.local('result', (aInflated / b))
-    return result.value
+    return (aInflated // b)
 
 
 def divUp(a,  b):
@@ -124,7 +123,7 @@ def powDown(x,  y):
     #     with sp.else_():
     #         powDown.value = sub(raw, maxError)
 
-    return powDown.value
+    # return powDown.value
 
 
 # def pow(x, y):
@@ -164,7 +163,7 @@ def powUp(x,  y):
     #     raw = pow(x, y)
     #     maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
     #     result.value = add(raw, maxError)
-
+    return powUp.value
 
 # /**
 #  * @dev Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
@@ -172,6 +171,8 @@ def powUp(x,  y):
 #  * Useful when computing the complement for values with some level of relative error, as it strips this error and
 #  * prevents intermediate negative values.
 #  */
+
+
 def complement(x):
     # Equivalent to:
     #  = (x < ONE) ? (ONE - x) : 0;

@@ -24,7 +24,7 @@ class BasePoolMath:
 
         sptRatio = FixedPoint.divUp(sptAmountOut, sptTotalSupply)
 
-        amountsIn = sp.map({}, tkey=sp.TNat, tvalue=sp.TNat)
+        amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         with sp.for_('i', sp.range(0, sp.len(balances)))as i:
             amountsIn[i] = FixedPoint.mulUp(balances[i], sptRatio)
 
