@@ -115,15 +115,15 @@ def powDown(x,  y):
         powDown.value = mulDown(mulDown(x, x), mulDown(x, x))
 
     # with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
-    #     raw = LogExpMath.pow(x, y)
+    #     raw = powu(x, y)
     #     # raw = sp.nat(5)
-    #     maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
+    #     maxError = mulUp(raw, MAX_POW_RELATIVE_ERROR) + 1
     #     with sp.if_(raw < maxError):
     #         powDown.value = 0
     #     with sp.else_():
-    #         powDown.value = sub(raw, maxError)
+    #         powDown.value = sp.as_nat(raw - maxError)
 
-    # return powDown.value
+    return powDown.value
 
 
 # def pow(x, y):
@@ -182,30 +182,32 @@ def complement(x):
 
     return result.value
 
-# def powu( x,  y):
-#     xAbs = sp.local('xAbs', sp.abs(x))
 
-#     # // Calculate the first iteration of the loop in advance.
-#     resultAbs = y & 1 > 0 ? xAbs : uint256(uUNIT);
+def powu(x,  y):
+    xAbs = sp.local('xAbs', x)
 
-#     # // Equivalent to "for(y /= 2; y > 0; y /= 2)" but faster.
-#     yAux = sp.local('yAux', y >> 1)
-#     # with sp.for_(yAux >>= 1; yAux > 0; yAux >>= 1):
-#     with sp.while_(yAux > 0):
+    # // Calculate the first iteration of the loop in advance.
+    resultAbs = sp.local('resultAbs', ONE)
+    with sp.if_(y & 1 > 0):
+        resultAbs.value = xAbs.value
 
-#         xAbs.value = mulDown(xAbs.value, xAbs.value);
+    # // Equivalent to "for(y /= 2; y > 0; y /= 2)" but faster.
+    yAux = sp.local('yAux', y >> 1)
+    # with sp.for_(yAux >>= 1; yAux > 0; yAux >>= 1):
+    with sp.while_(yAux.value > 0):
 
-#         # // Equivalent to "y % 2 == 1" but faster.
-#         with sp.if_(yAux & 1 > 0):
-#             resultAbs = mulDown(resultAbs, xAbs)
+        xAbs.value = mulDown(xAbs.value, xAbs.value)
+        sp.trace(xAbs.value)
+        # // Equivalent to "y % 2 == 1" but faster.
+        with sp.if_(yAux.value & 1 > 0):
+            resultAbs.value = mulDown(resultAbs.value, xAbs.value)
 
-#         yAux.value = yAux.value >> 1
+        yAux.value = yAux.value >> 1
 
+        # // Is the base negative and the exponent an odd number?
+    # resultInt = sp.to_int(resultAbs)
+    # isNegative = unwrap(x) < 0 && y & 1 == 1;
+    # with sp.if_(isNegative):
+    #     resultInt = -resultInt;
 
-#         # // Is the base negative and the exponent an odd number?
-#     resultInt = int256(resultAbs);
-#     isNegative = unwrap(x) < 0 && y & 1 == 1;
-#     with sp.if_(isNegative):
-#         resultInt = -resultInt;
-
-#     result = wrap(resultInt);
+    return resultAbs.value
