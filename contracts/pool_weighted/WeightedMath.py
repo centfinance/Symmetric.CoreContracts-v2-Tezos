@@ -36,15 +36,20 @@ class WeightedMath:
         sp.set_type(balances, sp.TMap(sp.TNat, sp.TNat))
 
         # Create an initial invariant
-        invariant = sp.local('invariant', FixedPoint.ONE)
+        # TODO: Fix LogExpMath
+        # invariant = sp.local('invariant', FixedPoint.ONE)
+        invariant = sp.local('invariant', 1)
 
         # Iterate through each index in the normalized weights
         with sp.for_('i', sp.range(0, sp.len(normalizedWeights))) as i:
             # Calculate the power of down from the balance and normalized weight
             powDown = FixedPoint.powDown(balances[i], normalizedWeights[i])
             # Multiply the previous invariant to give a new invariant
-            invariant.value = FixedPoint.mulDown(
-                invariant.value, powDown)
+            # TODO: Fix LogExpMath
+            # invariant.value = FixedPoint.mulDown(
+            #     invariant.value, powDown)
+
+            invariant.value *= powDown
 
         # Verify that the new invariant is larger 0
         sp.verify(invariant.value > 0)
@@ -148,7 +153,8 @@ class WeightedMath:
         def mulDown(x, y):
             return FixedPoint.mulDown(x, y)
 
-        ir = sp.local('ir', FixedPoint.ONE)
+        # ir = sp.local('ir', FixedPoint.ONE)
+        ir = sp.local('ir', 1)
 
         with sp.for_('i', sp.range(0, sp.len(balances))) as i:
             amountInWithoutFee = sp.local('amountInWithoutFee', 0)
@@ -169,9 +175,9 @@ class WeightedMath:
             balanceRatio = FixedPoint.divDown(
                 (balances[i] + amountInWithoutFee.value), balances[i])
 
-            ir.value = mulDown(ir.value, FixedPoint.powDown(
-                balanceRatio, normalizedWeights[i]))
+            # ir.value = mulDown(ir.value, FixedPoint.powDown(
+            # balanceRatio, normalizedWeights[i]))
+            ir.value *= FixedPoint.powDown(
+                balanceRatio, normalizedWeights[i])
 
-            sp.trace(balanceRatio)
-            sp.trace(ir.value)
         return ir.value

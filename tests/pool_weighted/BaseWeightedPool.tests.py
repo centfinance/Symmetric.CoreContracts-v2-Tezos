@@ -30,7 +30,7 @@ class MockBaseWeightedPool(BaseWeightedPool):
     @sp.entry_point
     def onInitializePool(self, params):
         result = self._onInitializePool(params)
-        self._mintPoolTokens(sp.sender, sp.nat(2000000000000000000))
+        self._mintPoolTokens(sp.sender, sp.fst(result))
         self.data.result = result
 
     @sp.entry_point
@@ -50,8 +50,8 @@ def test():
     })
 
     amounts = sp.map({
-        0: sp.nat(1538475648000000000),
-        1: sp.nat(700000000000000000),
+        0: sp.nat(15384756480000000000),
+        1: sp.nat(7000000000000000000),
     })
 
     balances = sp.map({
@@ -89,7 +89,7 @@ def test():
         sender=vault.address
     )
 
-    sc.verify(sp.fst(c.data.result) == 2)
+    sc.verify(sp.fst(c.data.result) == 20755076034929283936)
 
     amounts2 = sp.map({
         0: sp.nat(1539244900000000000),
