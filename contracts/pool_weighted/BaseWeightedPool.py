@@ -198,7 +198,6 @@ class BaseWeightedPool(
 
     def _doExit(self, params):
         doExit = sp.local('doExit', (0, {}))
-
         with sp.if_(params.userData.kind == 'EXACT_SPT_IN_FOR_ONE_TOKEN_OUT'):
             doExit.value = self._exitExactSPTInForTokenOut(
                 sp.record(
@@ -231,14 +230,13 @@ class BaseWeightedPool(
         sp.verify(params.userData.tokenIndex < sp.len(
             params.balances), Errors.OUT_OF_BOUNDS)
 
-        # amountOut = WeightedMath._calcTokenOutGivenExactSptIn(
-        #     params.balances[params.userData.tokenIndex],
-        #     params.normalizedWeights[params.userData.tokenIndex],
-        #     params.userData.sptAmountIn,
-        #     params.totalSupply,
-        #     self.data.swapFeePercentage
-        # )
-        amountOut = 1000000000000000000
+        amountOut = WeightedMath._calcTokenOutGivenExactSptIn(
+            params.balances[params.userData.tokenIndex],
+            params.normalizedWeights[params.userData.tokenIndex],
+            params.userData.sptAmountIn,
+            params.totalSupply,
+            self.data.swapFeePercentage
+        )
 
         # // We join in a single token, so we initialize amountsIn with zeros
         amountsOut = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
@@ -252,9 +250,9 @@ class BaseWeightedPool(
         params
     ):
         # Note that there is no minimum amountOut parameter: this is handled by `IVault.exitPool`.
-        # amountsOut = BasePoolMath.computeProportionalAmountsOut(
-        #     params.balances, params.totalSupply, params.userData.sptAmountIn)
-        amountsOut = {0: 1000000000000000000, 1: 1000000000000000000}
+        amountsOut = BasePoolMath.computeProportionalAmountsOut(
+            params.balances, params.totalSupply, params.userData.sptAmountIn)
+
         return (params.userData.sptAmountIn, amountsOut)
 
     def _exitSPTInForExactTokensOut(
@@ -266,16 +264,13 @@ class BaseWeightedPool(
 
         upscaledAmounts = ScalingHelpers._upscaleArray(
             params.userData.amountsOut, params.scalingFactors)
-
-        # sptAmountIn = WeightedMath._calcSptInGivenExactTokensOut(
-        #     balances=params.balances,
-        #     normalizedWeights=params.normalizedWeights,
-        #     amountsOut=upscaledAmounts,
-        #     totalSupply=params.totalSupply,
-        #     swapFeePercentage=self.data.swapFeePercentage,
-        # )
-
-        sptAmountIn = 1000000000000000000
+        sptAmountIn = WeightedMath._calcSptInGivenExactTokensOut(
+            balances=params.balances,
+            normalizedWeights=params.normalizedWeights,
+            amountsOut=upscaledAmounts,
+            totalSupply=params.totalSupply,
+            swapFeePercentage=self.data.swapFeePercentage,
+        )
 
         sp.verify(sptAmountIn >= params.userData.maxSPTAmountIn,
                   Errors.SPT_OUT_MIN_AMOUNT)

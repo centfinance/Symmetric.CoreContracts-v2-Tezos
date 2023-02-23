@@ -149,7 +149,7 @@ def test():
     c.onJoinPool(params4)
 
     exitUserData = sp.record(
-        kind='EXACT_SPT_IN_FOR_ONE_TOKEN_OUT',
+        kind='SPT_IN_FOR_EXACT_TOKENS_OUT',
         maxSPTAmountIn=1000000000000000000,
         amountsOut={0: 1000000000000000000, 1: 1000000000000000000},
         tokenIndex=0,
@@ -163,6 +163,15 @@ def test():
     )
     c.onExitPool(exitParams)
 
+    exitUserData = sp.record(
+        kind='EXACT_SPT_IN_FOR_TOKENS_OUT',
+        maxSPTAmountIn=1000000000000000000,
+        amountsOut={0: 1000000000000000000, 1: 1000000000000000000},
+        tokenIndex=0,
+        sptAmountIn=1000000000000000000,
+        allT=1000000000000000000,
+    )
+
     exitParams2 = sp.record(
         balances=balances,
         scalingFactors=scalingFactors,
@@ -170,6 +179,14 @@ def test():
     )
     c.onExitPool(exitParams2)
 
+    exitUserData = sp.record(
+        kind='SPT_IN_FOR_EXACT_TOKENS_OUT',
+        maxSPTAmountIn=1000000000000000000,
+        amountsOut={0: 1000000000000000000, 1: 1000000000000000000},
+        tokenIndex=0,
+        sptAmountIn=1000000000000000000,
+        allT=1000000000000000000,
+    )
     exitParams3 = sp.record(
         balances=balances,
         scalingFactors=scalingFactors,
