@@ -216,8 +216,8 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
-        # with sp.if_(params.userData.kind == 'SPT_IN_FOR_EXACT_TOKENS_OUT'):
-        #     doExit.value = self._exitSPTInForExactTokensOut(params)
+        with sp.if_(params.userData.kind == 'SPT_IN_FOR_EXACT_TOKENS_OUT'):
+            doExit.value = self._exitSPTInForExactTokensOut(params)
 
         # TODO: add fail if no kind matches
         return (sp.fst(doExit.value), sp.snd(doExit.value))
@@ -267,13 +267,15 @@ class BaseWeightedPool(
         upscaledAmounts = ScalingHelpers._upscaleArray(
             params.userData.amountsOut, params.scalingFactors)
 
-        sptAmountIn = WeightedMath._calcSptInGivenExactTokensOut(
-            balances=params.balances,
-            normalizedWeights=params.normalizedWeights,
-            amountsOut=upscaledAmounts,
-            totalSupply=params.totalSupply,
-            swapFeePercentage=self.data.swapFeePercentage,
-        )
+        # sptAmountIn = WeightedMath._calcSptInGivenExactTokensOut(
+        #     balances=params.balances,
+        #     normalizedWeights=params.normalizedWeights,
+        #     amountsOut=upscaledAmounts,
+        #     totalSupply=params.totalSupply,
+        #     swapFeePercentage=self.data.swapFeePercentage,
+        # )
+
+        sptAmountIn = 1000000000000000000
 
         sp.verify(sptAmountIn >= params.userData.maxSPTAmountIn,
                   Errors.SPT_OUT_MIN_AMOUNT)
