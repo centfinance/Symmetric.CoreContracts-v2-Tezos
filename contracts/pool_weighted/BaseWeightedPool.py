@@ -93,23 +93,23 @@ class BaseWeightedPool(
         doJoin = sp.local('doJoin', (0, {}))
         with sp.if_(params.userData.kind == 'EXACT_TOKENS_IN_FOR_SPT_OUT'):
             doJoin.value = self._joinExactTokensInForSPTOut(params)
-        # with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_SPT_OUT'):
-        #     doJoin.value = self._joinTokenInForExactSPTOut(
-        #         sp.record(
-        #             balances=params.balances,
-        #             normalizedWeights=params.normalizedWeights,
-        #             totalSupply=params.totalSupply,
-        #             userData=params.userData
-        #         )
-        #     )
-        # with sp.if_(params.userData.kind == 'ALL_TOKENS_IN_FOR_EXACT_SPT_OUT'):
-        #     doJoin.value = self._joinAllTokensInForExactSPTOut(
-        #         sp.record(
-        #             balances=params.balances,
-        #             totalSupply=params.totalSupply,
-        #             userData=params.userData
-        #         )
-        #     )
+        with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_SPT_OUT'):
+            doJoin.value = self._joinTokenInForExactSPTOut(
+                sp.record(
+                    balances=params.balances,
+                    normalizedWeights=params.normalizedWeights,
+                    totalSupply=params.totalSupply,
+                    userData=params.userData
+                )
+            )
+        with sp.if_(params.userData.kind == 'ALL_TOKENS_IN_FOR_EXACT_SPT_OUT'):
+            doJoin.value = self._joinAllTokensInForExactSPTOut(
+                sp.record(
+                    balances=params.balances,
+                    totalSupply=params.totalSupply,
+                    userData=params.userData
+                )
+            )
         return (sp.fst(doJoin.value), sp.snd(doJoin.value))
 
     def _joinExactTokensInForSPTOut(
@@ -134,38 +134,38 @@ class BaseWeightedPool(
 
         return (sptAmountOut, upscaledAmounts)
 
-    # def _joinTokenInForExactSPTOut(
-    #     self,
-    #     params
-    # ):
-    #     # Note that there is no maximum amountIn parameter: this is handled by `IVault.joinPool`.
+    def _joinTokenInForExactSPTOut(
+        self,
+        params
+    ):
+        # Note that there is no maximum amountIn parameter: this is handled by `IVault.joinPool`.
 
-    #     sp.verify(params.userData.tokenIndex < sp.len(
-    #         params.balances), Errors.OUT_OF_BOUNDS)
+        sp.verify(params.userData.tokenIndex < sp.len(
+            params.balances), Errors.OUT_OF_BOUNDS)
 
-    #     amountIn = WeightedMath._calcTokenInGivenExactSptOut(
-    #         params.balances[params.userData.tokenIndex],
-    #         params.normalizedWeights[params.userData.tokenIndex],
-    #         params.userData.sptAmountOut,
-    #         params.totalSupply,
-    #         self.data.swapFeePercentage
-    #     )
+        amountIn = WeightedMath._calcTokenInGivenExactSptOut(
+            params.balances[params.userData.tokenIndex],
+            params.normalizedWeights[params.userData.tokenIndex],
+            params.userData.sptAmountOut,
+            params.totalSupply,
+            self.data.swapFeePercentage
+        )
 
-    #     # // We join in a single token, so we initialize amountsIn with zeros
-    #     amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
-    #     # // And then assign the result to the selected token
-    #     amountsIn[params.userData.tokenIndex] = amountIn
+        # // We join in a single token, so we initialize amountsIn with zeros
+        amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
+        # // And then assign the result to the selected token
+        amountsIn[params.userData.tokenIndex] = amountIn
 
-    #     return (params.userData.sptAmountOut, amountsIn)
+        return (params.userData.sptAmountOut, amountsIn)
 
-    # def _joinAllTokensInForExactSPTOut(
-    #     self,
-    #     params
-    # ):
-    #     sptAmountOut = params.userData.allT
-    #     # // Note that there is no maximum amountsIn parameter: this is handled by `IVault.joinPool`.
+    def _joinAllTokensInForExactSPTOut(
+        self,
+        params
+    ):
+        sptAmountOut = params.userData.allT
+        # // Note that there is no maximum amountsIn parameter: this is handled by `IVault.joinPool`.
 
-    #     amountsIn = BasePoolMath.computeProportionalAmountsIn(
-    #         params.balances, params.totalSupply, sptAmountOut)
+        amountsIn = BasePoolMath.computeProportionalAmountsIn(
+            params.balances, params.totalSupply, sptAmountOut)
 
-    #     return (sptAmountOut, amountsIn)
+        return (sptAmountOut, amountsIn)

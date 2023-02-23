@@ -110,3 +110,35 @@ def test():
     )
 
     c.onJoinPool(params2)
+
+    userData3 = sp.record(
+        amountsIn=amounts2,
+        kind='TOKEN_IN_FOR_EXACT_SPT_OUT',
+        minSPTAmountOut=1,
+        tokenIndex=0,
+        sptAmountOut=1,
+        allT=10,
+    )
+    params3 = sp.record(
+        balances=balances,
+        scalingFactors=scalingFactors,
+        userData=userData3
+    )
+
+    c.onJoinPool(params3)
+
+    userData4 = sp.record(
+        amountsIn=amounts2,
+        kind='TOKEN_IN_FOR_EXACT_SPT_OUT',
+        minSPTAmountOut=1,
+        tokenIndex=0,
+        sptAmountOut=1,
+        allT=10,
+    )
+    params4 = sp.record(
+        balances=balances,
+        scalingFactors=scalingFactors,
+        userData=userData4,
+    )
+
+    c.onJoinPool(params4)
