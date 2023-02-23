@@ -11,7 +11,7 @@ import contracts.pool_utils.lib.PoolRegistrationLib as PoolRegistrationLib
 from contracts.pool_utils.SymmetricPoolToken import SymmetricPoolToken
 
 _MIN_TOKENS = 2
-_DEFAULT_MINIMUM_BPT = 1000000
+_DEFAULT_MINIMUM_SPT = 1000000
 _MIN_SWAP_FEE_PERCENTAGE = 1000000000000
 _MAX_SWAP_FEE_PERCENTAGE = 100000000000000000
 _SWAP_FEE_PERCENTAGE_OFFSET = 1000000000000
@@ -101,110 +101,118 @@ class BasePool(
 
         with sp.if_(self.data.totalSupply == 0):
             (sptAmountOut, amountsIn) = self._onInitializePool(
-                poolId,
-                sender,
-                recipient,
-                scalingFactors,
-                userData
+                sp.record(
+                    poolId=poolId,
+                    sender=sender,
+                    recipient=recipient,
+                    scalingFactors=scalingFactors,
+                    userData=userData,
+                )
             )
 
             # // On initialization, we lock _getMinimumBpt() by minting it for the zero address. This BPT acts as a
             # // minimum as it will never be burned, which reduces potential issues with rounding, and also prevents the
             # // Pool from ever being fully drained.
-            sp.verify(sptAmountOut >= _DEFAULT_MINIMUM_BPT,
-                      Errors.MINIMUM_BPT)
+            sp.verify(sptAmountOut >= _DEFAULT_MINIMUM_SPT,
+                      Errors.MINIMUM_SPT)
             # Mint to Tezos Null address
             self._mintPoolTokens(sp.address(
-                'tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU'), _DEFAULT_MINIMUM_BPT)
+                'tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU'), _DEFAULT_MINIMUM_SPT)
             self._mintPoolTokens(
-                recipient, sp.as_nat(sptAmountOut - _DEFAULT_MINIMUM_BPT))
+                recipient, sp.as_nat(sptAmountOut - _DEFAULT_MINIMUM_SPT))
 
             # // amountsIn are amounts entering the Pool, so we round up.
             # ScalingHelpers._downscaleUpArray(amountsIn, scalingFactors)
 
-            # return (amountsIn, new uint256[](balances.length))
         with sp.else_():
             upScaledBalances = ScalingHelpers._upscaleArray(
                 balances, scalingFactors)
             (sptAmountOut, amountsIn) = self._onJoinPool(
-                poolId,
-                sender,
-                recipient,
-                upScaledBalances,
-                lastChangeBlock,
-                # // Protocol fees are disabled while in recovery mode
-                # self.inRecoveryMode() ? 0: protocolSwapFeePercentage,
-                protocolSwapFeePercentage,
-                scalingFactors,
-                userData,
+                sp.record(
+                    poolId=poolId,
+                    sender=sender,
+                    recipient=recipient,
+                    upScaledBalances=upScaledBalances,
+                    lastChangeBlock=lastChangeBlock,
+                    # // Protocol fees are disabled while in recovery mode
+                    # self.inRecoveryMode() ? 0: protocolSwapFeePercentage,
+                    protocolSwapFeePercentage=protocolSwapFeePercentage,
+                    scalingFactors=scalingFactors,
+                    userData=userData,
+                )
             )
 
             # // Note we no longer use `balances` after calling `_onJoinPool`, which may mutate it.
 
             self._mintPoolTokens(recipient, sptAmountOut)
 
-            # // amountsIn are amounts entering the Pool, so we round up.
-            # downscaledAmounts = ScalingHelpers._downscaleUpArray(
-            #     amountsIn, scalingFactors)
+        # // amountsIn are amounts entering the Pool, so we round up.
+        # downscaledAmounts = ScalingHelpers._downscaleUpArray(
+        #     amountsIn, scalingFactors)
 
-            # // This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
-            # return (amountsIn, new uint256[](balances.length));
+        # // This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
+        # return (amountsIn, new uint256[](balances.length));
 
-    @sp.entry_point
-    def onExitPool(
-        self,
-        poolId,
-        sender,
-        recipient,
-        balances,
-        lastChangeBlock,
-        protocolSwapFeePercentage,
-        userData
-    ):
-        """
-          * @dev Called by the Vault when a user calls `IVault.exitPool` to remove liquidity from this Pool.  how many
-          * tokens the Vault should deduct from the Pool's balances, as well as the amount of protocol fees the Pool owes
-          * to the Vault. The Vault will then take tokens from the Pool's balances and send them to `recipient`,
-          * as well as collect the reported amount in protocol fees, which the Pool should calculate based on
-          * `protocolSwapFeePercentage`.
-          *
-          * Protocol fees are charged on exit events to guarantee that users exiting the Pool have paid their share.
-          *
-          * `sender` is the account performing the exit (typically the pool shareholder), and `recipient` is the account
-          * to which the Vault will send the proceeds. `balances` contains the total token balances for each token
-          * the Pool registered in the Vault, in the same order that `IVault.getPoolTokens` would return.
-          *
-          * `lastChangeBlock` is the last block in which *any* of the Pool's registered tokens last changed its total
-          * balance.
-          *
-          * `userData` contains any pool-specific instructions needed to perform the calculations, such as the type of
-          * exit (e.g., proportional given an amount of pool shares, single-asset, multi-asset, etc.)
-          *
-          * Contracts implementing this def should check that the caller is indeed the Vault before performing any
-          * state-changing operations, such as burning pool shares.
-        """
-        with sp.if_(userData.recoveryModeExit):
-            # Check that it's in recovery mode
-            # Note that we don't upscale balances nor downscale amountsOut - we don't care about scaling factors during
-            # a recovery mode exit.
-            (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
-                balances, self.data.totalSupply, userData)
-        with sp.else_():
-            scalingFactors = self.data.scalingFactors
-            (sptAmountIn, amountsOut) = self._onExitPool(
-                sp.record(
-                    poolId,
-                    sender,
-                    recipient,
-                    balances,
-                    lastChangeBlock,
-                    # inRecoveryMode() ? 0 : protocolSwapFeePercentage, // Protocol fees are disabled while in recovery mode
-                    protocolSwapFeePercentage,
-                    scalingFactors,
-                    userData
-                )
-            )
-        self._burnPoolTokens(sender, sptAmountIn)
+    # @sp.entry_point
+    # def onExitPool(
+    #     self,
+    #     poolId,
+    #     sender,
+    #     recipient,
+    #     balances,
+    #     lastChangeBlock,
+    #     protocolSwapFeePercentage,
+    #     userData
+    # ):
+    #     """
+    #       * @dev Called by the Vault when a user calls `IVault.exitPool` to remove liquidity from this Pool.  how many
+    #       * tokens the Vault should deduct from the Pool's balances, as well as the amount of protocol fees the Pool owes
+    #       * to the Vault. The Vault will then take tokens from the Pool's balances and send them to `recipient`,
+    #       * as well as collect the reported amount in protocol fees, which the Pool should calculate based on
+    #       * `protocolSwapFeePercentage`.
+    #       *
+    #       * Protocol fees are charged on exit events to guarantee that users exiting the Pool have paid their share.
+    #       *
+    #       * `sender` is the account performing the exit (typically the pool shareholder), and `recipient` is the account
+    #       * to which the Vault will send the proceeds. `balances` contains the total token balances for each token
+    #       * the Pool registered in the Vault, in the same order that `IVault.getPoolTokens` would return.
+    #       *
+    #       * `lastChangeBlock` is the last block in which *any* of the Pool's registered tokens last changed its total
+    #       * balance.
+    #       *
+    #       * `userData` contains any pool-specific instructions needed to perform the calculations, such as the type of
+    #       * exit (e.g., proportional given an amount of pool shares, single-asset, multi-asset, etc.)
+    #       *
+    #       * Contracts implementing this def should check that the caller is indeed the Vault before performing any
+    #       * state-changing operations, such as burning pool shares.
+    #     """
+    #     with sp.if_(userData.recoveryModeExit):
+    #         # Check that it's in recovery mode
+    #         # Note that we don't upscale balances nor downscale amountsOut - we don't care about scaling factors during
+    #         # a recovery mode exit.
+    #         (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
+    #             sp.record(
+    #                 balances=balances,
+    #                 totalSupply=self.data.totalSupply,
+    #                 userData=userData
+    #             )
+    #         )
+    #     with sp.else_():
+    #         scalingFactors = self.data.scalingFactors
+    #         (sptAmountIn, amountsOut) = self._onExitPool(
+    #             sp.record(
+    #                 poolId,
+    #                 sender,
+    #                 recipient,
+    #                 balances,
+    #                 lastChangeBlock,
+    #                 # inRecoveryMode() ? 0 : protocolSwapFeePercentage, // Protocol fees are disabled while in recovery mode
+    #                 protocolSwapFeePercentage,
+    #                 scalingFactors,
+    #                 userData
+    #             )
+    #         )
+    #     self._burnPoolTokens(sender, sptAmountIn)
 
     # @ sp.entry_point
     # def setSwapFeePercentage(self, swapFeePercentage):
