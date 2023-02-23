@@ -48,7 +48,7 @@ class SymmetricPoolToken(
         return result.value
 
     def _mintPoolTokens(self, recipient, amount):
-        self._mint(self, sp.record(address=recipient, value=amount))
+        self._mint(sp.record(address=recipient, value=amount))
 
     def _burnPoolTokens(self, sender, amount):
-        self._burn(self, sp.record(address=sender, value=amount))
+        self._burn(sp.record(address=sender, value=amount))
