@@ -38,6 +38,11 @@ class MockBaseWeightedPool(BaseWeightedPool):
         result = self._onJoinPool(params)
         self.data.result = result
 
+    @sp.entry_point
+    def onExitPool(self, params):
+        result = self._onExitPool(params)
+        self.data.result = result
+
 
 @sp.add_test(name="BaseWeightedPoolTest_1", profile=True)
 def test():
@@ -142,3 +147,33 @@ def test():
     )
 
     c.onJoinPool(params4)
+
+    exitUserData = sp.record(
+        kind='EXACT_SPT_IN_FOR_ONE_TOKEN_OUT',
+        minSPTAmountOut=1,
+        tokenIndex=0,
+        sptAmountIn=1000000000000000000,
+        allT=1000000000000000000,
+    )
+
+    exitParams = sp.record(
+        balances=balances,
+        scalingFactors=scalingFactors,
+        userData=exitUserData,
+    )
+    c.onExitPool(exitParams)
+
+    exitUserData2 = sp.record(
+        kind='EXACT_SPT_IN_FOR_ONE_TOKEN_OUT',
+        minSPTAmountOut=1,
+        tokenIndex=0,
+        sptAmountIn=1000000000000000000,
+        allT=1000000000000000000,
+    )
+
+    exitParams2 = sp.record(
+        balances=balances,
+        scalingFactors=scalingFactors,
+        userData=exitUserData2,
+    )
+    c.onExitPool(exitParams2)
