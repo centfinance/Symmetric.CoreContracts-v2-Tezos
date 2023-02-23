@@ -116,7 +116,7 @@ def test():
         kind='TOKEN_IN_FOR_EXACT_SPT_OUT',
         minSPTAmountOut=1,
         tokenIndex=0,
-        sptAmountOut=1,
+        sptAmountOut=1000000000000000000,
         allT=10,
     )
     params3 = sp.record(
@@ -132,8 +132,8 @@ def test():
         kind='TOKEN_IN_FOR_EXACT_SPT_OUT',
         minSPTAmountOut=1,
         tokenIndex=0,
-        sptAmountOut=1,
-        allT=10,
+        sptAmountOut=1000000000000000000,
+        allT=1000000000000000000,
     )
     params4 = sp.record(
         balances=balances,

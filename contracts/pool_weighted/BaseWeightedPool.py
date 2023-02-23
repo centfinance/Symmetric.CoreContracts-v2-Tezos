@@ -110,6 +110,7 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
+        # TODO: add fail if no kind matches
         return (sp.fst(doJoin.value), sp.snd(doJoin.value))
 
     def _joinExactTokensInForSPTOut(
@@ -169,3 +170,78 @@ class BaseWeightedPool(
             params.balances, params.totalSupply, sptAmountOut)
 
         return (sptAmountOut, amountsIn)
+
+    def _onExitPool(self, params):
+        # TODO: Implement protocol fees
+        # (preJoinExitSupply,  preJoinExitInvariant) = self._beforeJoinExit(params.balances, params.normalizedWeights);
+
+        (sptAmpountIn, amountsOut) = self._doJoin(
+            sp.record(
+                balances=params.balances,
+                normalizedWeights=self.data.normalizedWeights,
+                scalingFactors=params.scalingFactors,
+                totalSupply=self.data.totalSupply,
+                userData=params.userData
+            )
+        )
+        # TODO: Implement protocol fees
+        # self._afterJoinExit(
+        #     preJoinExitInvariant= preJoinExitInvariant,
+        #     balances = params.balances,
+        #     amountsIn = amountsIn,
+        #     normalizedWeights = self.data.normalizedWeights,
+        #     preJoinExitSupply = preJoinExitInvariant,
+        #     preJoinExitSupply.add(bptAmountOut)
+        # );
+
+        return (sptAmpountIn, amountsOut)
+
+    def _doExit(self, params):
+        doExit = sp.local('doExit', (0, {}))
+
+        with sp.if_(params.userData.kind == 'EXACT_BPT_IN_FOR_ONE_TOKEN_OUT'):
+            doExit.value = self._exitExactSPTInForTokensOut(
+                sp.record(
+                    balances=params.balances,
+                    normalizedWeights=params.normalizedWeights,
+                    totalSupply=params.totalSupply,
+                    userData=params.userData
+                )
+            )
+        # with sp.if_(params.userData.kind == 'EXACT_BPT_IN_FOR_ONE_TOKEN_OUT'):
+        #     doExit.value = self._exitExactSPTInForTokensOut(
+        #         sp.record(
+        #             balances=params.balances,
+        #             totalSupply=params.totalSupply,
+        #             userData=params.userData
+        #         )
+        #     )
+        # with sp.if_(params.userData.kind == 'SPT_IN_FOR_EXACT_TOKENS_OUT'):
+        #     doExit.value = self._exitSPTInForExactTokensOut(params)
+
+        # TODO: add fail if no kind matches
+        return (sp.fst(doExit.value), sp.snd(doExit.value))
+
+    def _exitExactBPTInForTokenOut(
+        self,
+        params
+    ):
+        # Note that there is no maximum amountIn parameter: this is handled by `IVault.joinPool`.
+
+        sp.verify(params.userData.tokenIndex < sp.len(
+            params.balances), Errors.OUT_OF_BOUNDS)
+
+        amountOut = WeightedMath._calcTokenOutGivenExactSptIn(
+            params.balances[params.userData.tokenIndex],
+            params.normalizedWeights[params.userData.tokenIndex],
+            params.userData.sptAmountIn,
+            params.totalSupply,
+            self.data.swapFeePercentage
+        )
+
+        # // We join in a single token, so we initialize amountsIn with zeros
+        amountsOut = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
+        # // And then assign the result to the selected token
+        amountsOut[params.userData.tokenIndex] = amountOut
+
+        return (params.userData.sptAmountIn, amountsOut)
