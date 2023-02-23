@@ -35,16 +35,16 @@ class BasePoolMath:
         sptTotalSupply,
         sptAmountIn
     ):
-        # ************************************************************************************
-        #  computeProportionalAmountsIn
-        #  (per token)
-        #  aI = amountIn                   /      sptOut      \
-        #  b = balance           aI = b * | ----------------- |
-        #  sptOut = sptAmountOut           \  sptTotalSupply  /
-        #  spt = sptTotalSupply
-        # ************************************************************************************
+        # **********************************************************************************************
+        #  computeProportionalAmountsOut                                                             //
+        #  (per token)                                                                               //
+        #  aO = tokenAmountOut             /        sptIn         \                                  //
+        #  b = tokenBalance      a0 = b * | ---------------------  |                                 //
+        #  sptIn = sptAmountIn             \     sptTotalSupply    /                                 //
+        #  spt = sptTotalSupply                                                                      //
+        # **********************************************************************************************
 
-        #  Since we're computing amounts in, we round up overall. This means rounding up on both the
+        #  Since we're computing an amount out, we round down overall. This means rounding down on both the
         #  multiplication and division.
 
         sptRatio = FixedPoint.divDown(sptAmountIn, sptTotalSupply)
