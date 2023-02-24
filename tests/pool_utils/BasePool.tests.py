@@ -49,11 +49,26 @@ class MockBasePool(BasePool):
             }
         )
 
+    def _onExitPool(self, params):
+        return (
+            1000000000000000000,
+            {
+                0: sp.nat(1000000000000000000),
+                1: sp.nat(1000000000000000000),
+            }
+        )
+
     def _doRecoveryModeExit(
             self,
             params
     ):
-        pass
+        return (
+            1000000000000000000,
+            {
+                0: sp.nat(1000000000000000000),
+                1: sp.nat(1000000000000000000),
+            }
+        )
 
 
 @sp.add_test(name="BasePoolTest_1", profile=True)
