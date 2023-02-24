@@ -276,3 +276,11 @@ class BaseWeightedPool(
                   Errors.SPT_OUT_MIN_AMOUNT)
 
         return (sptAmountIn, upscaledAmounts)
+
+    def _doRecoveryModeExit(
+        self,
+        params
+    ):
+        amountsOut = BasePoolMath.computeProportionalAmountsOut(
+            params.balances, params.totalSupply, params.userData.sptAmountIn)
+        return (params.userData.sptAmountIn, amountsOut)
