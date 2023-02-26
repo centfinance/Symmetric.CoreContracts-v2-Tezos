@@ -113,9 +113,12 @@ class PoolBalances(
 
         pool = self._getPoolAddress(poolId)
 
+        amountsInOrOut = sp.local('amountInOrOut', 0)
         with sp.if_(kind == 1):
-            # Calll BasePool view to get amounts and protocolFees
-            (amountsInOrOut, dueProtocolFeeAmounts) = pool.onJoinPool(
+            # Calll BasePool view to get amounts
+
+            # Call BasePool entry point to perform join
+            amountsInOrOut.value = pool.onJoinPool(
                 poolId,
                 sender,
                 recipient,
@@ -125,7 +128,7 @@ class PoolBalances(
                 change.userData
             )
         with sp.else_():
-            (amountsInOrOut, dueProtocolFeeAmounts) = pool.onExitPool(
+            amountsInOrOut.value = pool.onExitPool(
                 poolId,
                 sender,
                 recipient,
@@ -136,18 +139,18 @@ class PoolBalances(
             )
 
         InputHelpers.ensureInputLengthMatch(
-            sp.len(balances), sp.len(amountsInOrOut), sp.len(dueProtocolFeeAmounts))
+            sp.len(balances), sp.len(amountsInOrOut))
         # // The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
         # // their participation.
         finalBalances = sp.map({}, sp.TNat, sp.TNat)
         with sp.if_(kind == 1):
             finalBalances = self._processJoinPoolTransfers(
-                sender, change, balances, amountsInOrOut, dueProtocolFeeAmounts)
+                sender, change, balances, amountsInOrOut)
         with sp.else_():
             finalBalances = self._processExitPoolTransfers(
-                recipient, change, balances, amountsInOrOut, dueProtocolFeeAmounts)
+                recipient, change, balances, amountsInOrOut)
 
-        return (finalBalances, amountsInOrOut, dueProtocolFeeAmounts)
+        return (finalBalances, amountsInOrOut)
 
     def _processJoinPoolTransfers(
         self,
@@ -155,12 +158,11 @@ class PoolBalances(
         change,
         balances,
         amountsIn,
-        dueProtocolFeeAmounts
     ):
         # // We need to track how much of the received ETH was used and wrapped into WETH to return any excess.
         wrappedEth = 0
 
-        finalBalances = sp.map({}, sp.TNat, sp.TBytes)
+        finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TBytes))
         with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
             amountIn = amountsIn[i]
             sp.verify(amountIn <= change.limits[i], Errors.JOIN_ABOVE_MAX)
@@ -173,18 +175,12 @@ class PoolBalances(
             with sp.if_(self._isETH(asset)):
                 wrappedEth = wrappedEth.add(amountIn)
 
-            feeAmount = dueProtocolFeeAmounts[i]
-            self._payFeeAmount(self._translateToIERC20(asset), feeAmount)
-
-            # // Compute the new Pool balances. Note that the fee amount might be larger than `amountIn`,
-            # // resulting in an overall decrease of the Pool's balance for a token.
-            # This lets us skip checked arithmetic
-            finalBalances[i] = (amountIn >= feeAmount)
-            ? balances[i].increaseCash(amountIn - feeAmount)
-            : balances[i].decreaseCash(feeAmount - amountIn)
+            finalBalances[i] = balances[i].increaseCash(amountIn)
 
         # // Handle any used and remaining ETH.
         self._handleRemainingEth(wrappedEth)
+
+        return finalBalances
 
     def _processJoinPoolTransfers(
         self,
@@ -192,9 +188,8 @@ class PoolBalances(
         change,
         balances,
         amountsOut,
-        dueProtocolFeeAmounts
     ):
-        finalBalances = sp.map({}, sp.TNat, sp.TBytes)
+        finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TBytes))
         with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
             amountOut = amountsOut[i]
             sp.verify(amountOut <= change.limits[i], Errors.EXIT_BELOW_MIN)
@@ -203,8 +198,7 @@ class PoolBalances(
             self._sendAsset(asset, amountOut, recipient,
                             change.useInternalBalance)
 
-            feeAmount = dueProtocolFeeAmounts[i]
-            self._payFeeAmount(self._translateToIERC20(asset), feeAmount)
-
             finalBalances[i] = balances[i].decreaseCash(
-                amountOut.add(feeAmount))
+                amountOut)
+
+        return finalBalances

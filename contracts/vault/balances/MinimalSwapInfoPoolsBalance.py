@@ -43,3 +43,11 @@ class MinimalSwapInfoPoolsBalance:
                 self.data._minimalSwapInfoPoolsTokens[params.poolId][prevSize] = t
         with sp.else_():
             self.data._minimalSwapInfoPoolsTokens[params.poolId] = params.tokens
+
+    def _setMinimalSwapInfoPoolBalances(
+        self,
+        params
+    ):
+        with sp.for_('i', sp.range(0, sp.len(params.tokens))) as i:
+            self.data._minimalSwapInfoPoolsBalances[params.poolId][params.tokens[i]
+                                                                   ] = params.balances[i]
