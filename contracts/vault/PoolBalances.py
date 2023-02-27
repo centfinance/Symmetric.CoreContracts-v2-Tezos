@@ -10,6 +10,39 @@ import contracts.interfaces.SymmetricErrors as Errors
 import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
 
+class Types:
+
+    t_joinUserData = sp.TRecord(
+        kind=sp.TString,
+        amountsIn=sp.TMap(sp.TNat, sp.TNat),
+        minSPTAmountOut=sp.TNat,
+        tokenIndex=sp.TNat,
+        sptAmountOut=sp.TNat,
+        allT=sp.TNat,
+    )
+
+    t_exitUserData = sp.TRecord(
+        kind=sp.TString,
+        amountsOut=sp.TMap(sp.TNat, sp.TNat),
+        maxSPTAmountIn=sp.TNat,
+        tokenIndex=sp.TNat,
+        sptAmountIn=sp.TNat,
+        allT=sp.TNat,
+    )
+
+    t_userData = t_joinUserData | t_exitUserData
+
+    t_joinOrExitPool_params = sp.TRecord(
+        poolId=sp.TBytes,
+        sender=sp.TAddress,
+        recipient=sp.TAddress,
+        balances=sp.TMap(sp.TNat, sp.TNat),
+        lastChangeBlock=sp.TNat,
+        protocolSwapFeePercentage=sp.TNat,
+        userData=t_userData,
+    )
+
+
 class PoolBalances(
     PoolTokens,
 ):
@@ -130,12 +163,11 @@ class PoolBalances(
             userData=change.userData,
         )
         with sp.if_(kind == 1):
-
             # Calll BasePool view to get amounts
             (sptAmountIn, amountsOut) = sp.view('beforeJoinPool', pool,
                                                 params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat)))
             # Call BasePool entry point to perform join
-            onJoinPool = sp.contract(sp.TNat, pool, "onJoinPool").open_some(
+            onJoinPool = sp.contract(Types.t_joinOrExitPool_params, pool, "onJoinPool").open_some(
                 "INTERFACE_MISMATCH")
             sp.transfer(params, sp.tez(0), onJoinPool)
             amountsInOrOut.value = amountsIn
@@ -143,82 +175,84 @@ class PoolBalances(
             (sptAmountOut, amountsIn) = sp.view('beforeJoinPool', pool,
                                                 params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat)))
 
-            pool.onExitPool()
+            onExitPool = sp.contract(Types.t_joinOrExitPool_params, pool, "onJoinPool").open_some(
+                "INTERFACE_MISMATCH")
+            sp.transfer(params, sp.tez(0), onExitPool)
             amountsInOrOut.value = amountsOut
 
         InputHelpers.ensureInputLengthMatch(
             sp.len(balances), sp.len(amountsInOrOut))
         # // The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
         # // their participation.
-        finalBalances = sp.compute({})
-        with sp.if_(kind == 1):
-            finalBalances = self._processJoinPoolTransfers(
-                sender, change, balances, amountsInOrOut)
-        with sp.else_():
-            finalBalances = self._processExitPoolTransfers(
-                recipient, change, balances, amountsInOrOut)
+        # finalBalances = sp.compute({})
+        # with sp.if_(kind == 1):
+        #     finalBalances = self._processJoinPoolTransfers(
+        #         sender, change, balances, amountsInOrOut)
+        # with sp.else_():
+        #     finalBalances = self._processExitPoolTransfers(
+        #         recipient, change, balances, amountsInOrOut)
 
-        return (finalBalances, amountsInOrOut)
+        # return (finalBalances, amountsInOrOut)
 
-    def _processJoinPoolTransfers(
-        self,
-        sender,
-        change,
-        balances,
-        amountsIn,
-    ):
-        # // We need to track how much of the received ETH was used and wrapped into WETH to return any excess.
-        wrappedEth = 0
+    # def _processJoinPoolTransfers(
+    #     self,
+    #     sender,
+    #     change,
+    #     balances,
+    #     amountsIn,
+    # ):
+    #     # // We need to track how much of the received ETH was used and wrapped into WETH to return any excess.
+    #     wrappedEth = 0
 
-        finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TBytes))
-        with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
-            amountIn = amountsIn[i]
-            sp.verify(amountIn <= change.limits[i], Errors.JOIN_ABOVE_MAX)
+    #     finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TBytes))
+    #     with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
+    #         amountIn = amountsIn[i]
+    #         sp.verify(amountIn <= change.limits[i], Errors.JOIN_ABOVE_MAX)
 
-            # // Receive assets from the sender - possibly from Internal Balance.
-            asset = change.assets[i]
-            self._receiveAsset(asset, amountIn, sender,
-                               change.useInternalBalance)
+    #         # // Receive assets from the sender - possibly from Internal Balance.
+    #         asset = change.assets[i]
+    #         self._receiveAsset(asset, amountIn, sender,
+    #                            change.useInternalBalance)
 
-            with sp.if_(self._isETH(asset)):
-                wrappedEth = wrappedEth.add(amountIn)
+    #         with sp.if_(self._isETH(asset)):
+    #             wrappedEth = wrappedEth.add(amountIn)
 
-            finalBalances[i] = balances[i].increaseCash(amountIn)
+    #         finalBalances[i] = balances[i].increaseCash(amountIn)
 
-        # // Handle any used and remaining ETH.
-        self._handleRemainingEth(wrappedEth)
+    #     # // Handle any used and remaining ETH.
+    #     self._handleRemainingEth(wrappedEth)
 
-        return finalBalances
+    #     return finalBalances
 
-    def _processExitPoolTransfers(
-        self,
-        recipient,
-        change,
-        balances,
-        amountsOut,
-    ):
-        finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TBytes))
-        with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
-            amountOut = amountsOut[i]
-            sp.verify(amountOut <= change.limits[i], Errors.EXIT_BELOW_MIN)
+    # def _processExitPoolTransfers(
+    #     self,
+    #     recipient,
+    #     change,
+    #     balances,
+    #     amountsOut,
+    # ):
+    #     finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TBytes))
+    #     with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
+    #         amountOut = amountsOut[i]
+    #         sp.verify(amountOut <= change.limits[i], Errors.EXIT_BELOW_MIN)
 
-            asset = change.assets[i]
-            self._sendAsset(asset, amountOut, recipient,
-                            change.useInternalBalance)
+    #         asset = change.assets[i]
+    #         self._sendAsset(asset, amountOut, recipient,
+    #                         change.useInternalBalance)
 
-            finalBalances[i] = balances[i].decreaseCash(
-                amountOut)
+    #         finalBalances[i] = balances[i].decreaseCash(
+    #             amountOut)
 
-        return finalBalances
+    #     return finalBalances
 
-    def _validateTokensAndGetBalances(self, poolId, expectedTokens):
-        (actualTokens, balances) = self._getPoolTokens(poolId)
-        InputHelpers.ensureInputLengthMatch(
-            sp.len(actualTokens), sp.len(expectedTokens))
-        sp.verify(actualTokens.length > 0, Errors.POOL_NO_TOKENS)
+    # def _validateTokensAndGetBalances(self, poolId, expectedTokens):
+    #     (actualTokens, balances) = self._getPoolTokens(poolId)
+    #     InputHelpers.ensureInputLengthMatch(
+    #         sp.len(actualTokens), sp.len(expectedTokens))
+    #     sp.verify(actualTokens.length > 0, Errors.POOL_NO_TOKENS)
 
-        with sp.for_('i', sp.range(0, sp.len(actualTokens))) as i:
-            sp.verify(actualTokens[i] ==
-                      expectedTokens[i], Errors.TOKENS_MISMATCH)
+    #     with sp.for_('i', sp.range(0, sp.len(actualTokens))) as i:
+    #         sp.verify(actualTokens[i] ==
+    #                   expectedTokens[i], Errors.TOKENS_MISMATCH)
 
-        return balances
+    #     return balances
