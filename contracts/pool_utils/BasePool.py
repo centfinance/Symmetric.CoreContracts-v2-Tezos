@@ -187,7 +187,8 @@ class BasePool(
           * state-changing operations, such as burning pool shares.
         """
         with sp.if_(userData.recoveryModeExit):
-            # Check that it's in recovery mode
+            # TODO: Check that it's in recovery mode
+            # _ensureInRecoveryMode();
             # Note that we don't upscale balances nor downscale amountsOut - we don't care about scaling factors during
             # a recovery mode exit.
             (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
@@ -272,7 +273,44 @@ class BasePool(
             amountsIn, scalingFactors)
 
         # This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
-        return downscaledAmounts
+        return (sptAmountOut, downscaledAmounts)
+
+    @sp.onchain_view()
+    def beforeExitPool(
+        self,
+        params,
+    ):
+        downscaledAmounts = sp.local('downScaledAmounts', {})
+        with sp.if_(params.userData.recoveryModeExit):
+            # TODO: Check that it's in recovery mode
+            # _ensureInRecoveryMode();
+            # Note that we don't upscale balances nor downscale amountsOut - we don't care about scaling factors during
+            # a recovery mode exit.
+            (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
+                sp.record(
+                    balances=params.balances,
+                    totalSupply=self.data.totalSupply,
+                    userData=params.userData
+                )
+            )
+        with sp.else_():
+            scalingFactors = self.data.scalingFactors
+            (sptAmountIn, amountsOut) = self._onExitPool(
+                sp.record(
+                    poolId=params.poolId,
+                    sender=params.sender,
+                    recipient=params.recipient,
+                    balances=params.balances,
+                    lastChangeBlock=params.lastChangeBlock,
+                    # inRecoveryMode() ? 0 : protocolSwapFeePercentage, // Protocol fees are disabled while in recovery mode
+                    protocolSwapFeePercentage=params.protocolSwapFeePercentage,
+                    scalingFactors=scalingFactors,
+                    userData=params.userData
+                )
+            )
+            downscaledAmounts.value = ScalingHelpers._downscaleDownArray(
+                amountsOut, scalingFactors)
+            return (sptAmountIn, downscaledAmounts)
 
     # @ sp.onchain_view()
     # def getPoolId(self):
