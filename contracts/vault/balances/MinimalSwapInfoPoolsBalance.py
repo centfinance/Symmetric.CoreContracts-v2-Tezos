@@ -9,8 +9,15 @@ class Types:
         address=sp.TAddress,
         id=sp.TNat
     )
+    BALANCE = sp.TRecord(
+        cash=sp.TNat,
+        managed=sp.TNat,
+        lastChangeBlock=sp.TNat,
+    )
 
     TOKENS_TYPE = sp.TMap(sp.TNat, TOKEN)
+
+    BALANCES_TYPE = sp.TMap(TOKEN, BALANCE)
 
     REGISTER_MSI_POOL_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TBytes,
@@ -28,8 +35,8 @@ class MinimalSwapInfoPoolsBalance:
             ),
             _minimalSwapInfoPoolsBalances=sp.big_map(
                 l={},
-                tkey=Types.TOKEN,
-                tvalue=sp.TNat,
+                tkey=sp.TBytes,
+                tvalue=Types.BALANCES_TYPE,
             ),
         ),
 

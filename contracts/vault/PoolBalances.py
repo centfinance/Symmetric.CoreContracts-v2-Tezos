@@ -7,6 +7,8 @@ import contracts.utils.helpers.InputHelpers as InputHelpers
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.vault.balances.BalanceAllocation as BalanceAllocation
+
 
 class PoolBalances(
     PoolTokens,
@@ -112,7 +114,8 @@ class PoolBalances(
         balances
     ):
 
-        (totalBalances,  lastChangeBlock) = balances.totalsAndLastChangeBlock()
+        (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
+            balances)
 
         pool = self._getPoolAddress(poolId)
 
@@ -132,7 +135,9 @@ class PoolBalances(
             (sptAmountIn, amountsOut) = sp.view('beforeJoinPool', pool,
                                                 params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat)))
             # Call BasePool entry point to perform join
-            pool.onJoinPool()
+            onJoinPool = sp.contract(sp.TNat, pool, "onJoinPool").open_some(
+                "INTERFACE_MISMATCH")
+            sp.transfer(params, sp.tez(0), onJoinPool)
             amountsInOrOut.value = amountsIn
         with sp.else_():
             (sptAmountOut, amountsIn) = sp.view('beforeJoinPool', pool,
@@ -145,7 +150,7 @@ class PoolBalances(
             sp.len(balances), sp.len(amountsInOrOut))
         # // The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
         # // their participation.
-        finalBalances = sp.map({}, sp.TNat, sp.TNat)
+        finalBalances = sp.compute({})
         with sp.if_(kind == 1):
             finalBalances = self._processJoinPoolTransfers(
                 sender, change, balances, amountsInOrOut)
