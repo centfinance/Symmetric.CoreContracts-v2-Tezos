@@ -1,8 +1,11 @@
 import smartpy as sp
 
+
 from contracts.vault.PoolTokens import PoolTokens
 
 import contracts.utils.helpers.InputHelpers as InputHelpers
+
+import contracts.interfaces.SymmetricErrors as Errors
 
 
 class PoolBalances(
@@ -114,29 +117,29 @@ class PoolBalances(
         pool = self._getPoolAddress(poolId)
 
         amountsInOrOut = sp.local('amountInOrOut', 0)
+        params = sp.record(
+            poolId=poolId,
+            sender=sender,
+            recipient=recipient,
+            balances=totalBalances,
+            lastChangeBlock=lastChangeBlock,
+            protocolSwapFeePercentage=self.data.swapFeePercentage,
+            userData=change.userData,
+        )
         with sp.if_(kind == 1):
-            # Calll BasePool view to get amounts
 
+            # Calll BasePool view to get amounts
+            (sptAmountIn, amountsOut) = sp.view('beforeJoinPool', pool,
+                                                params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat)))
             # Call BasePool entry point to perform join
-            amountsInOrOut.value = pool.onJoinPool(
-                poolId,
-                sender,
-                recipient,
-                totalBalances,
-                lastChangeBlock,
-                self.data.protocolSwapFeePercentage,
-                change.userData
-            )
+            pool.onJoinPool()
+            amountsInOrOut.value = amountsIn
         with sp.else_():
-            amountsInOrOut.value = pool.onExitPool(
-                poolId,
-                sender,
-                recipient,
-                totalBalances,
-                lastChangeBlock,
-                self.data.protocolSwapFeePercentage,
-                change.userData
-            )
+            (sptAmountOut, amountsIn) = sp.view('beforeJoinPool', pool,
+                                                params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat)))
+
+            pool.onExitPool()
+            amountsInOrOut.value = amountsOut
 
         InputHelpers.ensureInputLengthMatch(
             sp.len(balances), sp.len(amountsInOrOut))
@@ -182,7 +185,7 @@ class PoolBalances(
 
         return finalBalances
 
-    def _processJoinPoolTransfers(
+    def _processExitPoolTransfers(
         self,
         recipient,
         change,
@@ -202,3 +205,15 @@ class PoolBalances(
                 amountOut)
 
         return finalBalances
+
+    def _validateTokensAndGetBalances(self, poolId, expectedTokens):
+        (actualTokens, balances) = self._getPoolTokens(poolId)
+        InputHelpers.ensureInputLengthMatch(
+            sp.len(actualTokens), sp.len(expectedTokens))
+        sp.verify(actualTokens.length > 0, Errors.POOL_NO_TOKENS)
+
+        with sp.for_('i', sp.range(0, sp.len(actualTokens))) as i:
+            sp.verify(actualTokens[i] ==
+                      expectedTokens[i], Errors.TOKENS_MISMATCH)
+
+        return balances
