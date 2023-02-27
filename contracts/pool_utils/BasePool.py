@@ -218,6 +218,62 @@ class BasePool(
     # def setSwapFeePercentage(self, swapFeePercentage):
     #     pass
 
+    @sp.onchain_view()
+    def beforeJoinPool(
+        self,
+        params,
+    ):
+        scalingFactors = self.data.scalingFactors
+
+        with sp.if_(self.data.totalSupply == 0):
+            (sptAmountOut, amountsIn) = self._onInitializePool(
+                sp.record(
+                    poolId=params.poolId,
+                    sender=params.sender,
+                    recipient=params.recipient,
+                    scalingFactors=scalingFactors,
+                    userData=params.userData,
+                )
+            )
+
+            # // On initialization, we lock _getMinimumBpt() by minting it for the zero address. This BPT acts as a
+            # // minimum as it will never be burned, which reduces potential issues with rounding, and also prevents the
+            # // Pool from ever being fully drained.
+            sp.verify(sptAmountOut >= _DEFAULT_MINIMUM_SPT,
+                      Errors.MINIMUM_SPT)
+            # Mint to Tezos Null address
+            self._mintPoolTokens(sp.address(
+                'tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU'), _DEFAULT_MINIMUM_SPT)
+            self._mintPoolTokens(
+                params.recipient, sp.as_nat(sptAmountOut - _DEFAULT_MINIMUM_SPT))
+
+            # // amountsIn are amounts entering the Pool, so we round up.
+            # ScalingHelpers._downscaleUpArray(amountsIn, scalingFactors)
+
+        with sp.else_():
+            upScaledBalances = ScalingHelpers._upscaleArray(
+                params.balances, scalingFactors)
+            (sptAmountOut, amountsIn) = self._onJoinPool(
+                sp.record(
+                    poolId=params.poolId,
+                    sender=params.sender,
+                    recipient=params.recipient,
+                    upScaledBalances=upScaledBalances,
+                    lastChangeBlock=params.lastChangeBlock,
+                    # // Protocol fees are disabled while in recovery mode
+                    # self.inRecoveryMode() ? 0: protocolSwapFeePercentage,
+                    protocolSwapFeePercentage=params.protocolSwapFeePercentage,
+                    scalingFactors=scalingFactors,
+                    userData=params.userData,
+                )
+            )
+        # amountsIn are amounts entering the Pool, so we round up.
+        downscaledAmounts = ScalingHelpers._downscaleUpArray(
+            amountsIn, scalingFactors)
+
+        # This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
+        return downscaledAmounts
+
     # @ sp.onchain_view()
     # def getPoolId(self):
     #     """
