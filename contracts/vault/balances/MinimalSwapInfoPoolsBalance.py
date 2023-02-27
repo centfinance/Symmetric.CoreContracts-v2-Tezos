@@ -26,6 +26,11 @@ class MinimalSwapInfoPoolsBalance:
                 tkey=sp.TBytes,
                 tvalue=Types.TOKENS_TYPE
             ),
+            _minimalSwapInfoPoolsBalances=sp.big_map(
+                l={},
+                tkey=Types.TOKEN,
+                tvalue=sp.TNat,
+            ),
         ),
 
     def _registerMinimalSwapInfoPoolTokens(self, params):
@@ -51,3 +56,15 @@ class MinimalSwapInfoPoolsBalance:
         with sp.for_('i', sp.range(0, sp.len(params.tokens))) as i:
             self.data._minimalSwapInfoPoolsBalances[params.poolId][params.tokens[i]
                                                                    ] = params.balances[i]
+
+    def _getMinimalSwapInfoPoolTokens(self, poolId):
+        poolTokens = self.data._minimalSwapInfoPoolsTokens[poolId]
+        tokens = {}
+        balances = {}
+
+        with sp.for_('i', sp.range(0, sp.len(tokens))) as i:
+            token = poolTokens[i]
+            tokens[i] = token
+            balances[i] = self.data._minimalSwapInfoPoolsBalances[poolId][token]
+
+        return (tokens, balances)
