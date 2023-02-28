@@ -34,7 +34,7 @@ class Types:
         allT=sp.TNat,
     )
 
-    t_joinPool_params = sp.TRecord(
+    t_onJoinPool_params = sp.TRecord(
         poolId=sp.TBytes,
         sender=sp.TAddress,
         recipient=sp.TAddress,
@@ -44,7 +44,7 @@ class Types:
         userData=t_joinUserData,
     )
 
-    t_exitPool_params = sp.TRecord(
+    t_onExitPool_params = sp.TRecord(
         poolId=sp.TBytes,
         sender=sp.TAddress,
         recipient=sp.TAddress,
@@ -82,6 +82,25 @@ class Types:
         request=t_exitPool_request
     )
 
+    userData_type = sp.TVariant(
+        joinPool=t_joinUserData,
+        exitPool=t_exitUserData,
+    )
+
+    t_request = sp.TRecord(
+        userData=userData_type,
+        assets=sp.TMap(sp.TNat, TOKEN),
+        limits=sp.TMap(sp.TNat, sp.TNat),
+        useInternalBalance=sp.TBool,
+    )
+
+    t_joinOrExitPool_params = sp.TRecord(
+        poolId=sp.TBytes,
+        sender=sp.TAddress,
+        recipient=sp.TAddress,
+        request=t_request
+    )
+
 
 class PoolBalances(
     PoolTokens,
@@ -89,7 +108,7 @@ class PoolBalances(
     def __init__(self):
         PoolTokens.__init__(self)
 
-    @sp.entry_point(parameter_type=Types.t_joinPool_params)
+    @sp.entry_point(parameter_type=Types.t_joinOrExitPool_params)
     def joinPool(
         self,
         poolId,
@@ -106,7 +125,7 @@ class PoolBalances(
                 change=request,
             ))
 
-    @sp.entry_point(parameter_type=Types.t_exitPool_params)
+    @sp.entry_point(parameter_type=Types.t_joinOrExitPool_params)
     def exitPool(
         self,
         poolId,
@@ -148,24 +167,27 @@ class PoolBalances(
         (
             finalBalances,
             amountsInOrOut,
-            paidProtocolSwapFeeAmounts
         ) = self._callPoolBalanceChange(params.kind, params.poolId, params.sender, params.recipient, params.change, balances)
 
         # All that remains is storing the new Pool balances.
-        # specialization = self._getSpecialization(params.poolId)
+        specialization = self._getSpecialization(params.poolId)
         # with sp.if_(specialization == sp.nat(2)):
         #     self._setTwoTokenPoolCashBalances(
         #         params.poolId, tokens[0], finalBalances[0], tokens[1], finalBalances[1])
 
-        # with sp.if_(specialization == sp.nat(1)):
-        #     self._setMinimalSwapInfoPoolBalances(
-        #         params.poolId, tokens, finalBalances)
+        with sp.if_(specialization == sp.nat(1)):
+            self._setMinimalSwapInfoPoolBalances(
+                sp.record(
+                    poolId=params.poolId,
+                    tokens=tokens,
+                    balances=finalBalances,
+                ))
 
         # with sp.if_((specialization != sp.nat(2)) & (specialization != sp.nat(1))):
         #     # PoolSpecialization.GENERAL
         #     self._setGeneralPoolBalances(params.poolId, finalBalances)
 
-        # # Amounts in are positive, out are negative
+        # Amounts in are positive, out are negative
         # positive = params.kind == 1
 
         # PoolBalanceChanged = sp.record(
@@ -193,79 +215,98 @@ class PoolBalances(
 
         (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
             balances)
+        pool = self._getPoolAddress(poolId)
+        amountsInOrOut = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat))
 
-        # pool = self._getPoolAddress(poolId)
-        pool = sp.address('tz1')
-        amountsInOrOut = sp.local('amountInOrOut', 0)
-        params = sp.record(
-            poolId=poolId,
-            sender=sender,
-            recipient=recipient,
-            balances=totalBalances,
-            lastChangeBlock=lastChangeBlock,
-            protocolSwapFeePercentage=self.data.swapFeePercentage,
-            userData=change.userData,
-        )
         with sp.if_(kind == 1):
+            params = sp.record(
+                poolId=poolId,
+                sender=sender,
+                recipient=recipient,
+                balances=totalBalances,
+                lastChangeBlock=lastChangeBlock,
+                protocolSwapFeePercentage=0,
+                # protocolSwapFeePercentage=self.data.swapFeePercentage,
+                userData=change.userData.open_variant('joinPool'),
+            )
             # Calll BasePool view to get amounts
             pair = sp.view('beforeJoinPool', pool,
-                           params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat)))
+                           params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
             # Call BasePool entry point to perform join
-            onJoinPool = sp.contract(Types.t_joinPool_params, pool, "onJoinPool").open_some(
+            onJoinPool = sp.contract(Types.t_onJoinPool_params, pool, "onJoinPool").open_some(
                 "INTERFACE_MISMATCH")
             sp.transfer(params, sp.tez(0), onJoinPool)
-            amountsInOrOut.value = sp.snd(pair)
+            amountsInOrOut = sp.snd(pair)
         with sp.else_():
-            pair = sp.view('beforeJoinPool', pool,
-                           params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat)))
+            params = sp.record(
+                poolId=poolId,
+                sender=sender,
+                recipient=recipient,
+                balances=totalBalances,
+                lastChangeBlock=lastChangeBlock,
+                protocolSwapFeePercentage=0,
+                # protocolSwapFeePercentage=self.data.swapFeePercentage,
+                userData=change.userData.open_variant('exitPool'),
+            )
+            pair = sp.view('beforeExitPool', pool,
+                           params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
 
-            onExitPool = sp.contract(Types.t_exitPool_params, pool, "onJoinPool").open_some(
+            onExitPool = sp.contract(Types.t_onExitPool_params, pool, "onExitPool").open_some(
                 "INTERFACE_MISMATCH")
             sp.transfer(params, sp.tez(0), onExitPool)
-            amountsInOrOut.value = sp.snd(pair)
+            amountsInOrOut = sp.snd(pair)
 
-        sp.verify(sp.len(balances) == sp.len(amountsInOrOut.value))
-        # // The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
-        # // their participation.
-        # finalBalances = sp.compute({})
-        # with sp.if_(kind == 1):
-        #     finalBalances = self._processJoinPoolTransfers(
-        #         sender, change, balances, amountsInOrOut)
+        sp.verify(sp.len(balances) == sp.len(amountsInOrOut))
+        #  The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
+        #  their participation.
+        finalBalances = sp.local('finalBalances', {})
+        with sp.if_(kind == 1):
+            finalBalances.value = self._processJoinPoolTransfers(
+                sender, change, balances, amountsInOrOut)
         # with sp.else_():
         #     finalBalances = self._processExitPoolTransfers(
         #         recipient, change, balances, amountsInOrOut)
 
-        # return (finalBalances, amountsInOrOut)
+        return (finalBalances.value, amountsInOrOut)
 
-    # def _processJoinPoolTransfers(
-    #     self,
-    #     sender,
-    #     change,
-    #     balances,
-    #     amountsIn,
-    # ):
-    #     # // We need to track how much of the received ETH was used and wrapped into WETH to return any excess.
-    #     wrappedEth = 0
+    def _processJoinPoolTransfers(
+        self,
+        sender,
+        change,
+        balances,
+        amountsIn,
+    ):
+        # // We need to track how much of the received ETH was used and wrapped into WETH to return any excess.
+        wrappedXtz = sp.compute(0)
 
-    #     finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TBytes))
-    #     with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
-    #         amountIn = amountsIn[i]
-    #         sp.verify(amountIn <= change.limits[i], Errors.JOIN_ABOVE_MAX)
+        newBalances = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TRecord(
+            cash=sp.TNat,
+            managed=sp.TNat,
+            lastChangeBlock=sp.TNat,
+        )))
+        with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
+            amountIn = amountsIn[i]
+            sp.verify(amountIn <= change.limits[i], Errors.JOIN_ABOVE_MAX)
 
-    #         # // Receive assets from the sender - possibly from Internal Balance.
-    #         asset = change.assets[i]
-    #         self._receiveAsset(asset, amountIn, sender,
-    #                            change.useInternalBalance)
+            # // Receive assets from the sender - possibly from Internal Balance.
+            # asset = change.assets[i]
+            # self._receiveAsset(asset, amountIn, sender,
+            #                    change.useInternalBalance)
 
-    #         with sp.if_(self._isETH(asset)):
-    #             wrappedEth = wrappedEth.add(amountIn)
+            # with sp.if_(self._isXTZ(asset)):
+            #     wrappedXtz = wrappedXtz.add(amountIn)
+            updated_balance = sp.record(
+                cash=(balances[i].cash + amountIn),
+                managed=balances[i].managed,
+                lastChangeBlock=balances[i].lastChangeBlock,
+            )
 
-    #         finalBalances[i] = balances[i].increaseCash(amountIn)
+            newBalances[i] = updated_balance
 
-    #     # // Handle any used and remaining ETH.
-    #     self._handleRemainingEth(wrappedEth)
+        # // Handle any used and remaining ETH.
+        # self._handleRemainingXtz(wrappedXtz)
 
-    #     return finalBalances
+        return newBalances
 
     # def _processExitPoolTransfers(
     #     self,
@@ -274,7 +315,7 @@ class PoolBalances(
     #     balances,
     #     amountsOut,
     # ):
-    #     finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TBytes))
+    #     finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TNat))
     #     with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
     #         amountOut = amountsOut[i]
     #         sp.verify(amountOut <= change.limits[i], Errors.EXIT_BELOW_MIN)
