@@ -70,10 +70,11 @@ class PoolTokens(
 
     def _getPoolTokens(self, poolId):
         specialization = self._getSpecialization(poolId)
-        with sp.if_(specialization == sp.nat(2)):
-            return self._getTwoTokenPoolTokens(poolId)
+
+        # with sp.if_(specialization == sp.nat(2)):
+        #     return self._getTwoTokenPoolTokens(poolId)
         # with sp.if_(specialization == sp.nat(1)):
-        #     return self._getMinimalSwapInfoPoolTokens(poolId);
+        return self._getMinimalSwapInfoPoolTokens(poolId)
         # with sp.if_((specialization != sp.nat(2)) & (specialization != sp.nat(1))):
         #     # PoolSpecialization.GENERAL
         #     return self._getGeneralPoolTokens(poolId);

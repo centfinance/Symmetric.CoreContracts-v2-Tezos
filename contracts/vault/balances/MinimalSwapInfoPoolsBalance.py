@@ -66,8 +66,9 @@ class MinimalSwapInfoPoolsBalance:
 
     def _getMinimalSwapInfoPoolTokens(self, poolId):
         poolTokens = self.data._minimalSwapInfoPoolsTokens[poolId]
-        tokens = {}
-        balances = {}
+        tokens = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN))
+        balances = sp.compute(
+            sp.map(l={}, tkey=sp.TNat, tvalue=Types.BALANCE))
 
         with sp.for_('i', sp.range(0, sp.len(tokens))) as i:
             token = poolTokens[i]
