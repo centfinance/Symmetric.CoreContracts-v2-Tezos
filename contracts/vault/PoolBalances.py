@@ -11,6 +11,10 @@ import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
 
 class Types:
+    TOKEN = sp.TRecord(
+        address=sp.TAddress,
+        id=sp.TNat,
+    )
 
     t_joinUserData = sp.TRecord(
         kind=sp.TString,
@@ -50,6 +54,34 @@ class Types:
         userData=t_exitUserData,
     )
 
+    t_joinPool_request = sp.TRecord(
+        userData=t_joinUserData,
+        assets=sp.TMap(sp.TNat, TOKEN),
+        limits=sp.TMap(sp.TNat, sp.TNat),
+        useInternalBalance=sp.TBool,
+    )
+
+    t_joinPool_params = sp.TRecord(
+        poolId=sp.TBytes,
+        sender=sp.TAddress,
+        recipient=sp.TAddress,
+        request=t_joinPool_request
+    )
+
+    t_exitPool_request = sp.TRecord(
+        userData=t_exitUserData,
+        assets=sp.TMap(sp.TNat, TOKEN),
+        limits=sp.TMap(sp.TNat, sp.TNat),
+        useInternalBalance=sp.TBool,
+    )
+
+    t_exitPool_params = sp.TRecord(
+        poolId=sp.TBytes,
+        sender=sp.TAddress,
+        recipient=sp.TAddress,
+        request=t_exitPool_request
+    )
+
 
 class PoolBalances(
     PoolTokens,
@@ -57,7 +89,7 @@ class PoolBalances(
     def __init__(self):
         PoolTokens.__init__(self)
 
-    @sp.entry_point
+    @sp.entry_point(parameter_type=Types.t_joinPool_params)
     def joinPool(
         self,
         poolId,
@@ -65,7 +97,6 @@ class PoolBalances(
         recipient,
         request
     ):
-        sp.set_type(poolId, sp.TBytes)
         self._joinOrExit(
             sp.record(
                 kind=0,
@@ -75,7 +106,7 @@ class PoolBalances(
                 change=request,
             ))
 
-    @sp.entry_point
+    @sp.entry_point(parameter_type=Types.t_exitPool_params)
     def exitPool(
         self,
         poolId,
@@ -83,7 +114,6 @@ class PoolBalances(
         recipient,
         request
     ):
-        sp.set_type(poolId, sp.TBytes)
         self._joinOrExit(
             sp.record(
                 kind=0,
@@ -101,6 +131,8 @@ class PoolBalances(
         self,
         params,
     ):
+        sp.set_type(params.change.assets, sp.TMap(sp.TNat, Types.TOKEN))
+        sp.set_type(params.change.limits, sp.TMap(sp.TNat, sp.TNat))
         # This def uses a large number of stack variables (poolId, sender and recipient, balances, amounts, fees,
         # etc.), which leads to 'stack too deep' issues. It relies on private defs with seemingly arbitrary
         # interfaces to work around this limitation.
@@ -113,11 +145,11 @@ class PoolBalances(
 
         # The bulk of the work is done here: the corresponding Pool hook is called, its final balances are computed,
         # assets are transferred, and fees are paid.
-        # (
-        #     finalBalances,
-        #     amountsInOrOut,
-        #     paidProtocolSwapFeeAmounts
-        # ) = self._callPoolBalanceChange(params.kind, params.poolId, params.sender, params.recipient, params.change, balances)
+        (
+            finalBalances,
+            amountsInOrOut,
+            paidProtocolSwapFeeAmounts
+        ) = self._callPoolBalanceChange(params.kind, params.poolId, params.sender, params.recipient, params.change, balances)
 
         # All that remains is storing the new Pool balances.
         # specialization = self._getSpecialization(params.poolId)
