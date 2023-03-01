@@ -28,7 +28,7 @@ class MockVault(sp.Contract):
         sp.set_type(params, sp.TRecord(
             poolId=sp.TBytes,
             tokens=sp.TMap(sp.TNat, sp.TRecord(
-                address=sp.TAddress, id=sp.TNat)),
+                address=sp.TAddress, id=sp.TNat, FA2=sp.TBool)),
             assetManagers=sp.TOption(sp.TMap(sp.TNat, sp.TAddress))
         ))
         pass
@@ -64,9 +64,9 @@ def test():
     sc += v
 
     tokens = sp.map({
-        0: sp.record(address=sp.address('tz1'), id=sp.nat(0)),
-        1: sp.record(address=sp.address('tz1'), id=sp.nat(1)),
-        2: sp.record(address=sp.address('tz1'), id=sp.nat(2)),
+        0: sp.record(address=sp.address('tz1'), id=sp.nat(0), FA2=False),
+        1: sp.record(address=sp.address('tz1'), id=sp.nat(1), FA2=False),
+        2: sp.record(address=sp.address('tz1'), id=sp.nat(2), FA2=False),
     })
 
     weights = sp.map({
