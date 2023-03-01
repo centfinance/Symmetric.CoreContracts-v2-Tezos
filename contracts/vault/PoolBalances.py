@@ -3,6 +3,8 @@ import smartpy as sp
 
 from contracts.vault.PoolTokens import PoolTokens
 
+from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
+
 import contracts.utils.helpers.InputHelpers as InputHelpers
 
 import contracts.interfaces.SymmetricErrors as Errors
@@ -264,9 +266,9 @@ class PoolBalances(
         with sp.if_(kind == 1):
             finalBalances.value = self._processJoinPoolTransfers(
                 sender, change, balances, amountsInOrOut)
-        # with sp.else_():
-        #     finalBalances = self._processExitPoolTransfers(
-        #         recipient, change, balances, amountsInOrOut)
+        with sp.else_():
+            finalBalances.value = self._processExitPoolTransfers(
+                recipient, change, balances, amountsInOrOut)
 
         return (finalBalances.value, amountsInOrOut)
 
@@ -289,13 +291,14 @@ class PoolBalances(
             amountIn = amountsIn[i]
             sp.verify(amountIn <= change.limits[i], Errors.JOIN_ABOVE_MAX)
 
-            # // Receive assets from the sender - possibly from Internal Balance.
-            # asset = change.assets[i]
-            # self._receiveAsset(asset, amountIn, sender,
-            #                    change.useInternalBalance)
+            # Receive assets from the sender - possibly from Internal Balance.
+            asset = change.assets[i]
+            AssetTransfersHandler._receiveAsset(asset, amountIn, sender,
+                                                change.useInternalBalance)
 
             # with sp.if_(self._isXTZ(asset)):
             #     wrappedXtz = wrappedXtz.add(amountIn)
+
             updated_balance = sp.record(
                 cash=(balances[i].cash + amountIn),
                 managed=balances[i].managed,
@@ -325,9 +328,9 @@ class PoolBalances(
             amountOut = amountsOut[i]
             sp.verify(amountOut <= change.limits[i], Errors.EXIT_BELOW_MIN)
 
-            # asset = change.assets[i]
-            # self._sendAsset(asset, amountOut, recipient,
-            #                 change.useInternalBalance)
+            asset = change.assets[i]
+            AssetTransfersHandler._sendAsset(asset, amountOut, recipient,
+                                             change.useInternalBalance)
 
             updated_balance = sp.record(
                 cash=sp.as_nat(balances[i].cash - amountOut),
