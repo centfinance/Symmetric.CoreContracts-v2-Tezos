@@ -279,7 +279,7 @@ class PoolBalances(
         # // We need to track how much of the received ETH was used and wrapped into WETH to return any excess.
         wrappedXtz = sp.compute(0)
 
-        newBalances = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TRecord(
+        joinBalances = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TRecord(
             cash=sp.TNat,
             managed=sp.TNat,
             lastChangeBlock=sp.TNat,
@@ -301,33 +301,42 @@ class PoolBalances(
                 lastChangeBlock=balances[i].lastChangeBlock,
             )
 
-            newBalances[i] = updated_balance
+            joinBalances[i] = updated_balance
 
         # // Handle any used and remaining ETH.
         # self._handleRemainingXtz(wrappedXtz)
 
-        return newBalances
+        return joinBalances
 
-    # def _processExitPoolTransfers(
-    #     self,
-    #     recipient,
-    #     change,
-    #     balances,
-    #     amountsOut,
-    # ):
-    #     finalBalances = sp.compute(sp.map({}, sp.TNat, sp.TNat))
-    #     with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
-    #         amountOut = amountsOut[i]
-    #         sp.verify(amountOut <= change.limits[i], Errors.EXIT_BELOW_MIN)
+    def _processExitPoolTransfers(
+        self,
+        recipient,
+        change,
+        balances,
+        amountsOut,
+    ):
+        exitBalances = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TRecord(
+            cash=sp.TNat,
+            managed=sp.TNat,
+            lastChangeBlock=sp.TNat,
+        )))
+        with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
+            amountOut = amountsOut[i]
+            sp.verify(amountOut <= change.limits[i], Errors.EXIT_BELOW_MIN)
 
-    #         asset = change.assets[i]
-    #         self._sendAsset(asset, amountOut, recipient,
-    #                         change.useInternalBalance)
+            # asset = change.assets[i]
+            # self._sendAsset(asset, amountOut, recipient,
+            #                 change.useInternalBalance)
 
-    #         finalBalances[i] = balances[i].decreaseCash(
-    #             amountOut)
+            updated_balance = sp.record(
+                cash=sp.as_nat(balances[i].cash - amountOut),
+                managed=balances[i].managed,
+                lastChangeBlock=balances[i].lastChangeBlock,
+            )
 
-    #     return finalBalances
+            exitBalances[i] = updated_balance
+
+        return exitBalances
 
     def _validateTokensAndGetBalances(self, poolId, expectedTokens):
         (actualTokens, balances) = self._getPoolTokens(poolId)
