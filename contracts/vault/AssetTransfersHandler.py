@@ -1,5 +1,7 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricErrors as Errors
+
 
 class AssetTransfersHandler:
 
@@ -85,10 +87,30 @@ class AssetTransfersHandler:
                 sender, receiver, amount, tokenAddress)
 
     def _receiveAsset(asset, amount, sender, fromInternalBalance):
-        pass
+        AssetTransfersHandler.TransferToken(
+            sender,
+            sp.self_address,
+            amount,
+            asset.address,
+            asset.id,
+            asset.FA2
+        )
 
     def _sendAsset(asset, amount, recipient, toInternalBalance):
-        pass
+        AssetTransfersHandler.TransferToken(
+            sp.self_address,
+            recipient,
+            amount,
+            asset.address,
+            asset.id,
+            asset.FA2
+        )
 
-    def _handleRemainingXtz(amountUsed):
-        pass
+    def _handleRemainingTez(amountUsed):
+        amount = sp.utils.mutez_to_nat(sp.amount)
+        sp.verify(amount >= amountUsed, Errors.INSUFFICIENT_ETH)
+
+        excess = sp.as_nat(amount - amountUsed)
+        with sp.if_(excess > 0):
+            mutez = sp.utils.nat_to_mutez(amount)
+            sp.send(sp.source, mutez)
