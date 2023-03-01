@@ -7,7 +7,8 @@ class Types:
 
     TOKEN = sp.TRecord(
         address=sp.TAddress,
-        id=sp.TNat
+        id=sp.TNat,
+        FA2=sp.TBool,
     )
     TWO_TOKEN_POOL_BALANCES = sp.TRecord(
         sharedCash=sp.TBytes,

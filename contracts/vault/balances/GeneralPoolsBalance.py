@@ -6,10 +6,10 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 
 class Types:
-
     TOKEN = sp.TRecord(
         address=sp.TAddress,
-        id=sp.TNat
+        id=sp.TNat,
+        FA2=sp.TBool,
     )
 
     ENUMERABLE_MAP = sp.TRecord(

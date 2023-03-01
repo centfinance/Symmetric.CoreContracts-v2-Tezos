@@ -15,6 +15,7 @@ class Types:
     TOKEN = sp.TRecord(
         address=sp.TAddress,
         id=sp.TNat,
+        FA2=sp.TBool,
     )
     REGISTER_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TBytes,
