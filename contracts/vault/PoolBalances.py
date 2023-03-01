@@ -174,9 +174,15 @@ class PoolBalances(
 
         # All that remains is storing the new Pool balances.
         specialization = self._getSpecialization(params.poolId)
-        # with sp.if_(specialization == sp.nat(2)):
-        #     self._setTwoTokenPoolCashBalances(
-        #         params.poolId, tokens[0], finalBalances[0], tokens[1], finalBalances[1])
+        with sp.if_(specialization == sp.nat(2)):
+            self._setTwoTokenPoolCashBalances(
+                sp.record(
+                    poolId=params.poolId,
+                    tokenA=tokens[0],
+                    balanceA=finalBalances[0],
+                    tokenB=tokens[1],
+                    balanceB=finalBalances[1],
+                ))
 
         with sp.if_(specialization == sp.nat(1)):
             self._setMinimalSwapInfoPoolBalances(
@@ -191,16 +197,15 @@ class PoolBalances(
         #     self._setGeneralPoolBalances(params.poolId, finalBalances)
 
         # Amounts in are positive, out are negative
-        # positive = params.kind == 1
+        positive = params.kind == 1
 
-        # PoolBalanceChanged = sp.record(
-        #     poolId=params.poolId,
-        #     sender=params.sender,
-        #     tokens=tokens,
-        #     amountsInOrOut=amountsInOrOut,
-        #     paidProtocolSwapFeeAmounts=paidProtocolSwapFeeAmounts,
-        # )
-        # sp.emit(PoolBalanceChanged, tag='PoolBalanceChanged', with_type=True)
+        PoolBalanceChanged = sp.record(
+            poolId=params.poolId,
+            sender=params.sender,
+            tokens=tokens,
+            amountsInOrOut=amountsInOrOut,
+        )
+        sp.emit(PoolBalanceChanged, tag='PoolBalanceChanged', with_type=True)
 
     # /**
     #  * @dev Calls the corresponding Pool hook to get the amounts in/out plus protocol fee amounts, and performs the

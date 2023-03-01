@@ -12,8 +12,14 @@ class Types:
         FA2=sp.TBool,
     )
 
+    BALANCE = sp.TRecord(
+        cash=sp.TNat,
+        managed=sp.TNat,
+        lastChangeBlock=sp.TNat,
+    )
+
     ENUMERABLE_MAP = sp.TRecord(
-        balances=sp.TMap(sp.TNat, sp.TOption(sp.TBytes)),
+        balances=sp.TMap(sp.TNat, sp.TOption(BALANCE)),
         tokens=sp.TMap(TOKEN, sp.TNat)
     )
 
@@ -63,3 +69,9 @@ class GeneralPoolsBalance:
                 record.tokens[t] = i
                 record.balances[i] = sp.none
             self.data._generalPoolsBalances[params.poolId] = record
+
+    def _setGeneralPoolBalances(self, params):
+        poolBalances = self.data._generalPoolsBalances[params.poolId]
+
+        with sp.for_('i', sp.range(0, sp.len(params.balances))) as i:
+            poolBalances.balances[i] = params.balances[i]
