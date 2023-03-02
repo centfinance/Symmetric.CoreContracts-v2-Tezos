@@ -66,8 +66,8 @@ class WeightedMath:
         weightOut,
         amountIn
     ):
-        sp.verify(amountIn <= balanceIn.mulDown(
-            WeightedMath._MAX_IN_RATIO), Errors.MAX_IN_RATIO)
+        sp.verify(amountIn <= FixedPoint.mulDown(balanceIn,
+                                                 WeightedMath._MAX_IN_RATIO), Errors.MAX_IN_RATIO)
 
         denominator = balanceIn + amountIn
         base = FixedPoint.divUp(balanceIn, denominator)

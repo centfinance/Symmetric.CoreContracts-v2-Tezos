@@ -125,17 +125,19 @@ class WeightedPool(
 
         self.data.initialized = True
 
+    @sp.private_lambda(with_storage='read-only', wrap_call=True)
     def _getNormalizedWeight(self, token):
         normalizedWeight = sp.local('normalizedWeight', sp.nat(0))
         with sp.for_('i', sp.range(0, self.data.totalTokens)) as i:
             with sp.if_(self.data.tokens[i] == token):
                 normalizedWeight.value = self.data.normalizedWeights[i]
 
-        with sp.if_(normalizedWeight.value == 0):
+        with sp.if_(normalizedWeight.value == sp.nat(0)):
             sp.failwith(Errors.INVALID_TOKEN)
 
-        return normalizedWeight
+        sp.result(normalizedWeight.value)
 
+    @sp.private_lambda(with_storage='read-only', wrap_call=True)
     def _scalingFactor(self, token):
         scalingFactor = sp.local('scalingFactor', sp.nat(0))
         with sp.for_('i', sp.range(0, self.data.totalTokens)) as i:
@@ -145,4 +147,4 @@ class WeightedPool(
         with sp.if_(scalingFactor.value == 0):
             sp.failwith(Errors.INVALID_TOKEN)
 
-        return scalingFactor
+        sp.result(scalingFactor.value)
