@@ -121,7 +121,28 @@ class WeightedPool(
                 assetManagers=sp.none,
                 swapFeePercentage=params.swapFeePercentage,
             )
-
         )
 
         self.data.initialized = True
+
+    def _getNormalizedWeight(self, token):
+        normalizedWeight = sp.local('normalizedWeight', sp.nat(0))
+        with sp.for_('i', sp.range(0, self.data.totalTokens)) as i:
+            with sp.if_(self.data.tokens[i] == token):
+                normalizedWeight.value = self.data.normalizedWeights[i]
+
+        with sp.if_(normalizedWeight.value == 0):
+            sp.failwith(Errors.INVALID_TOKEN)
+
+        return normalizedWeight
+
+    def _scalingFactor(self, token):
+        scalingFactor = sp.local('scalingFactor', sp.nat(0))
+        with sp.for_('i', sp.range(0, self.data.totalTokens)) as i:
+            with sp.if_(self.data.tokens[i] == token):
+                scalingFactor.value = self.data.scalingFactors[i]
+
+        with sp.if_(scalingFactor.value == 0):
+            sp.failwith(Errors.INVALID_TOKEN)
+
+        return scalingFactor
