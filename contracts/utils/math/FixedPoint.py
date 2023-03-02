@@ -126,24 +126,18 @@ def powDown(x,  y):
     return powDown.value
 
 
-# def pow(x, y):
-#     powResult = sp.local('powResult', 0)
-#     base = sp.local('base', x)
-#     exponent = sp.local('exponent', y)
+def pow(x, y):
+    powResult = sp.local('powResult', 1)
+    base = sp.local('base', x)
+    exponent = sp.local('exponent', y)
 
-#     with sp.while_(exponent.value != 0):
-#         with sp.if_((exponent.value % 2) != 0):
-#             powResult.value *= base.value
+    with sp.while_(exponent.value != 0):
+        with sp.if_((exponent.value % 2) != 0):
+            powResult.value *= base.value
 
-#         exponent.value = exponent.value >> 1  # Equivalent to exponent.value / 2
-#         base.value *= base.value
-
-#     return powResult.value
-
-# /**
-#  * @dev Returns x^y, assuming both are fixed point numbers, rounding up. The  is guaranteed to not be below
-#  * the true value (that is, the error def expected - actual is always negative).
-#  */
+        exponent.value = exponent.value >> 1  # Equivalent to exponent.value / 2
+        base.value *= base.value
+    return powResult.value
 
 
 def powUp(x,  y):
@@ -197,7 +191,6 @@ def powu(x,  y):
     with sp.while_(yAux.value > 0):
 
         xAbs.value = mulDown(xAbs.value, xAbs.value)
-        sp.trace(xAbs.value)
         # // Equivalent to "y % 2 == 1" but faster.
         with sp.if_(yAux.value & 1 > 0):
             resultAbs.value = mulDown(resultAbs.value, xAbs.value)
@@ -209,5 +202,6 @@ def powu(x,  y):
     # isNegative = unwrap(x) < 0 && y & 1 == 1;
     # with sp.if_(isNegative):
     #     resultInt = -resultInt;
+    sp.trace(resultAbs.value)
 
     return resultAbs.value
