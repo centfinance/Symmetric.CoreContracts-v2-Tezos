@@ -59,6 +59,23 @@ class WeightedMath:
         # Return the new invariant
         return invariant.value
 
+    def _calcOutGivenIn(
+        balanceIn,
+        weightIn,
+        balanceOut,
+        weightOut,
+        amountIn
+    ):
+        sp.verify(amountIn <= balanceIn.mulDown(
+            WeightedMath._MAX_IN_RATIO), Errors.MAX_IN_RATIO)
+
+        denominator = balanceIn + amountIn
+        base = FixedPoint.divUp(balanceIn, denominator)
+        exponent = FixedPoint.divDown(weightIn, weightOut)
+        power = FixedPoint.powUp(base, exponent)
+
+        return FixedPoint.mulDown(balanceOut, WeightedMath.complement(power))
+
     def _calcSptOutGivenExactTokensIn(balances, normalizedWeights, amountsIn, totalSupply, swapFeePercentage):
         def mulDown(x, y):
             return FixedPoint.mulDown(x, y)
