@@ -82,10 +82,12 @@ def test():
         0: sp.record(
             address=token1.address,
             id=0,
+            FA2=False,
         ),
         1: sp.record(
             address=token2.address,
             id=0,
+            FA2=False,
         )
     }
     weights = sp.map({

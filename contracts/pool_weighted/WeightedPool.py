@@ -14,6 +14,7 @@ class Types:
     TOKEN = sp.TRecord(
         address=sp.TAddress,
         id=sp.TNat,
+        FA2=sp.TBool,
     )
 
     STORAGE = sp.TRecord(

@@ -28,7 +28,7 @@ class MockVault(sp.Contract):
         sp.set_type(params, sp.TRecord(
             poolId=sp.TBytes,
             tokens=sp.TMap(sp.TNat, sp.TRecord(
-                address=sp.TAddress, id=sp.TNat)),
+                address=sp.TAddress, id=sp.TNat, FA2=sp.TBool)),
             assetManagers=sp.TList(sp.TAddress)
         ))
         pass
@@ -52,7 +52,7 @@ class MockPool(sp.Contract):
                 vault=sp.TAddress,
                 specialization=sp.TNat,
                 tokens=sp.TMap(sp.TNat, sp.TRecord(
-                    address=sp.TAddress, id=sp.TNat)),
+                    address=sp.TAddress, id=sp.TNat, FA2=sp.TBool)),
                 poolId=sp.TBytes
             )
         )
@@ -74,7 +74,7 @@ def test():
     sc += v
 
     tokens = sp.map({
-        0: sp.record(address=sp.address('tz1'), id=sp.nat(0)),
+        0: sp.record(address=sp.address('tz1'), id=sp.nat(0), FA2=False),
     })
     p = MockPool(sp.record(
         vault=v.address,

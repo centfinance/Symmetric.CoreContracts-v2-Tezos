@@ -34,9 +34,9 @@ def test():
     poolId = _toPoolId(pool.address, sp.nat(1),  sp.nat(1))
 
     tokens = sp.map({
-        0: sp.record(address=token1.address, id=sp.nat(0)),
-        1: sp.record(address=token2.address, id=sp.nat(43)),
-        2: sp.record(address=token1.address, id=sp.nat(1)),
+        0: sp.record(address=token1.address, id=sp.nat(0), FA2=False),
+        1: sp.record(address=token2.address, id=sp.nat(43), FA2=False),
+        2: sp.record(address=token1.address, id=sp.nat(1), FA2=False),
     })
 
     assetManagers = [
@@ -49,8 +49,8 @@ def test():
     ))
 
     newTokens = sp.map({
-        0: sp.record(address=token3.address, id=sp.nat(0)),
-        1: sp.record(address=token4.address, id=sp.nat(0))
+        0: sp.record(address=token3.address, id=sp.nat(0), FA2=False),
+        1: sp.record(address=token4.address, id=sp.nat(0), FA2=False),
     })
 
     v.registerTokens(sp.record(
@@ -62,8 +62,8 @@ def test():
    # Test TwoTokensPool
     v.registerPool(sp.nat(2)).run(sender=pool2.address)
     tokens2 = sp.map({
-        0: sp.record(address=token1.address, id=sp.nat(0)),
-        1: sp.record(address=token2.address, id=sp.nat(43)),
+        0: sp.record(address=token1.address, id=sp.nat(0), FA2=False),
+        1: sp.record(address=token2.address, id=sp.nat(43), FA2=False),
     })
     poolId2 = _toPoolId(pool2.address, sp.nat(2),  sp.nat(2))
 

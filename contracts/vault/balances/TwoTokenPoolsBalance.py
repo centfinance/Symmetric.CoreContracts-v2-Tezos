@@ -7,17 +7,25 @@ class Types:
 
     TOKEN = sp.TRecord(
         address=sp.TAddress,
-        id=sp.TNat
+        id=sp.TNat,
+        FA2=sp.TBool,
     )
+
+    BALANCE = sp.TRecord(
+        tokenA=sp.TNat,
+        tokenB=sp.TNat,
+        lastChangeBlock=sp.TNat,
+    )
+
     TWO_TOKEN_POOL_BALANCES = sp.TRecord(
-        sharedCash=sp.TBytes,
-        sharedManaged=sp.TBytes
+        sharedCash=sp.TOption(BALANCE),
+        sharedManaged=sp.TOption(BALANCE),
     )
 
     TWO_TOKEN_POOL_TOKENS = sp.TRecord(
         tokenA=TOKEN,
         tokenB=TOKEN,
-        balances=sp.TOption(sp.TMap(sp.TBytes, TWO_TOKEN_POOL_BALANCES))
+        balances=sp.TOption(TWO_TOKEN_POOL_BALANCES)
     )
 
     REGISTER_TT_POOL_TOKENS_PARAMS = sp.TRecord(
@@ -49,3 +57,13 @@ class TwoTokenPoolsBalance:
             balances=sp.none
         )
         self.data._twoTokenPoolTokens[params.poolId] = twoTokenPoolTokens
+
+    def _setTwoTokenPoolCashBalances(self, params):
+        updated_cash = sp.record(
+            tokenA=params.balanceA.cash,
+            tokenB=params.balanceB.cash,
+            lastChangeBlock=sp.max(
+                params.balanceA.lastChangeBlock, params.balanceB.lastChangeBlock),
+        )
+        with sp.modify_record(self.data._twoTokenPoolTokens[params.poolId].balances, 'poolBalances') as poolBalances:
+            poolBalances.sharedCash = updated_cash
