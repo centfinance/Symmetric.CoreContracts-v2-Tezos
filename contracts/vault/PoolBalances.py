@@ -22,10 +22,10 @@ class Types:
     t_joinUserData = sp.TRecord(
         kind=sp.TString,
         amountsIn=sp.TMap(sp.TNat, sp.TNat),
-        minSPTAmountOut=sp.TNat,
-        tokenIndex=sp.TNat,
-        sptAmountOut=sp.TNat,
-        allT=sp.TNat,
+        minSPTAmountOut=sp.TOption(sp.TNat),
+        tokenIndex=sp.TOption(sp.TNat),
+        sptAmountOut=sp.TOption(sp.TNat),
+        allT=sp.TOption(sp.TNat),
     )
 
     t_exitUserData = sp.TRecord(
@@ -121,7 +121,7 @@ class PoolBalances(
     ):
         self._joinOrExit(
             sp.record(
-                kind=0,
+                kind=sp.nat(1),
                 poolId=poolId,
                 sender=sender,
                 recipient=recipient,
@@ -138,7 +138,7 @@ class PoolBalances(
     ):
         self._joinOrExit(
             sp.record(
-                kind=0,
+                kind=sp.nat(0),
                 poolId=poolId,
                 sender=sender,
                 recipient=recipient,
@@ -148,7 +148,7 @@ class PoolBalances(
     # /**
     #  * @dev Implements both `joinPool` and `exitPool`, based on `kind`.
     #  */
-    @sp.private_lambda(with_storage="read-write", with_operations=True)
+    # @sp.private_lambda(with_storage="read-write", with_operations=True)
     def _joinOrExit(
         self,
         params,
@@ -173,7 +173,7 @@ class PoolBalances(
         ) = self._callPoolBalanceChange(params.kind, params.poolId, params.sender, params.recipient, params.change, balances)
 
         # All that remains is storing the new Pool balances.
-        specialization = self._getSpecialization(params.poolId)
+        # specialization = self._getSpecialization(params.poolId)
         # with sp.if_(specialization == sp.nat(2)):
         #     self._setTwoTokenPoolCashBalances(
         #         sp.record(
@@ -184,13 +184,13 @@ class PoolBalances(
         #             balanceB=finalBalances[1],
         #         ))
 
-        with sp.if_(specialization == sp.nat(1)):
-            self._setMinimalSwapInfoPoolBalances(
-                sp.record(
-                    poolId=params.poolId,
-                    tokens=tokens,
-                    balances=finalBalances,
-                ))
+        # with sp.if_(specialization == sp.nat(1)):
+        self._setMinimalSwapInfoPoolBalances(
+            sp.record(
+                poolId=params.poolId,
+                tokens=tokens,
+                balances=finalBalances,
+            ))
 
         # with sp.if_((specialization != sp.nat(2)) & (specialization != sp.nat(1))):
         #     # PoolSpecialization.GENERAL
@@ -227,19 +227,19 @@ class PoolBalances(
             balances)
         pool = self._getPoolAddress(poolId)
         amountsInOrOut = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat))
-
-        with sp.if_(kind == 1):
+        sp.trace(kind)
+        with sp.if_(kind == sp.nat(1)):
             params = sp.record(
                 poolId=poolId,
                 sender=sender,
                 recipient=recipient,
                 balances=totalBalances,
                 lastChangeBlock=lastChangeBlock,
-                protocolSwapFeePercentage=0,
+                protocolSwapFeePercentage=sp.nat(0),
                 # protocolSwapFeePercentage=self.data.swapFeePercentage,
                 userData=change.userData.open_variant('joinPool'),
             )
-            # Calll BasePool view to get amounts
+            # Call BasePool view to get amounts
             pair = sp.view('beforeJoinPool', pool,
                            params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
             # Call BasePool entry point to perform join
@@ -247,24 +247,25 @@ class PoolBalances(
                 "INTERFACE_MISMATCH")
             sp.transfer(params, sp.tez(0), onJoinPool)
             amountsInOrOut = sp.snd(pair)
-        with sp.else_():
-            params = sp.record(
-                poolId=poolId,
-                sender=sender,
-                recipient=recipient,
-                balances=totalBalances,
-                lastChangeBlock=lastChangeBlock,
-                protocolSwapFeePercentage=0,
-                # protocolSwapFeePercentage=self.data.swapFeePercentage,
-                userData=change.userData.open_variant('exitPool'),
-            )
-            pair = sp.view('beforeExitPool', pool,
-                           params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
 
-            onExitPool = sp.contract(Types.t_onExitPool_params, pool, "onExitPool").open_some(
-                "INTERFACE_MISMATCH")
-            sp.transfer(params, sp.tez(0), onExitPool)
-            amountsInOrOut = sp.snd(pair)
+        # with sp.if_(kind == sp.nat(0)):
+        #     params = sp.record(
+        #         poolId=poolId,
+        #         sender=sender,
+        #         recipient=recipient,
+        #         balances=totalBalances,
+        #         lastChangeBlock=lastChangeBlock,
+        #         protocolSwapFeePercentage=0,
+        #         # protocolSwapFeePercentage=self.data.swapFeePercentage,
+        #         userData=change.userData.open_variant('exitPool'),
+        #     )
+        #     pair = sp.view('beforeExitPool', pool,
+        #                    params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+
+        #     onExitPool = sp.contract(Types.t_onExitPool_params, pool, "onExitPool").open_some(
+        #         "INTERFACE_MISMATCH")
+        #     sp.transfer(params, sp.tez(0), onExitPool)
+        #     amountsInOrOut = sp.snd(pair)
 
         sp.verify(sp.len(balances) == sp.len(amountsInOrOut))
         #  The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of

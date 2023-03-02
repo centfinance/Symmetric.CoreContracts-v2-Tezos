@@ -56,6 +56,8 @@ class MinimalSwapInfoPoolsBalance:
                 self.data._minimalSwapInfoPoolsTokens[params.poolId][prevSize] = t
         with sp.else_():
             self.data._minimalSwapInfoPoolsTokens[params.poolId] = params.tokens
+            self.data._minimalSwapInfoPoolsBalances[params.poolId] = sp.map(
+                l={}, tkey=Types.TOKEN, tvalue=Types.BALANCE)
 
     def _setMinimalSwapInfoPoolBalances(
         self,
@@ -71,9 +73,13 @@ class MinimalSwapInfoPoolsBalance:
         balances = sp.compute(
             sp.map(l={}, tkey=sp.TNat, tvalue=Types.BALANCE))
 
-        with sp.for_('i', sp.range(0, sp.len(tokens))) as i:
+        with sp.for_('i', sp.range(0, sp.len(poolTokens))) as i:
             token = poolTokens[i]
             tokens[i] = token
-            balances[i] = self.data._minimalSwapInfoPoolsBalances[poolId][token]
+            balances[i] = self.data._minimalSwapInfoPoolsBalances.get(poolId, {}).get(token, sp.record(
+                cash=sp.nat(0),
+                managed=sp.nat(0),
+                lastChangeBlock=sp.level,
+            ))
 
         return (tokens, balances)

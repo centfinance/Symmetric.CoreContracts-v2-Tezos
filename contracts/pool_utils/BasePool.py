@@ -273,7 +273,7 @@ class BasePool(
             amountsIn, scalingFactors)
 
         # This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
-        return (sptAmountOut, downscaledAmounts)
+        sp.result((sptAmountOut, downscaledAmounts))
 
     @sp.onchain_view()
     def beforeExitPool(
@@ -310,7 +310,7 @@ class BasePool(
             )
             downscaledAmounts.value = ScalingHelpers._downscaleDownArray(
                 amountsOut, scalingFactors)
-            return (sptAmountIn, downscaledAmounts)
+            sp.result((sptAmountIn, downscaledAmounts))
 
     # @ sp.onchain_view()
     # def getPoolId(self):
