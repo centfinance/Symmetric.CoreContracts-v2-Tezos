@@ -32,9 +32,10 @@ class BaseWeightedPool(
     def _onSwapGivenIn(self, params):
         return WeightedMath._calcOutGivenIn(
             params.currentBalanceTokenIn,
-            self._getNormalizedWeight(params.swapRequest.tokenIn)
+            self._getNormalizedWeight(params.swapRequest.tokenIn),
             params.currentBalanceTokenOut,
-            self._getNormalizedWeight(params.swapRequest.tokenOut)
+            self._getNormalizedWeight(params.swapRequest.tokenOut),
+            params.swapRequest.amount,
         )
 
     def _onInitializePool(self, params):

@@ -54,6 +54,14 @@ class MockWeightedPool(WeightedPool):
             symbol,
             owner,
         )
+        self.update_initial_storage(
+            swapGivenIn=sp.nat(0),
+        )
+
+    @sp.entry_point
+    def test_onSwapGivenIn(self, params):
+        swapGivenIn = self._onSwapGivenIn(params)
+        self.data.swapGivenIn = swapGivenIn
 
 
 @sp.add_test(name="WeightedPoolTest_1", profile=True)
@@ -66,19 +74,16 @@ def test():
     tokens = sp.map({
         0: sp.record(address=sp.address('tz1'), id=sp.nat(0), FA2=False),
         1: sp.record(address=sp.address('tz1'), id=sp.nat(1), FA2=False),
-        2: sp.record(address=sp.address('tz1'), id=sp.nat(2), FA2=False),
     })
 
     weights = sp.map({
-        0: sp.nat(330000000000000000),
-        1: sp.nat(330000000000000000),
-        2: sp.nat(340000000000000000),
+        0: sp.nat(500000000000000000),
+        1: sp.nat(500000000000000000),
     })
 
     decimals = sp.map({
         0: sp.nat(3),
         1: sp.nat(12),
-        2: sp.nat(18),
     })
 
     p = MockWeightedPool(
