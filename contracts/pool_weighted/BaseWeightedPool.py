@@ -38,6 +38,15 @@ class BaseWeightedPool(
             params.swapRequest.amount,
         )
 
+    def _onSwapGivenOut(self, params):
+        return WeightedMath._calcInGivenOut(
+            params.currentBalanceTokenIn,
+            self._getNormalizedWeight(params.swapRequest.tokenIn),
+            params.currentBalanceTokenOut,
+            self._getNormalizedWeight(params.swapRequest.tokenOut),
+            params.swapRequest.amount,
+        )
+
     def _onInitializePool(self, params):
         sp.set_type(params, sp.TRecord(
             userData=sp.TRecord(
