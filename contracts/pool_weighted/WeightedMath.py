@@ -76,7 +76,7 @@ class WeightedMath:
 
         return FixedPoint.mulDown(balanceOut, WeightedMath.complement(power))
 
-    def _calcOutGivenIn(
+    def _calcInGivenOut(
         balanceIn,
         weightIn,
         balanceOut,
