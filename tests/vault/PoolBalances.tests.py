@@ -77,14 +77,14 @@ def test():
         0: 1000000000000000000,
         1: 1000000000000000000,
     }
-    userData = sp.variant('joinPool', sp.record(
+    userData = sp.record(
         kind='INIT',
         amountsIn=amountsIn,
         minSPTAmountOut=sp.none,
         tokenIndex=sp.none,
         sptAmountOut=sp.none,
         allT=sp.none,
-    ))
+    )
 
     assets = {
         0: sp.record(

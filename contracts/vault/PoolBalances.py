@@ -111,7 +111,7 @@ class PoolBalances(
     def __init__(self):
         PoolTokens.__init__(self)
 
-    @sp.entry_point(parameter_type=Types.t_joinOrExitPool_params)
+    @sp.entry_point(parameter_type=Types.t_joinPool_params)
     def joinPool(
         self,
         poolId,
@@ -119,16 +119,62 @@ class PoolBalances(
         recipient,
         request
     ):
-        self._joinOrExit(
+        balances = self._validateTokensAndGetBalances(
             sp.record(
-                kind=sp.nat(1),
                 poolId=poolId,
-                sender=sender,
-                recipient=recipient,
-                change=request,
+                expectedTokens=request.assets,
+                limits=request.limits,
             ))
 
-    @sp.entry_point(parameter_type=Types.t_joinOrExitPool_params)
+        (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
+            balances)
+
+        pool = self._getPoolAddress(poolId)
+
+        params = sp.record(
+            poolId=poolId,
+            sender=sender,
+            recipient=recipient,
+            balances=totalBalances,
+            lastChangeBlock=lastChangeBlock,
+            protocolSwapFeePercentage=sp.nat(0),
+            # protocolSwapFeePercentage=self.data.swapFeePercentage,
+            userData=request.userData,
+        )
+        # Call BasePool view to get amounts
+        pair = sp.view('beforeJoinPool', pool,
+                       params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+        # Call BasePool entry point to perform join
+        onJoinPool = sp.contract(Types.t_onJoinPool_params, pool, "onJoinPool").open_some(
+            "INTERFACE_MISMATCH")
+
+        sp.transfer(params, sp.tez(0), onJoinPool)
+
+        amountsIn = sp.snd(pair)
+
+        sp.verify(sp.len(balances) == sp.len(amountsIn))
+        #  The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
+        #  their participation.
+        finalBalances = self._processJoinPoolTransfers(
+            sender, request, balances, amountsIn)
+
+        self._setMinimalSwapInfoPoolBalances(
+            sp.record(
+                poolId=poolId,
+                tokens=request.assets,
+                balances=finalBalances,
+            ))
+
+        PoolBalanceChanged = sp.record(
+            poolId=poolId,
+            sender=sender,
+            tokens=request.assets,
+            amountsInOrOut=self._castToInt(
+                sp.record(amounts=amountsIn, positive=True)),
+        )
+        sp.emit(PoolBalanceChanged, tag='PoolBalanceChanged', with_type=True)
+
+    @sp.entry_point(parameter_type=Types.t_exitPool_params)
     def exitPool(
         self,
         poolId,
@@ -136,149 +182,60 @@ class PoolBalances(
         recipient,
         request
     ):
-        self._joinOrExit(
+        balances = self._validateTokensAndGetBalances(
             sp.record(
-                kind=sp.nat(0),
                 poolId=poolId,
-                sender=sender,
-                recipient=recipient,
-                change=request,
+                expectedTokens=request.assets,
+                limits=request.limits,
             ))
-
-    # /**
-    #  * @dev Implements both `joinPool` and `exitPool`, based on `kind`.
-    #  */
-    # @sp.private_lambda(with_storage="read-write", with_operations=True)
-    def _joinOrExit(
-        self,
-        params,
-    ):
-        sp.set_type(params.change.assets, sp.TMap(sp.TNat, Types.TOKEN))
-        sp.set_type(params.change.limits, sp.TMap(sp.TNat, sp.TNat))
-        # This def uses a large number of stack variables (poolId, sender and recipient, balances, amounts, fees,
-        # etc.), which leads to 'stack too deep' issues. It relies on private defs with seemingly arbitrary
-        # interfaces to work around this limitation.
-        sp.verify(sp.len(params.change.assets) == sp.len(params.change.limits))
-
-        # We first check that the caller passed the Pool's registered tokens in the correct order, and retrieve the
-        # current balance for each.
-        tokens = params.change.assets
-        balances = self._validateTokensAndGetBalances(params.poolId, tokens)
-
-        # The bulk of the work is done here: the corresponding Pool hook is called, its final balances are computed,
-        # assets are transferred, and fees are paid.
-        (
-            finalBalances,
-            amountsInOrOut,
-        ) = self._callPoolBalanceChange(params.kind, params.poolId, params.sender, params.recipient, params.change, balances)
-
-        # All that remains is storing the new Pool balances.
-        # specialization = self._getSpecialization(params.poolId)
-        # with sp.if_(specialization == sp.nat(2)):
-        #     self._setTwoTokenPoolCashBalances(
-        #         sp.record(
-        #             poolId=params.poolId,
-        #             tokenA=tokens[0],
-        #             balanceA=finalBalances[0],
-        #             tokenB=tokens[1],
-        #             balanceB=finalBalances[1],
-        #         ))
-
-        # with sp.if_(specialization == sp.nat(1)):
-        self._setMinimalSwapInfoPoolBalances(
-            sp.record(
-                poolId=params.poolId,
-                tokens=tokens,
-                balances=finalBalances,
-            ))
-
-        # with sp.if_((specialization != sp.nat(2)) & (specialization != sp.nat(1))):
-        #     # PoolSpecialization.GENERAL
-        #     self._setGeneralPoolBalances(sp.record(
-        #         poolId=params.poolId,
-        #         balances=finalBalances))
-
-        # Amounts in are positive, out are negative
-        positive = params.kind == 1
-
-        PoolBalanceChanged = sp.record(
-            poolId=params.poolId,
-            sender=params.sender,
-            tokens=tokens,
-            amountsInOrOut=self._castToInt(amountsInOrOut, positive),
-        )
-        sp.emit(PoolBalanceChanged, tag='PoolBalanceChanged', with_type=True)
-
-    # /**
-    #  * @dev Calls the corresponding Pool hook to get the amounts in/out plus protocol fee amounts, and performs the
-    #  * associated token transfers and fee payments, returning the Pool's final balances.
-    #  */
-    def _callPoolBalanceChange(
-        self,
-        kind,
-        poolId,
-        sender,
-        recipient,
-        change,
-        balances
-    ):
 
         (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
             balances)
+
         pool = self._getPoolAddress(poolId)
-        amountsInOrOut = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat))
-        sp.trace(kind)
-        with sp.if_(kind == sp.nat(1)):
-            params = sp.record(
-                poolId=poolId,
-                sender=sender,
-                recipient=recipient,
-                balances=totalBalances,
-                lastChangeBlock=lastChangeBlock,
-                protocolSwapFeePercentage=sp.nat(0),
-                # protocolSwapFeePercentage=self.data.swapFeePercentage,
-                userData=change.userData.open_variant('joinPool'),
-            )
-            # Call BasePool view to get amounts
-            pair = sp.view('beforeJoinPool', pool,
-                           params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
-            # Call BasePool entry point to perform join
-            onJoinPool = sp.contract(Types.t_onJoinPool_params, pool, "onJoinPool").open_some(
-                "INTERFACE_MISMATCH")
-            sp.transfer(params, sp.tez(0), onJoinPool)
-            amountsInOrOut = sp.snd(pair)
 
-        # with sp.if_(kind == sp.nat(0)):
-        #     params = sp.record(
-        #         poolId=poolId,
-        #         sender=sender,
-        #         recipient=recipient,
-        #         balances=totalBalances,
-        #         lastChangeBlock=lastChangeBlock,
-        #         protocolSwapFeePercentage=0,
-        #         # protocolSwapFeePercentage=self.data.swapFeePercentage,
-        #         userData=change.userData.open_variant('exitPool'),
-        #     )
-        #     pair = sp.view('beforeExitPool', pool,
-        #                    params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+        params = sp.record(
+            poolId=poolId,
+            sender=sender,
+            recipient=recipient,
+            balances=totalBalances,
+            lastChangeBlock=lastChangeBlock,
+            protocolSwapFeePercentage=sp.nat(0),
+            # protocolSwapFeePercentage=self.data.swapFeePercentage,
+            userData=request.userData,
+        )
+        # Call BasePool view to get amounts
+        pair = sp.view('beforeExitPool', pool,
+                       params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+        # Call BasePool entry point to perform join
+        onExitPool = sp.contract(Types.t_onExitPool_params, pool, "onExitPool").open_some(
+            "INTERFACE_MISMATCH")
 
-        #     onExitPool = sp.contract(Types.t_onExitPool_params, pool, "onExitPool").open_some(
-        #         "INTERFACE_MISMATCH")
-        #     sp.transfer(params, sp.tez(0), onExitPool)
-        #     amountsInOrOut = sp.snd(pair)
+        sp.transfer(params, sp.tez(0), onExitPool)
 
-        sp.verify(sp.len(balances) == sp.len(amountsInOrOut))
+        amountsOut = sp.snd(pair)
+
+        sp.verify(sp.len(balances) == sp.len(amountsOut))
         #  The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
         #  their participation.
-        finalBalances = sp.local('finalBalances', {})
-        with sp.if_(kind == 1):
-            finalBalances.value = self._processJoinPoolTransfers(
-                sender, change, balances, amountsInOrOut)
-        with sp.else_():
-            finalBalances.value = self._processExitPoolTransfers(
-                recipient, change, balances, amountsInOrOut)
+        finalBalances = self._processExitPoolTransfers(
+            sender, request, balances, amountsOut)
 
-        return (finalBalances.value, amountsInOrOut)
+        self._setMinimalSwapInfoPoolBalances(
+            sp.record(
+                poolId=poolId,
+                tokens=request.assets,
+                balances=finalBalances,
+            ))
+
+        PoolBalanceChanged = sp.record(
+            poolId=poolId,
+            sender=sender,
+            tokens=request.assets,
+            amountsInOrOut=self._castToInt(
+                sp.record(amounts=amountsOut, positive=False)),
+        )
+        sp.emit(PoolBalanceChanged, tag='PoolBalanceChanged', with_type=True)
 
     def _processJoinPoolTransfers(
         self,
@@ -349,24 +306,27 @@ class PoolBalances(
 
         return exitBalances
 
-    def _validateTokensAndGetBalances(self, poolId, expectedTokens):
-        (actualTokens, balances) = self._getPoolTokens(poolId)
-        sp.verify(sp.len(actualTokens) == sp.len(expectedTokens))
+    @sp.private_lambda(with_storage='read-only', wrap_call=True)
+    def _validateTokensAndGetBalances(self, params):
+        sp.verify(sp.len(params.expectedTokens) == sp.len(params.limits))
+
+        (actualTokens, balances) = self._getPoolTokens(params.poolId)
+        sp.verify(sp.len(actualTokens) == sp.len(params.expectedTokens))
         sp.verify(sp.len(actualTokens) > 0, Errors.POOL_NO_TOKENS)
 
         with sp.for_('i', sp.range(0, sp.len(actualTokens))) as i:
             sp.verify(actualTokens[i] ==
-                      expectedTokens[i], Errors.TOKENS_MISMATCH)
+                      params.expectedTokens[i], Errors.TOKENS_MISMATCH)
 
-        return balances
+        sp.result(balances)
 
-    def _castToInt(self, values, positive):
-
+    @sp.private_lambda()
+    def _castToInt(self, params):
         signedValues = sp.compute(sp.map({}))
-        with sp.for_('i', sp.range(0, sp.len(values))) as i:
-            with sp.if_(positive):
-                signedValues[i] = sp.to_int(values[i])
+        with sp.for_('i', sp.range(0, sp.len(params.amounts))) as i:
+            with sp.if_(params.positive):
+                signedValues[i] = sp.to_int(params.amounts[i])
             with sp.else_():
-                signedValues[i] = - sp.to_int(values[i])
+                signedValues[i] = - sp.to_int(params.amounts[i])
 
-        return signedValues
+        sp.result(signedValues)
