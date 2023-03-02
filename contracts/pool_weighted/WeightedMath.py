@@ -76,6 +76,24 @@ class WeightedMath:
 
         return FixedPoint.mulDown(balanceOut, WeightedMath.complement(power))
 
+    def _calcOutGivenIn(
+        balanceIn,
+        weightIn,
+        balanceOut,
+        weightOut,
+        amountOut
+    ):
+        sp.verify(amountOut <= FixedPoint.mulDown(balanceIn,
+                                                  WeightedMath._MAX_IN_RATIO), Errors.MAX_IN_RATIO)
+
+        base = FixedPoint.divUp(balanceOut, sp.as_nat(balanceOut - amountOut))
+        exponent = FixedPoint.divUp(weightIn, weightOut)
+        power = FixedPoint.powUp(base, exponent)
+
+        ratio = sp.as_nat(power - FixedPoint.ONE)
+
+        return FixedPoint.mulUp(balanceIn, ratio)
+
     def _calcSptOutGivenExactTokensIn(balances, normalizedWeights, amountsIn, totalSupply, swapFeePercentage):
         def mulDown(x, y):
             return FixedPoint.mulDown(x, y)
