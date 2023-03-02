@@ -174,15 +174,15 @@ class PoolBalances(
 
         # All that remains is storing the new Pool balances.
         specialization = self._getSpecialization(params.poolId)
-        with sp.if_(specialization == sp.nat(2)):
-            self._setTwoTokenPoolCashBalances(
-                sp.record(
-                    poolId=params.poolId,
-                    tokenA=tokens[0],
-                    balanceA=finalBalances[0],
-                    tokenB=tokens[1],
-                    balanceB=finalBalances[1],
-                ))
+        # with sp.if_(specialization == sp.nat(2)):
+        #     self._setTwoTokenPoolCashBalances(
+        #         sp.record(
+        #             poolId=params.poolId,
+        #             tokenA=tokens[0],
+        #             balanceA=finalBalances[0],
+        #             tokenB=tokens[1],
+        #             balanceB=finalBalances[1],
+        #         ))
 
         with sp.if_(specialization == sp.nat(1)):
             self._setMinimalSwapInfoPoolBalances(
@@ -194,7 +194,9 @@ class PoolBalances(
 
         # with sp.if_((specialization != sp.nat(2)) & (specialization != sp.nat(1))):
         #     # PoolSpecialization.GENERAL
-        #     self._setGeneralPoolBalances(params.poolId, finalBalances)
+        #     self._setGeneralPoolBalances(sp.record(
+        #         poolId=params.poolId,
+        #         balances=finalBalances))
 
         # Amounts in are positive, out are negative
         positive = params.kind == 1
@@ -203,7 +205,7 @@ class PoolBalances(
             poolId=params.poolId,
             sender=params.sender,
             tokens=tokens,
-            amountsInOrOut=amountsInOrOut,
+            amountsInOrOut=self._castToInt(amountsInOrOut, positive),
         )
         sp.emit(PoolBalanceChanged, tag='PoolBalanceChanged', with_type=True)
 
@@ -284,8 +286,7 @@ class PoolBalances(
         balances,
         amountsIn,
     ):
-        # // We need to track how much of the received ETH was used and wrapped into WETH to return any excess.
-        wrappedXtz = sp.compute(0)
+       #  wrappedXtz = sp.compute(0)
 
         joinBalances = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TRecord(
             cash=sp.TNat,
@@ -300,7 +301,7 @@ class PoolBalances(
             asset = change.assets[i]
             AssetTransfersHandler._receiveAsset(asset, amountIn, sender,
                                                 change.useInternalBalance)
-
+            # TODO: Handle Native Tez
             # with sp.if_(self._isXTZ(asset)):
             #     wrappedXtz = wrappedXtz.add(amountIn)
 
@@ -312,7 +313,7 @@ class PoolBalances(
 
             joinBalances[i] = updated_balance
 
-        # // Handle any used and remaining ETH.
+        # TODO: Handle Native Tez
         # self._handleRemainingXtz(wrappedXtz)
 
         return joinBalances
@@ -357,3 +358,14 @@ class PoolBalances(
                       expectedTokens[i], Errors.TOKENS_MISMATCH)
 
         return balances
+
+    def _castToInt(self, values, positive):
+
+        signedValues = sp.compute(sp.map({}))
+        with sp.for_('i', sp.range(0, sp.len(values))) as i:
+            with sp.if_(positive):
+                signedValues[i] = sp.to_int(values[i])
+            with sp.else_():
+                signedValues[i] = - sp.to_int(values[i])
+
+        return signedValues
