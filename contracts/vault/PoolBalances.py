@@ -31,10 +31,10 @@ class Types:
     t_exitUserData = sp.TRecord(
         kind=sp.TString,
         amountsOut=sp.TMap(sp.TNat, sp.TNat),
-        maxSPTAmountIn=sp.TNat,
-        tokenIndex=sp.TNat,
-        sptAmountIn=sp.TNat,
-        allT=sp.TNat,
+        maxSPTAmountIn=sp.TOption(sp.TNat),
+        tokenIndex=sp.TOption(sp.TNat),
+        sptAmountIn=sp.TOption(sp.TNat),
+        allT=sp.TOption(sp.TNat),
     )
 
     t_onJoinPool_params = sp.TRecord(
@@ -83,25 +83,6 @@ class Types:
         sender=sp.TAddress,
         recipient=sp.TAddress,
         request=t_exitPool_request
-    )
-
-    userData_type = sp.TVariant(
-        joinPool=t_joinUserData,
-        exitPool=t_exitUserData,
-    )
-
-    t_request = sp.TRecord(
-        userData=userData_type,
-        assets=sp.TMap(sp.TNat, TOKEN),
-        limits=sp.TMap(sp.TNat, sp.TNat),
-        useInternalBalance=sp.TBool,
-    )
-
-    t_joinOrExitPool_params = sp.TRecord(
-        poolId=sp.TBytes,
-        sender=sp.TAddress,
-        recipient=sp.TAddress,
-        request=t_request
     )
 
 

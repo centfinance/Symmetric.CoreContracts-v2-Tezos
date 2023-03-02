@@ -11,6 +11,15 @@ t_joinUserData = sp.TRecord(
     allT=sp.TOption(sp.TNat),
 )
 
+t_exitUserData = sp.TRecord(
+    kind=sp.TString,
+    amountsOut=sp.TMap(sp.TNat, sp.TNat),
+    maxSPTAmountIn=sp.TOption(sp.TNat),
+    tokenIndex=sp.TOption(sp.TNat),
+    sptAmountIn=sp.TOption(sp.TNat),
+    allT=sp.TOption(sp.TNat),
+)
+
 t_onJoinPool_params = sp.TRecord(
     poolId=sp.TBytes,
     sender=sp.TAddress,
@@ -19,6 +28,16 @@ t_onJoinPool_params = sp.TRecord(
     lastChangeBlock=sp.TNat,
     protocolSwapFeePercentage=sp.TNat,
     userData=t_joinUserData,
+)
+
+t_onExitPool_params = sp.TRecord(
+    poolId=sp.TBytes,
+    sender=sp.TAddress,
+    recipient=sp.TAddress,
+    balances=sp.TMap(sp.TNat, sp.TNat),
+    lastChangeBlock=sp.TNat,
+    protocolSwapFeePercentage=sp.TNat,
+    userData=t_exitUserData,
 )
 
 
@@ -37,6 +56,19 @@ class MockPool(sp.Contract):
     @sp.entry_point
     def onJoinPool(self, params):
         sp.set_type(params, t_onJoinPool_params)
+        pass
+
+    @sp.onchain_view()
+    def beforeExitPool(self, params):
+        sp.set_type(params, t_onExitPool_params)
+        sp.result((sp.nat(0), sp.map(l={
+            0: sp.nat(1000000000000000000),
+            1: sp.nat(1000000000000000000),
+        }, tkey=sp.TNat, tvalue=sp.TNat)))
+
+    @sp.entry_point
+    def onExitPool(self, params):
+        sp.set_type(params, t_onExitPool_params)
         pass
 
 
@@ -130,5 +162,29 @@ def test():
             sender=sender,
             recipient=recipient,
             request=request,
+        )
+    )
+    exitUserData = sp.record(
+        kind='INIT',
+        amountsOut=amountsIn,
+        maxSPTAmountIn=sp.none,
+        tokenIndex=sp.none,
+        sptAmountIn=sp.none,
+        allT=sp.none,
+    )
+
+    exitRequest = sp.record(
+        userData=exitUserData,
+        assets=assets,
+        limits=limits,
+        useInternalBalance=False,
+    )
+
+    c.exitPool(
+        sp.record(
+            poolId=poolId,
+            sender=sender,
+            recipient=recipient,
+            request=exitRequest,
         )
     )
