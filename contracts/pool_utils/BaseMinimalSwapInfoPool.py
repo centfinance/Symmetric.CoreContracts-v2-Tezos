@@ -2,36 +2,59 @@ import smartpy as sp
 
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
+from contracts.pool_utils.BasePool import BasePool
 
-class BaseMinimalSwapInfoPool:
 
+class BaseMinimalSwapInfoPool(BasePool):
+    def __init__(
+        self,
+        vault,
+        name,
+        symbol,
+        owner,
+    ):
+        BasePool.__init__(
+            self,
+            vault,
+            name,
+            symbol,
+            owner,
+        )
+
+    @sp.onchain_view()
     def onSwap(
         self,
-        request,
-        balanceTokenIn,
-        balanceTokenOut
+        params
     ):
         # TODO: Check it's not paused
-
-        scalingFactorTokenIn = self._scalingFactor(request.tokenIn)
-        scalingFactorTokenOut = self._scalingFactor(request.tokenOut)
+        scalingFactorTokenIn = sp.compute(self.data.getTokenValue((
+            params.request.tokenIn,
+            self.data.tokens,
+            self.data.scalingFactors,
+        )))
+        scalingFactorTokenOut = sp.compute(self.data.getTokenValue((
+            params.request.tokenOut,
+            self.data.tokens,
+            self.data.scalingFactors,
+        )))
 
         balanceTokenIn = ScalingHelpers._upscale(
-            balanceTokenIn, scalingFactorTokenIn)
+            params.balanceTokenIn, scalingFactorTokenIn)
         balanceTokenOut = ScalingHelpers._upscale(
-            balanceTokenOut, scalingFactorTokenOut)
+            params.balanceTokenOut, scalingFactorTokenOut)
 
-        swapAmount = sp.compute(0)
-        with sp.if_(request.kind == 'GIVEN_IN'):
-            swapAmount = self._subtractSwapFeeAmount(request.amount)
+        swapAmount = sp.local('swapAmount.value', 0)
+        with sp.if_(params.request.kind == 'GIVEN_IN'):
+            swapAmount.value = self._subtractSwapFeeAmount(
+                params.request.amount)
 
-            swapAmount = ScalingHelpers._upscale(
-                swapAmount, scalingFactorTokenIn)
+            swapAmount.value = ScalingHelpers._upscale(
+                swapAmount.value, scalingFactorTokenIn)
 
             swapRequest = sp.record(
-                tokenIn=request.tokenIn,
-                tokenOut=request.tokenOut,
-                amount=swapAmount,
+                tokenIn=params.request.tokenIn,
+                tokenOut=params.request.tokenOut,
+                amount=swapAmount.value,
             )
 
             amountOut = self._onSwapGivenIn(sp.record(
@@ -40,16 +63,17 @@ class BaseMinimalSwapInfoPool:
                 currentBalanceTokenOut=balanceTokenOut,
             ))
 
-            swapAmount = ScalingHelpers._downscaleDown(
+            swapAmount.value = ScalingHelpers._downscaleDown(
                 amountOut, scalingFactorTokenOut)
+
         with sp.else_():
-            swapAmount = ScalingHelpers._upscale(
-                request.amount, scalingFactorTokenOut)
+            swapAmount.value = ScalingHelpers._upscale(
+                params.request.amount, scalingFactorTokenOut)
 
             swapRequest = sp.record(
-                tokenIn=request.tokenIn,
-                tokenOut=request.tokenOut,
-                amount=swapAmount,
+                tokenIn=params.request.tokenIn,
+                tokenOut=params.request.tokenOut,
+                amount=swapAmount.value,
             )
 
             amountIn = self._onSwapGivenOut(sp.record(
@@ -61,6 +85,6 @@ class BaseMinimalSwapInfoPool:
             downscaleAmount = ScalingHelpers._downscaleUp(
                 amountIn, scalingFactorTokenIn)
 
-            swapAmount = self._addSwapFeeAmount(downscaleAmount)
+            swapAmount.value = self._addSwapFeeAmount(downscaleAmount)
 
-        return swapAmount
+        sp.result(swapAmount.value)

@@ -34,7 +34,11 @@ class Types:
             token_id=sp.TNat,
             token_info=sp.TMap(sp.TString, sp.TBytes))),
         totalSupply=sp.TNat,
-        vault=sp.TAddress
+        vault=sp.TAddress,
+        getTokenValue=sp.TLambda(sp.TTuple(
+            TOKEN,
+            sp.TMap(sp.TNat, TOKEN),
+            sp.TMap(sp.TNat, sp.TNat)), sp.TNat),
     )
 
     INITIALIZE_PARAMS = sp.TRecord(
@@ -43,6 +47,26 @@ class Types:
         tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
         swapFeePercentage=STORAGE.swapFeePercentage,
     )
+
+
+def getTokenValue(t):
+    sp.set_type(t, sp.TTuple(
+        Types.TOKEN,
+        sp.TMap(sp.TNat, Types.TOKEN),
+        sp.TMap(sp.TNat, sp.TNat)))
+
+    token, tokens, entries,  = sp.match_tuple(
+        t, 'token', 'tokens', 'entries')
+
+    entry = sp.local('entry', sp.nat(0))
+    with sp.for_('i', sp.range(0, sp.len(entries))) as i:
+        with sp.if_(tokens[i] == token):
+            entry.value = entries[i]
+
+    with sp.if_(entry.value == 0):
+        sp.failwith(Errors.INVALID_TOKEN)
+
+    sp.result(entry.value)
 
 
 class WeightedPool(
@@ -63,6 +87,7 @@ class WeightedPool(
             normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             totalTokens=sp.nat(0),
             initialized=sp.bool(False),
+            getTokenValue=getTokenValue
         )
         self.init_type(Types.STORAGE)
         # TODO: ProtocolFeeCache
@@ -124,27 +149,3 @@ class WeightedPool(
         )
 
         self.data.initialized = True
-
-    @sp.private_lambda(with_storage='read-only', wrap_call=True)
-    def _getNormalizedWeight(self, token):
-        normalizedWeight = sp.local('normalizedWeight', sp.nat(0))
-        with sp.for_('i', sp.range(0, self.data.totalTokens)) as i:
-            with sp.if_(self.data.tokens[i] == token):
-                normalizedWeight.value = self.data.normalizedWeights[i]
-
-        with sp.if_(normalizedWeight.value == sp.nat(0)):
-            sp.failwith(Errors.INVALID_TOKEN)
-
-        sp.result(normalizedWeight.value)
-
-    @sp.private_lambda(with_storage='read-only', wrap_call=True)
-    def _scalingFactor(self, token):
-        scalingFactor = sp.local('scalingFactor', sp.nat(0))
-        with sp.for_('i', sp.range(0, self.data.totalTokens)) as i:
-            with sp.if_(self.data.tokens[i] == token):
-                scalingFactor.value = self.data.scalingFactors[i]
-
-        with sp.if_(scalingFactor.value == 0):
-            sp.failwith(Errors.INVALID_TOKEN)
-
-        sp.result(scalingFactor.value)

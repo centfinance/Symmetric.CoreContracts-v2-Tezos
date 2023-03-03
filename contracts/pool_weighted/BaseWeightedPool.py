@@ -6,13 +6,13 @@ import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
 from contracts.pool_weighted.WeightedMath import WeightedMath
 
-from contracts.pool_utils.BasePool import BasePool
+from contracts.pool_utils.BaseMinimalSwapInfoPool import BaseMinimalSwapInfoPool
 
 from contracts.pool_utils.lib.BasePoolMath import BasePoolMath
 
 
 class BaseWeightedPool(
-    BasePool
+    BaseMinimalSwapInfoPool
 ):
     def __init__(
         self,
@@ -21,7 +21,7 @@ class BaseWeightedPool(
         symbol,
         owner,
     ):
-        BasePool.__init__(
+        BaseMinimalSwapInfoPool.__init__(
             self,
             vault,
             name,
@@ -32,18 +32,34 @@ class BaseWeightedPool(
     def _onSwapGivenIn(self, params):
         return WeightedMath._calcOutGivenIn(
             params.currentBalanceTokenIn,
-            self._getNormalizedWeight(params.swapRequest.tokenIn),
+            sp.compute(self.data.getTokenValue((
+                params.swapRequest.tokenIn,
+                self.data.tokens,
+                self.data.normalizedWeights,
+            ))),
             params.currentBalanceTokenOut,
-            self._getNormalizedWeight(params.swapRequest.tokenOut),
+            sp.compute(self.data.getTokenValue((
+                params.swapRequest.tokenOut,
+                self.data.tokens,
+                self.data.normalizedWeights,
+            ))),
             params.swapRequest.amount,
         )
 
     def _onSwapGivenOut(self, params):
         return WeightedMath._calcInGivenOut(
             params.currentBalanceTokenIn,
-            self._getNormalizedWeight(params.swapRequest.tokenIn),
+            sp.compute(self.data.getTokenValue((
+                params.swapRequest.tokenIn,
+                self.data.tokens,
+                self.data.normalizedWeights,
+            ))),
             params.currentBalanceTokenOut,
-            self._getNormalizedWeight(params.swapRequest.tokenOut),
+            sp.compute(self.data.getTokenValue((
+                params.swapRequest.tokenOut,
+                self.data.tokens,
+                self.data.normalizedWeights,
+            ))),
             params.swapRequest.amount,
         )
 
