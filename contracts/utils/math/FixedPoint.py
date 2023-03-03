@@ -149,21 +149,21 @@ def pow(x, y):
 def powUp(x,  y):
     # Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple to implement and occur often in 50/50
     # and 80/20 Weighted Pools
-    powUp = sp.compute(1)
+    powUp = sp.local('powUp', 1)
     with sp.if_(y == HALF):
-        powUp = square_root(x)
+        powUp.value = square_root(x)
     with sp.if_(y == ONE):
-        powUp = x
+        powUp.value = x
     with sp.if_(y == TWO):
-        powUp = mulUp(x, x)
+        powUp.value = mulUp(x, x)
     with sp.if_(y == FOUR):
         square = mulUp(x, x)
-        powUp = mulUp(square, square)
+        powUp.value = mulUp(square, square)
     # with sp.else_():
     #     raw = pow(x, y)
     #     maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
     #     result.value = add(raw, maxError)
-    return powUp
+    return powUp.value
 
 # /**
 #  * @dev Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
@@ -176,11 +176,11 @@ def powUp(x,  y):
 def complement(x):
     # Equivalent to:
     #  = (x < ONE) ? (ONE - x) : 0;
-    result = sp.compute(0)
+    complement = sp.local('complement', 0)
     with sp.if_(x < ONE):
-        result = sp.as_nat(ONE - x)
+        complement.value = sp.as_nat(ONE - x)
 
-    return result
+    return complement.value
 
 
 def powu(x,  y):

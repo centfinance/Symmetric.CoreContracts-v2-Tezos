@@ -237,7 +237,7 @@ def test():
     )
 
     amount = p.onSwap(swapParams)
-    sc.verify(amount == 313248281312135190)
+    sc.verify(amount == 89667728720983158)
 
     swapParams2 = sp.record(
         request=sp.record(
@@ -251,4 +251,4 @@ def test():
     )
 
     amount = p.onSwap(swapParams2)
-    sc.verify(amount == 532140002800736864)
+    sc.verify(amount == 112803158488437678)

@@ -87,4 +87,5 @@ class BaseMinimalSwapInfoPool(BasePool):
 
             swapAmount.value = self._addSwapFeeAmount(downscaleAmount)
 
+        sp.trace(swapAmount.value)
         sp.result(swapAmount.value)
