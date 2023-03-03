@@ -326,6 +326,15 @@ class BasePool(
 # Internal Functions
 ###########
 
+    def _addSwapFeeAmount(self, amount):
+        # This returns amount + fee amount, so we round up (favoring a higher fee amount).
+        return FixedPoint.divUp(amount, FixedPoint.complement(self.data.swapFeePercentage))
+
+    def _subtractSwapFeeAmount(self, amount):
+        # This returns amount - fee amount, so we round up (favoring a higher fee amount).
+        feeAmount = FixedPoint.mulUp(amount, self.data.swapFeePercentage)
+        return sp.as_nat(amount - feeAmount)
+
     def _setSwapFeePercentage(self, swapFeePercentage):
         sp.verify(swapFeePercentage >= _MIN_SWAP_FEE_PERCENTAGE,
                   Errors.MIN_SWAP_FEE_PERCENTAGE)
