@@ -137,13 +137,19 @@ def pow(x, y):
 
         exponent.value = exponent.value >> 1  # Equivalent to exponent.value / 2
         base.value *= base.value
+
     return powResult.value
+
+# /**
+#  * @dev Returns x^y, assuming both are fixed point numbers, rounding up. The  is guaranteed to not be below
+#  * the true value (that is, the error def expected - actual is always negative).
+#  */
 
 
 def powUp(x,  y):
     # Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple to implement and occur often in 50/50
     # and 80/20 Weighted Pools
-    powUp = sp.local("result", 1)
+    powUp = sp.local('powUp', 1)
     with sp.if_(y == HALF):
         powUp.value = square_root(x)
     with sp.if_(y == ONE):
@@ -170,11 +176,11 @@ def powUp(x,  y):
 def complement(x):
     # Equivalent to:
     #  = (x < ONE) ? (ONE - x) : 0;
-    result = sp.local("result", 0)
+    complement = sp.local('complement', 0)
     with sp.if_(x < ONE):
-        result.value = ONE - x
+        complement.value = sp.as_nat(ONE - x)
 
-    return result.value
+    return complement.value
 
 
 def powu(x,  y):
@@ -191,6 +197,7 @@ def powu(x,  y):
     with sp.while_(yAux.value > 0):
 
         xAbs.value = mulDown(xAbs.value, xAbs.value)
+        sp.trace(xAbs.value)
         # // Equivalent to "y % 2 == 1" but faster.
         with sp.if_(yAux.value & 1 > 0):
             resultAbs.value = mulDown(resultAbs.value, xAbs.value)
@@ -202,6 +209,5 @@ def powu(x,  y):
     # isNegative = unwrap(x) < 0 && y & 1 == 1;
     # with sp.if_(isNegative):
     #     resultInt = -resultInt;
-    sp.trace(resultAbs.value)
 
     return resultAbs.value

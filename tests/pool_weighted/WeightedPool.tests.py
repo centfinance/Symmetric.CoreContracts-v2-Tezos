@@ -2,6 +2,7 @@ import smartpy as sp
 
 from contracts.pool_weighted.WeightedPool import WeightedPool
 
+
 TOKEN = sp.TRecord(
     address=sp.TAddress,
     id=sp.TNat,
@@ -27,7 +28,11 @@ STORAGE = sp.TRecord(
         token_id=sp.TNat,
         token_info=sp.TMap(sp.TString, sp.TBytes))),
     totalSupply=sp.TNat,
-    vault=sp.TAddress
+    vault=sp.TAddress,
+    getTokenValue=sp.TLambda(sp.TTuple(
+        TOKEN,
+        sp.TMap(sp.TNat, TOKEN),
+        sp.TMap(sp.TNat, sp.TNat)), sp.TNat),
 )
 
 
@@ -178,3 +183,72 @@ def test():
             )
         )
     )
+
+
+@sp.add_test(name="BaseMinimalSwapInfoPoolTest_1", profile=True)
+def test():
+    sc = sp.test_scenario()
+
+    v = MockVault()
+    sc += v
+
+    tokens = sp.map({
+        0: sp.record(address=sp.address('tz1'), id=sp.nat(0), FA2=False),
+        1: sp.record(address=sp.address('tz1'), id=sp.nat(1), FA2=False),
+    })
+
+    weights = sp.map({
+        0: sp.nat(500000000000000000),
+        1: sp.nat(500000000000000000),
+    })
+
+    decimals = sp.map({
+        0: sp.nat(3),
+        1: sp.nat(12),
+    })
+
+    p = MockWeightedPool(
+        vault=v.address,
+        name="Symm Liqudidty Pool Token",
+        symbol="SYMMLP",
+        owner=sp.address("tz1"),
+    )
+
+    sc += p
+
+    p.initialize(
+        sp.record(
+            tokens=tokens,
+            normalizedWeights=weights,
+            tokenDecimals=decimals,
+            swapFeePercentage=sp.nat(15000000000000000)
+        )
+    )
+
+    swapParams = sp.record(
+        request=sp.record(
+            kind='GIVEN_IN',
+            tokenIn=tokens[0],
+            tokenOut=tokens[1],
+            amount=sp.nat(100000000000000000)
+        ),
+        balanceTokenIn=sp.nat(1000000000000000000),
+        balanceTokenOut=sp.nat(1000000000000000000),
+    )
+
+    amount = p.onSwap(swapParams)
+    sc.verify(amount == 89667728720983158)
+
+    swapParams2 = sp.record(
+        request=sp.record(
+            kind='GIVEN_OUT',
+            tokenIn=tokens[0],
+            tokenOut=tokens[1],
+            amount=sp.nat(100000000000000000)
+        ),
+        balanceTokenIn=sp.nat(1000000000000000000),
+        balanceTokenOut=sp.nat(1000000000000000000),
+    )
+
+    amount = p.onSwap(swapParams2)
+    sc.verify(amount == 112803158488437678)
