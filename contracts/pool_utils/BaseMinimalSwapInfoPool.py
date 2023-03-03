@@ -22,7 +22,7 @@ class BaseMinimalSwapInfoPool:
             balanceTokenOut, scalingFactorTokenOut)
 
         swapAmount = sp.compute(0)
-        with sp.if_(request.kind == ''):
+        with sp.if_(request.kind == 'GIVEN_IN'):
             swapAmount = self._subtractSwapFeeAmount(request.amount)
 
             swapAmount = ScalingHelpers._upscale(
@@ -62,3 +62,5 @@ class BaseMinimalSwapInfoPool:
                 amountIn, scalingFactorTokenIn)
 
             swapAmount = self._addSwapFeeAmount(downscaleAmount)
+
+        return swapAmount
