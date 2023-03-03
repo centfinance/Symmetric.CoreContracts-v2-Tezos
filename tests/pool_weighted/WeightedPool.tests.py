@@ -22,6 +22,7 @@ STORAGE = sp.TRecord(
     protocolFeesCollector=sp.TOption(sp.TAddress),
     swapFeePercentage=sp.TNat,
     swapGivenIn=sp.TNat,
+    swapGivenOut=sp.TNat,
     token_metadata=sp.TBigMap(sp.TNat, sp.TRecord(
         token_id=sp.TNat,
         token_info=sp.TMap(sp.TString, sp.TBytes))),
@@ -83,6 +84,7 @@ class MockWeightedPool(WeightedPool):
         )
         self.update_initial_storage(
             swapGivenIn=sp.nat(0),
+            swapGivenOut=sp.nat(0),
         )
         self.init_type(STORAGE)
 
@@ -98,6 +100,19 @@ class MockWeightedPool(WeightedPool):
             )))
         swapGivenIn = self._onSwapGivenIn(params)
         self.data.swapGivenIn = swapGivenIn
+
+    @sp.entry_point
+    def test_onSwapGivenOut(self, params):
+        sp.set_type(params, sp.TRecord(
+            currentBalanceTokenIn=sp.TNat,
+            currentBalanceTokenOut=sp.TNat,
+            swapRequest=sp.TRecord(
+                tokenIn=TOKEN,
+                tokenOut=TOKEN,
+                amount=sp.TNat,
+            )))
+        swapGivenOut = self._onSwapGivenOut(params)
+        self.data.swapGivenOut = swapGivenOut
 
 
 @ sp.add_test(name="WeightedPoolTest_1", profile=True)
@@ -141,6 +156,18 @@ def test():
     )
 
     p.test_onSwapGivenIn(
+        sp.record(
+            currentBalanceTokenIn=sp.nat(1000000000000000000),
+            currentBalanceTokenOut=sp.nat(1000000000000000000),
+            swapRequest=sp.record(
+                tokenIn=tokens[0],
+                tokenOut=tokens[1],
+                amount=sp.nat(212340000000000000),
+            )
+        )
+    )
+
+    p.test_onSwapGivenOut(
         sp.record(
             currentBalanceTokenIn=sp.nat(1000000000000000000),
             currentBalanceTokenOut=sp.nat(1000000000000000000),
