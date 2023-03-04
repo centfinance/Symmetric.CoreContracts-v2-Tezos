@@ -11,3 +11,11 @@ def totalsAndLastChangeBlock(balances):
         lastChangeBlock = sp.max(lastChangeBlock, lastChangeBlock)
 
     return (results, lastChangeBlock)
+
+
+def toBalance(cash, managed, lastChangeBlock):
+    return sp.record(
+        cash=cash,
+        managed=managed,
+        lastChangeBlock=lastChangeBlock,
+    )
