@@ -62,3 +62,33 @@ def test():
     )
 
     c.swap(swapParams)
+
+    swapParams2 = sp.record(
+        pool=pool.address,
+        tokenInBalance=sp.record(
+            cash=sp.nat(1000000000000000000),
+            managed=sp.nat(0),
+            lastChangeBlock=sp.nat(135789)
+        ),
+        tokenOutBalance=sp.record(
+            cash=sp.nat(1000000000000000000),
+            managed=sp.nat(0),
+            lastChangeBlock=sp.nat(135788)
+        ),
+        request=sp.record(
+            kind='GIVEN_OUT',
+            tokenIn=sp.record(
+                address=sp.address('tz1'),
+                id=sp.nat(0),
+                FA2=False,
+            ),
+            tokenOut=sp.record(
+                address=sp.address('tz1'),
+                id=sp.nat(1),
+                FA2=False,
+            ),
+            amount=sp.nat(12384759483945037),
+        )
+    )
+
+    c.swap(swapParams2)
