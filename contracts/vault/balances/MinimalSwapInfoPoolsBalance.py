@@ -83,3 +83,6 @@ class MinimalSwapInfoPoolsBalance:
             ))
 
         return (tokens, balances)
+
+    def _getMinimalSwapInfoPoolBalance(self, params):
+        return self.data._minimalSwapInfoPoolsBalances[params.poolId][params.token]

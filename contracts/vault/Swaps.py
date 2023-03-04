@@ -19,6 +19,24 @@ class Swaps(PoolBalances):
         ) = self._callMinimalSwapInfoPoolOnSwapHook(params)
         sp.trace(newTokenInBalance)
 
+    def _processMinimalSwapInfoPoolSwapRequest(self, params):
+        tokenInBalance = self._getMinimalSwapInfoPoolBalance(
+            params.request.poolId, params.request.tokenIn)
+        tokenOutBalance = self._getMinimalSwapInfoPoolBalance(
+            params.request.poolId, params.request.tokenOut)
+
+        (tokenInBalance, tokenOutBalance, amountCalculated) = self._callMinimalSwapInfoPoolOnSwapHook(
+            params.request,
+            params.pool,
+            tokenInBalance,
+            tokenOutBalance
+        )
+
+        self._minimalSwapInfoPoolsBalances[params.request.poolId][params.request.tokenIn] = tokenInBalance
+        self._minimalSwapInfoPoolsBalances[params.request.poolId][params.request.tokenOut] = tokenOutBalance
+
+        return amountCalculated
+
     def _callMinimalSwapInfoPoolOnSwapHook(self, params):
         tokenInTotal = (params.tokenInBalance.cash +
                         params.tokenInBalance.managed)
