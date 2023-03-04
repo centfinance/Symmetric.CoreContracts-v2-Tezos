@@ -12,7 +12,12 @@ class Swaps(PoolBalances):
 
     @sp.entry_point
     def swap(self, params):
-        self._callMinimalSwapInfoPoolOnSwapHook(self, params)
+        (
+            newTokenInBalance,
+            newTokenOutBalance,
+            amountCalculated
+        ) = self._callMinimalSwapInfoPoolOnSwapHook(params)
+        sp.trace(newTokenInBalance)
 
     def _callMinimalSwapInfoPoolOnSwapHook(self, params):
         tokenInTotal = (params.tokenInBalance.cash +
@@ -26,26 +31,30 @@ class Swaps(PoolBalances):
         swapParams = sp.record(
             balanceTokenIn=tokenInTotal,
             balanceTokenOut=tokenOutTotal,
-            request=params.request,
+            request=sp.record(
+                tokenIn=params.request.tokenIn,
+                tokenOut=params.request.tokenOut,
+                amount=params.request.amount,
+            ),
         )
 
         amountCalculated = sp.view('onSwap', params.pool,
                                    swapParams, t=sp.TNat).open_some("Invalid view")
 
-        (amountIn, amountOut) = sp.eif(
+        amounts = sp.eif(
             params.request.kind == 'GIVEN_IN',
             (params.request.amount, amountCalculated),
             (amountCalculated, params.request.amount),
         )
 
         newTokenInBalance = BalanceAllocation.toBalance(
-            (params.tokenInBalance + amountIn),
+            (params.tokenInBalance.cash + sp.fst(amounts)),
             params.tokenInBalance.managed,
             lastChangeBlock,
         )
 
         newTokenOutBalance = BalanceAllocation.toBalance(
-            sp.as_nat(params.tokenOutBalance - amountOut),
+            sp.as_nat(params.tokenOutBalance.cash - sp.snd(amounts)),
             params.tokenInBalance.managed,
             lastChangeBlock,
         )

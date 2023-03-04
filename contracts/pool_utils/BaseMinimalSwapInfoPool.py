@@ -5,6 +5,24 @@ import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 from contracts.pool_utils.BasePool import BasePool
 
 
+class Types:
+    TOKEN = sp.TRecord(
+        address=sp.TAddress,
+        id=sp.TNat,
+        FA2=sp.TBool,
+    )
+
+    t_onSwap_params = sp.TRecord(
+        balanceTokenIn=sp.TNat,
+        balanceTokenOut=sp.TNat,
+        request=sp.TRecord(
+            tokenIn=TOKEN,
+            tokenOut=TOKEN,
+            amount=sp.TNat,
+        ),
+    )
+
+
 class BaseMinimalSwapInfoPool(BasePool):
     def __init__(
         self,
@@ -26,6 +44,7 @@ class BaseMinimalSwapInfoPool(BasePool):
         self,
         params
     ):
+        sp.set_type(params, Types.t_onSwap_params)
         # TODO: Check it's not paused
         scalingFactorTokenIn = sp.compute(self.data.getTokenValue((
             params.request.tokenIn,
