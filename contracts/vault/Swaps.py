@@ -9,53 +9,89 @@ from contracts.vault.PoolBalances import PoolBalances
 from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
 
 
+class ISwaps:
+    TOKEN = sp.TRecord(
+        address=sp.TAddress,
+        id=sp.TNat,
+        FA2=sp.TBool,
+    )
+
+    SINGLE_SWAP = sp.TRecord(
+        poolId=sp.Tbytes,
+        kind=sp.TString,
+        assetIn=TOKEN,
+        assetOut=TOKEN,
+        amount=sp.TNat,
+    )
+
+    FUND_MANAGEMENT = sp.TRecord(
+        sender=sp.TAddress,
+        fromInternalBalance=sp.TBool,
+        recipient=sp.TAddress,
+        toInternalBalance=sp.TBool,
+    )
+
+    t_swap_params = sp.TRecord(
+        singleSwap=SINGLE_SWAP,
+        funds=FUND_MANAGEMENT,
+        limit=sp.TNat,
+        deadline=sp.TNat,
+    )
+
+
 class Swaps(PoolBalances):
 
     def __init__(self):
         PoolBalances.__init__(self)
 
-    @sp.entry_point
-    def swap(self, params):
-        sp.verify(sp.now <= params.deadline, Errors.SWAP_DEADLINE)
+    @sp.entry_point(parameter_type=ISwaps.t_swap_params)
+    def swap(
+        self,
+        singleSwap,
+        funds,
+        limit,
+        deadline,
+    ):
+        sp.verify(sp.now <= deadline, Errors.SWAP_DEADLINE)
 
-        sp.verify(params.singleSwap.amount > 0,
+        sp.verify(singleSwap.amount > 0,
                   Errors.UNKNOWN_AMOUNT_IN_FIRST_SWAP)
 
-        sp.verify(params.tokenIn != params.tokenOut,
+        sp.verify(singleSwap.assetIn != singleSwap.assetOut,
                   Errors.CANNOT_SWAP_SAME_TOKEN)
 
         poolRequest = sp.record(
-            poolId=params.singleSwap.poolId,
-            kind=params.singleSwap.kind,
-            tokenIn=params.tokenIn,
-            tokenOut=params.tokenOut,
-            amount=params.singleSwap.amount,
-            userData=params.singleSwap.userData,
-            from_=params.funds.sender,
-            to_=params.funds.recipient,
+            poolId=singleSwap.poolId,
+            kind=singleSwap.kind,
+            tokenIn=singleSwap.assetIn,
+            tokenOut=singleSwap.assetOut,
+            amount=singleSwap.amount,
+            userData=singleSwap.userData,
+            from_=funds.sender,
+            to_=funds.recipient,
         )
 
         (amountCalculated, amountIn, amountOut) = self._swapWithPool(poolRequest)
 
         checkLimits = sp.eif(
-            params.singleSwap.kind == 'GIVEN_IN',
-            (amountOut >= params.limit),
-            (amountIn <= params.limit),
+            singleSwap.kind == 'GIVEN_IN',
+            (amountOut >= limit),
+            (amountIn <= limit),
         )
         sp.verify(checkLimits, Errors.SWAP_LIMIT)
 
         AssetTransfersHandler._receiveAsset(
-            params.singleSwap.assetIn,
+            singleSwap.assetIn,
             amountIn,
-            params.funds.sender,
-            params.funds.fromInternalBalance
+            funds.sender,
+            funds.fromInternalBalance
         )
 
         AssetTransfersHandler._sendAsset(
-            params.singleSwap.assetOut,
+            singleSwap.assetOut,
             amountOut,
-            params.funds.recipient,
-            params.funds.toInternalBalance
+            funds.recipient,
+            funds.toInternalBalance
         )
         # TODO: Handle remaining Tez
 
