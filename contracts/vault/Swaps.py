@@ -93,11 +93,11 @@ class Swaps(PoolBalances):
         amountCalculated = sp.view('onSwap', params.pool,
                                    swapParams, t=sp.TNat).open_some("Invalid view")
 
-        amounts = sp.eif(
+        amounts = sp.compute(sp.eif(
             params.request.kind == 'GIVEN_IN',
             (params.request.amount, amountCalculated),
             (amountCalculated, params.request.amount),
-        )
+        ))
 
         newTokenInBalance = BalanceAllocation.toBalance(
             (params.tokenInBalance.cash + sp.fst(amounts)),
@@ -107,7 +107,7 @@ class Swaps(PoolBalances):
 
         newTokenOutBalance = BalanceAllocation.toBalance(
             sp.as_nat(params.tokenOutBalance.cash - sp.snd(amounts)),
-            params.tokenInBalance.managed,
+            params.tokenOutBalance.managed,
             lastChangeBlock,
         )
 
