@@ -1,8 +1,12 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricErrors as Errors
+
 import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
 from contracts.vault.PoolBalances import PoolBalances
+
+from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
 
 
 class Swaps(PoolBalances):
@@ -12,8 +16,48 @@ class Swaps(PoolBalances):
 
     @sp.entry_point
     def swap(self, params):
-        t = self._swapWithPool(params)
-        sp.trace(t)
+        sp.verify(sp.now <= params.deadline, Errors.SWAP_DEADLINE)
+
+        sp.verify(params.singleSwap.amount > 0,
+                  Errors.UNKNOWN_AMOUNT_IN_FIRST_SWAP)
+
+        sp.verify(params.tokenIn != params.tokenOut,
+                  Errors.CANNOT_SWAP_SAME_TOKEN)
+
+        poolRequest = sp.record(
+            poolId=params.singleSwap.poolId,
+            kind=params.singleSwap.kind,
+            tokenIn=params.tokenIn,
+            tokenOut=params.tokenOut,
+            amount=params.singleSwap.amount,
+            userData=params.singleSwap.userData,
+            from_=params.funds.sender,
+            to_=params.funds.recipient,
+        )
+
+        (amountCalculated, amountIn, amountOut) = self._swapWithPool(poolRequest)
+
+        checkLimits = sp.eif(
+            params.singleSwap.kind == 'GIVEN_IN',
+            (amountOut >= params.limit),
+            (amountIn <= params.limit),
+        )
+        sp.verify(checkLimits, Errors.SWAP_LIMIT)
+
+        AssetTransfersHandler._receiveAsset(
+            params.singleSwap.assetIn,
+            amountIn,
+            params.funds.sender,
+            params.funds.fromInternalBalance
+        )
+
+        AssetTransfersHandler._sendAsset(
+            params.singleSwap.assetOut,
+            amountOut,
+            params.funds.recipient,
+            params.funds.toInternalBalance
+        )
+        # TODO: Handle remaining Tez
 
     def _swapWithPool(self, params):
         pool = self._getPoolAddress(params.poolId)
