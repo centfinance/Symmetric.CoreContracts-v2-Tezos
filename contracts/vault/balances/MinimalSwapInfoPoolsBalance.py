@@ -87,4 +87,4 @@ class MinimalSwapInfoPoolsBalance:
 
     def _getMinimalSwapInfoPoolBalance(self, params):
         return self.data._minimalSwapInfoPoolsBalances.get(
-            params.poolId, message=Errors.INVALID_POOL_ID).get(params.token, meesage=Errors.TOKEN_NOT_REGISTERED)
+            params.poolId, message=Errors.INVALID_POOL_ID).get(params.token, message=Errors.TOKEN_NOT_REGISTERED)

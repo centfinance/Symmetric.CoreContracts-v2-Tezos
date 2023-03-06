@@ -33,6 +33,28 @@ def test():
     c = MockVault()
     sc += c
 
+    c.registerPool(sp.nat(1)).run(sender=pool.address)
+
+    assets = {
+        0: sp.record(
+            address=sp.address('tz1'),
+            id=sp.nat(0),
+            FA2=False,),
+        1: sp.record(
+            address=sp.address('tz1'),
+            id=sp.nat(1),
+            FA2=False,)
+    }
+
+    assetManagers = [
+        sp.address('tz100000000000000000000000000000000000000')] * 2
+
+    c.registerTokens(sp.record(
+        poolId=poolId,
+        tokens=assets,
+        assetManagers=assetManagers
+    ))
+
     swapParams = sp.record(
         pool=pool.address,
         tokenInBalance=sp.record(
