@@ -40,7 +40,7 @@ class PoolTokens(
     def registerTokens(self, params):
         sp.set_type(params, Types.REGISTER_TOKENS_PARAMS)
 
-        # specialization = self._getSpecialization(params.poolId)
+        # specialization = self._getPoolSpecialization(params.poolId)
 
         # with sp.if_(specialization == sp.nat(2)):
         #     sp.verify(sp.len(params.tokens) == sp.nat(2),
@@ -71,7 +71,7 @@ class PoolTokens(
         sp.emit(poolEvent, tag='TokensRegistered', with_type=True)
 
     def _getPoolTokens(self, poolId):
-        # specialization = self._getSpecialization(poolId)
+        # specialization = self._getPoolSpecialization(poolId)
 
         # with sp.if_(specialization == sp.nat(2)):
         #     return self._getTwoTokenPoolTokens(poolId)

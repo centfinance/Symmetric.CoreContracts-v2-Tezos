@@ -42,7 +42,7 @@ class PoolRegistry:
         )
         return sp.pack(pack)
 
-    def _getSpecialization(self, poolId):
+    def _getPoolSpecialization(self, poolId):
         sp.set_type(poolId, sp.TBytes)
 
         record = sp.unpack(poolId, sp.TRecord(

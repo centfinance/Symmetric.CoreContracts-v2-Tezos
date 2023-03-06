@@ -12,12 +12,12 @@ class Swaps(PoolBalances):
 
     @sp.entry_point
     def swap(self, params):
-        amountCalculated = self._processMinimalSwapInfoPoolSwapRequest(params)
-        sp.trace(amountCalculated)
+        t = self._swapWithPool(params)
+        sp.trace(t)
 
-    def _swapWithPool(self, request):
-        pool = self._getPoolAddress(request.poolId)
-        specialization = self._getPoolSpecialization(request.poolId)
+    def _swapWithPool(self, params):
+        pool = self._getPoolAddress(params.poolId)
+        specialization = self._getPoolSpecialization(params.poolId)
 
         amountCalculated = sp.local('amountCalculated', 0)
         # with sp.if_(specialization == sp.nat(2)):
@@ -26,31 +26,37 @@ class Swaps(PoolBalances):
         # with sp.else_():
         #     with sp.if_(specialization == sp.nat(1)):
         amountCalculated.value = self._processMinimalSwapInfoPoolSwapRequest(
-            request, pool)
+            sp.record(
+                request=params.request,
+                poolId=params.poolId,
+                pool=pool))
         # with sp.else_():
         #     amountCalculated = self._processGeneralPoolSwapRequest(
         #         request, pool)
 
-        amounts = sp.eif(
-            request.kind == 'GIVEN_IN',
-            (request.amount, amountCalculated.value),
-            (amountCalculated.value, request.amount),
-        )
+        amountsIn, amountsOut = sp.match_pair(sp.eif(
+            params.request.kind == 'GIVEN_IN',
+            (params.request.amount, amountCalculated.value),
+            (amountCalculated.value, params.request.amount),
+        ))
 
-        Swap = sp.record(
-            poolId=request.poolId,
-            tokenIn=request.tokenIn,
-            tokenOut=request.tokenOut,
-            amountIn=sp.fst(amounts),
-            amountOut=sp.snd(amounts)),
+        sp.emit(sp.record(
+            poolId=params.poolId,
+            tokenIn=(params.request.tokenIn.address,
+                     params.request.tokenIn.id),
+            tokenOut=(params.request.tokenOut.address,
+                      params.request.tokenOut.id),
+            amountIn=amountsIn,
+            amountOut=amountsOut
+        ), tag='Swap', with_type=True)
 
-        sp.emit(Swap, 'Swap', with_type=True)
+        return sp.tuple(l=(amountCalculated.value, amountsIn, amountsOut))
 
     def _processMinimalSwapInfoPoolSwapRequest(self, params):
         tokenInBalance = self._getMinimalSwapInfoPoolBalance(
-            sp.record(poolId=params.request.poolId, token=params.request.tokenIn))
+            sp.record(poolId=params.poolId, token=params.request.tokenIn))
         tokenOutBalance = self._getMinimalSwapInfoPoolBalance(
-            sp.record(poolId=params.request.poolId, token=params.request.tokenOut))
+            sp.record(poolId=params.poolId, token=params.request.tokenOut))
 
         (tokenInBalance, tokenOutBalance, amountCalculated) = self._callMinimalSwapInfoPoolOnSwapHook(
             sp.record(
@@ -60,8 +66,8 @@ class Swaps(PoolBalances):
                 tokenOutBalance=tokenOutBalance,
             ))
 
-        self._minimalSwapInfoPoolsBalances[params.request.poolId][params.request.tokenIn] = tokenInBalance
-        self._minimalSwapInfoPoolsBalances[params.request.poolId][params.request.tokenOut] = tokenOutBalance
+        self.data._minimalSwapInfoPoolsBalances[params.poolId][params.request.tokenIn] = tokenInBalance
+        self.data._minimalSwapInfoPoolsBalances[params.poolId][params.request.tokenOut] = tokenOutBalance
 
         return amountCalculated
 
