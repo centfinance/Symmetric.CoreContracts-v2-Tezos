@@ -1,6 +1,7 @@
 import smartpy as sp
 
 import contracts.utils.Utils as Utils
+import contracts.interfaces.SymmetricErrors as Errors
 
 
 class Types:
@@ -83,3 +84,7 @@ class MinimalSwapInfoPoolsBalance:
             ))
 
         return (tokens, balances)
+
+    def _getMinimalSwapInfoPoolBalance(self, params):
+        return self.data._minimalSwapInfoPoolsBalances.get(
+            params.poolId, message=Errors.INVALID_POOL_ID).get(params.token, message=Errors.TOKEN_NOT_REGISTERED)
