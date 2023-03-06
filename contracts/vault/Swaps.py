@@ -17,7 +17,7 @@ class ISwaps:
     )
 
     SINGLE_SWAP = sp.TRecord(
-        poolId=sp.Tbytes,
+        poolId=sp.TBytes,
         kind=sp.TString,
         assetIn=TOKEN,
         assetOut=TOKEN,
@@ -35,7 +35,7 @@ class ISwaps:
         singleSwap=SINGLE_SWAP,
         funds=FUND_MANAGEMENT,
         limit=sp.TNat,
-        deadline=sp.TNat,
+        deadline=sp.TTimestamp,
     )
 
 
@@ -60,18 +60,17 @@ class Swaps(PoolBalances):
         sp.verify(singleSwap.assetIn != singleSwap.assetOut,
                   Errors.CANNOT_SWAP_SAME_TOKEN)
 
-        poolRequest = sp.record(
+        request = sp.record(
             poolId=singleSwap.poolId,
             kind=singleSwap.kind,
             tokenIn=singleSwap.assetIn,
             tokenOut=singleSwap.assetOut,
             amount=singleSwap.amount,
-            userData=singleSwap.userData,
             from_=funds.sender,
             to_=funds.recipient,
         )
 
-        (amountCalculated, amountIn, amountOut) = self._swapWithPool(poolRequest)
+        (amountCalculated, amountIn, amountOut) = self._swapWithPool(request)
 
         checkLimits = sp.eif(
             singleSwap.kind == 'GIVEN_IN',
@@ -95,9 +94,9 @@ class Swaps(PoolBalances):
         )
         # TODO: Handle remaining Tez
 
-    def _swapWithPool(self, params):
-        pool = self._getPoolAddress(params.poolId)
-        specialization = self._getPoolSpecialization(params.poolId)
+    def _swapWithPool(self, request):
+        pool = self._getPoolAddress(request.poolId)
+        specialization = self._getPoolSpecialization(request.poolId)
 
         amountCalculated = sp.local('amountCalculated', 0)
         # with sp.if_(specialization == sp.nat(2)):
@@ -107,36 +106,36 @@ class Swaps(PoolBalances):
         #     with sp.if_(specialization == sp.nat(1)):
         amountCalculated.value = self._processMinimalSwapInfoPoolSwapRequest(
             sp.record(
-                request=params.request,
-                poolId=params.poolId,
-                pool=pool))
+                request=request,
+                pool=pool,
+            ))
         # with sp.else_():
         #     amountCalculated = self._processGeneralPoolSwapRequest(
         #         request, pool)
 
         amountsIn, amountsOut = sp.match_pair(sp.eif(
-            params.request.kind == 'GIVEN_IN',
-            (params.request.amount, amountCalculated.value),
-            (amountCalculated.value, params.request.amount),
+            request.kind == 'GIVEN_IN',
+            (request.amount, amountCalculated.value),
+            (amountCalculated.value, request.amount),
         ))
 
         sp.emit(sp.record(
-            poolId=params.poolId,
-            tokenIn=(params.request.tokenIn.address,
-                     params.request.tokenIn.id),
-            tokenOut=(params.request.tokenOut.address,
-                      params.request.tokenOut.id),
+            poolId=request.poolId,
+            tokenIn=(request.tokenIn.address,
+                     request.tokenIn.id),
+            tokenOut=(request.tokenOut.address,
+                      request.tokenOut.id),
             amountIn=amountsIn,
             amountOut=amountsOut
         ), tag='Swap', with_type=True)
 
-        return sp.tuple(l=(amountCalculated.value, amountsIn, amountsOut))
+        return (amountCalculated.value, amountsIn, amountsOut)
 
     def _processMinimalSwapInfoPoolSwapRequest(self, params):
         tokenInBalance = self._getMinimalSwapInfoPoolBalance(
-            sp.record(poolId=params.poolId, token=params.request.tokenIn))
+            sp.record(poolId=params.request.poolId, token=params.request.tokenIn))
         tokenOutBalance = self._getMinimalSwapInfoPoolBalance(
-            sp.record(poolId=params.poolId, token=params.request.tokenOut))
+            sp.record(poolId=params.request.poolId, token=params.request.tokenOut))
 
         (tokenInBalance, tokenOutBalance, amountCalculated) = self._callMinimalSwapInfoPoolOnSwapHook(
             sp.record(
@@ -146,8 +145,8 @@ class Swaps(PoolBalances):
                 tokenOutBalance=tokenOutBalance,
             ))
 
-        self.data._minimalSwapInfoPoolsBalances[params.poolId][params.request.tokenIn] = tokenInBalance
-        self.data._minimalSwapInfoPoolsBalances[params.poolId][params.request.tokenOut] = tokenOutBalance
+        self.data._minimalSwapInfoPoolsBalances[params.request.poolId][params.request.tokenIn] = tokenInBalance
+        self.data._minimalSwapInfoPoolsBalances[params.request.poolId][params.request.tokenOut] = tokenOutBalance
 
         return amountCalculated
 
