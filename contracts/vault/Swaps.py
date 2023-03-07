@@ -4,6 +4,8 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
+import contracts.utils.helpers.InputHelpers as InputHelpers
+
 from contracts.vault.PoolBalances import PoolBalances
 
 from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
@@ -93,6 +95,40 @@ class Swaps(PoolBalances):
             funds.toInternalBalance
         )
         # TODO: Handle remaining Tez
+
+    @sp.entry_point
+    def batchSwap(
+        self,
+        kind,
+        swaps,
+        assets,
+        funds,
+        limits,
+        deadline,
+    ):
+        sp.verify(sp.now <= deadline, Errors.SWAP_DEADLINE)
+
+        InputHelpers.ensureInputLengthMatch(assets.length, limits.length)
+
+        assetDeltas = self._swapWithPools(swaps, assets, funds, kind)
+        # TODO: Handle remaining Tez
+        # wrappedTez = 0
+        with sp.for_('i', sp.range(0, sp.len(assets))) as i:
+            asset = assets[i]
+            delta = assetDeltas[i]
+            sp.verify(delta <= limits[i], Errors.SWAP_LIMIT)
+
+            with sp.if_(delta > 0):
+                toReceive = sp.as_nat(delta)
+                AssetTransfersHandler._receiveAsset(
+                    asset, toReceive, funds.sender, funds.fromInternalBalance)
+                # TODO: Handle remaining Tez
+                # if (_isETH(asset)) {
+                #     wrappedEth = wrappedEth.add(toReceive);
+            with sp.if_(delta < 0):
+                toSend = sp.abs(delta)
+                AssetTransfersHandler._sendAsset(asset, toSend, funds.recipient,
+                                                 funds.toInternalBalance)
 
     def _swapWithPools(self, params):
         assetDeltas = sp.compute({}, tkey=sp.TNat, tvalue=sp.TInt)
