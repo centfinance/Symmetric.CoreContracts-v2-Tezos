@@ -94,6 +94,25 @@ class Swaps(PoolBalances):
         )
         # TODO: Handle remaining Tez
 
+    def _swapWithPools(self, params):
+        previousTokenCalculated = sp.local('previousTokenCalculated', ())
+        with sp.for_('i', sp.range(0, sp.lem(params.swaps))) as i:
+            withinBounds = (params.swaps[i].assetInIndex < sp.len(params.assets)) & (
+                params.swaps[i].assetOutIndex < sp.len(params.assets))
+
+            sp.verify(withinBounds, Errors.OUT_OF_BOUNDS)
+
+            tokenIn = params.assets[params.swaps[i].assetInIndex]
+            tokenOut = params.assets[params.swaps[i].assetOutIndex]
+            sp.verify(tokenIn != tokenOut, Errors.CANNOT_SWAP_SAME_TOKEN)
+
+            with sp.if_(params.swaps[i].amount == sp.nat(0)):
+                sp.verify(i > 0, Errors.UNKNOWN_AMOUNT_IN_FIRST_SWAP)
+                usingPreviousToken = (previousTokenCalculated == sp.compute(
+                    sp.eif(params.kind == 'GIVEN_IN', tokenIn, tokenOut)))
+                sp.verify(usingPreviousToken,
+                          Errors.MALCONSTRUCTED_MULTIHOP_SWAP)
+
     def _swapWithPool(self, request):
         pool = self._getPoolAddress(request.poolId)
         specialization = self._getPoolSpecialization(request.poolId)
