@@ -168,26 +168,43 @@ def test():
         )
     )
 
-    swapParams = sp.record(
+    singleSwap = sp.record(
         poolId=poolId,
-        request=sp.record(
-            kind='GIVEN_IN',
-            tokenIn=assets[0],
-            tokenOut=assets[1],
-            amount=sp.nat(12384759483945037),
-        )
+        kind='GIVEN_IN',
+        assetIn=assets[0],
+        assetOut=assets[1],
+        amount=sp.nat(12384759483945037),
+    )
+
+    funds = sp.record(
+        sender=sender,
+        fromInternalBalance=False,
+        recipient=recipient,
+        toInternalBalance=False,
+    )
+
+    swapParams = sp.record(
+        singleSwap=singleSwap,
+        funds=funds,
+        limit=sp.nat(0),
+        deadline=sp.timestamp(1)
     )
 
     c.swap(swapParams)
 
-    swapParams2 = sp.record(
+    singleSwap = sp.record(
         poolId=poolId,
-        request=sp.record(
-            kind='GIVEN_OUT',
-            tokenIn=assets[1],
-            tokenOut=assets[0],
-            amount=sp.nat(12384759483945037),
-        )
+        kind='GIVEN_OUT',
+        assetIn=assets[1],
+        assetOut=assets[0],
+        amount=sp.nat(12384759483945037),
+    )
+
+    swapParams2 = sp.record(
+        singleSwap=singleSwap,
+        funds=funds,
+        limit=sp.nat(2000000000000000000),
+        deadline=sp.timestamp(1)
     )
 
     c.swap(swapParams2)
