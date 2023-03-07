@@ -40,6 +40,22 @@ class ISwaps:
         deadline=sp.TTimestamp,
     )
 
+    BATCH_SWAP_STEP = sp.TRecord(
+        poolId=sp.TBytes,
+        assetInIndex=sp.TNat,
+        assetOutIndex=sp.TNat,
+        amount=sp.TNat,
+    )
+
+    t_batch_swap_params = sp.TRecord(
+        kind=sp.TString,
+        swaps=sp.TMap(sp.TNat, BATCH_SWAP_STEP),
+        assets=sp.TMap(sp.TNat, TOKEN),
+        funds=FUND_MANAGEMENT,
+        limits=sp.TMap(sp.TNat, sp.TInt),
+        deadline=sp.TTimestamp,
+    )
+
 
 class Swaps(PoolBalances):
 
@@ -96,7 +112,7 @@ class Swaps(PoolBalances):
         )
         # TODO: Handle remaining Tez
 
-    @sp.entry_point
+    @sp.entry_point(parameter_type=ISwaps.t_batch_swap_params)
     def batchSwap(
         self,
         kind,
