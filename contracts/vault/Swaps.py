@@ -95,7 +95,12 @@ class Swaps(PoolBalances):
         # TODO: Handle remaining Tez
 
     def _swapWithPools(self, params):
+        assetDeltas = sp.compute({}, tkey=sp.TNat, tvalue=sp.TInt)
+
         previousTokenCalculated = sp.local('previousTokenCalculated', ())
+        previousAmountCalculated = sp.local(
+            'previousAmountCalculated', sp.nat(0))
+
         with sp.for_('i', sp.range(0, sp.lem(params.swaps))) as i:
             withinBounds = (params.swaps[i].assetInIndex < sp.len(params.assets)) & (
                 params.swaps[i].assetOutIndex < sp.len(params.assets))
@@ -106,12 +111,36 @@ class Swaps(PoolBalances):
             tokenOut = params.assets[params.swaps[i].assetOutIndex]
             sp.verify(tokenIn != tokenOut, Errors.CANNOT_SWAP_SAME_TOKEN)
 
+            amount = sp.local('amount', params.swaps[i].amount)
+
             with sp.if_(params.swaps[i].amount == sp.nat(0)):
                 sp.verify(i > 0, Errors.UNKNOWN_AMOUNT_IN_FIRST_SWAP)
-                usingPreviousToken = (previousTokenCalculated == sp.compute(
+                usingPreviousToken = (previousTokenCalculated.value == sp.compute(
                     sp.eif(params.kind == 'GIVEN_IN', tokenIn, tokenOut)))
                 sp.verify(usingPreviousToken,
                           Errors.MALCONSTRUCTED_MULTIHOP_SWAP)
+                amount.value = previousAmountCalculated.value
+
+            poolRequest = sp.record(
+                poolId=params.swaps[i].poolId,
+                kind=params.kind,
+                tokenIn=tokenIn,
+                tokenOut=tokenOut,
+                amount=amount.value,
+                from_=params.funds.sender,
+                to_=params.funds.recipient,
+            )
+
+            (amountCalculated, amountIn, amountOut) = self._swapWithPool(poolRequest)
+            previousAmountCalculated.value = amountCalculated
+
+            previousTokenCalculated.value = sp.compute(
+                sp.eif(params.kind == 'GIVEN_IN', tokenOut, tokenIn))
+
+            assetDeltas[params.swaps[i].assetInIndex] = (assetDeltas.get(
+                params.swaps[i].assetInIndex, default_value=sp.nat(0)) + sp.to_int(amountIn))
+            assetDeltas[params.swaps[i].assetOutIndex] = (assetDeltas.get(
+                params.swaps[i].assetOutIndex, default_value=sp.nat(0)) - sp.to_int(amountOut))
 
     def _swapWithPool(self, request):
         pool = self._getPoolAddress(request.poolId)
