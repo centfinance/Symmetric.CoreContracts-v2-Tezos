@@ -4,8 +4,6 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
-import contracts.utils.helpers.InputHelpers as InputHelpers
-
 from contracts.vault.PoolBalances import PoolBalances
 
 from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
@@ -124,9 +122,15 @@ class Swaps(PoolBalances):
     ):
         sp.verify(sp.now <= deadline, Errors.SWAP_DEADLINE)
 
-        InputHelpers.ensureInputLengthMatch(assets.length, limits.length)
+        sp.verify(sp.len(assets) == sp.len(limits),
+                  Errors.INPUT_LENGTH_MISMATCH)
 
-        assetDeltas = self._swapWithPools(swaps, assets, funds, kind)
+        assetDeltas = self._swapWithPools(
+            sp.record(
+                swaps=swaps,
+                assets=assets,
+                funds=funds,
+                kind=kind))
         # TODO: Handle remaining Tez
         # wrappedTez = 0
         with sp.for_('i', sp.range(0, sp.len(assets))) as i:
@@ -142,18 +146,19 @@ class Swaps(PoolBalances):
                 # if (_isETH(asset)) {
                 #     wrappedEth = wrappedEth.add(toReceive);
             with sp.if_(delta < 0):
-                toSend = sp.abs(delta)
+                toSend = abs(delta)
                 AssetTransfersHandler._sendAsset(asset, toSend, funds.recipient,
                                                  funds.toInternalBalance)
 
     def _swapWithPools(self, params):
-        assetDeltas = sp.compute({}, tkey=sp.TNat, tvalue=sp.TInt)
+        assetDeltas = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TInt))
 
-        previousTokenCalculated = sp.local('previousTokenCalculated', ())
+        previousTokenCalculated = sp.local(
+            'previousTokenCalculated', sp.record(address=sp.address('tz1'), id=sp.nat(0), FA2=False))
         previousAmountCalculated = sp.local(
             'previousAmountCalculated', sp.nat(0))
 
-        with sp.for_('i', sp.range(0, sp.lem(params.swaps))) as i:
+        with sp.for_('i', sp.range(0, sp.len(params.swaps))) as i:
             withinBounds = (params.swaps[i].assetInIndex < sp.len(params.assets)) & (
                 params.swaps[i].assetOutIndex < sp.len(params.assets))
 
@@ -190,9 +195,11 @@ class Swaps(PoolBalances):
                 sp.eif(params.kind == 'GIVEN_IN', tokenOut, tokenIn))
 
             assetDeltas[params.swaps[i].assetInIndex] = (assetDeltas.get(
-                params.swaps[i].assetInIndex, default_value=sp.nat(0)) + sp.to_int(amountIn))
+                params.swaps[i].assetInIndex, default_value=sp.int(0)) + sp.to_int(amountIn))
             assetDeltas[params.swaps[i].assetOutIndex] = (assetDeltas.get(
-                params.swaps[i].assetOutIndex, default_value=sp.nat(0)) - sp.to_int(amountOut))
+                params.swaps[i].assetOutIndex, default_value=sp.int(0)) - sp.to_int(amountOut))
+
+        return assetDeltas
 
     def _swapWithPool(self, request):
         pool = self._getPoolAddress(request.poolId)
