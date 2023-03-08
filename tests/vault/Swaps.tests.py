@@ -102,11 +102,14 @@ def test():
 
     pool = MockPool()
     sc += pool
+    pool2 = MockPool()
+    sc += pool2
 
     c = MockVault()
     sc += c
 
     c.registerPool(sp.nat(1)).run(sender=pool.address)
+    c.registerPool(sp.nat(1)).run(sender=pool2.address)
 
     assets = {
         0: sp.record(
@@ -116,6 +119,17 @@ def test():
         1: sp.record(
             address=sp.address('tz1'),
             id=sp.nat(1),
+            FA2=False,)
+    }
+
+    assets2 = {
+        0: sp.record(
+            address=sp.address('tz1'),
+            id=sp.nat(56),
+            FA2=True,),
+        1: sp.record(
+            address=sp.address('tz1'),
+            id=sp.nat(13),
             FA2=False,)
     }
 
@@ -142,6 +156,13 @@ def test():
         limits=limits,
         useInternalBalance=False,
     )
+
+    request2 = sp.record(
+        userData=userData,
+        assets=assets2,
+        limits=limits,
+        useInternalBalance=False,
+    )
     sender = sp.test_account('sender').address
     recipient = sender
 
@@ -150,6 +171,12 @@ def test():
 
     poolId = _toPoolId(
         pool.address,
+        sp.nat(1),
+        sp.nat(1),
+    )
+
+    poolId2 = _toPoolId(
+        pool2.address,
         sp.nat(1),
         sp.nat(1),
     )
@@ -165,6 +192,21 @@ def test():
             sender=sender,
             recipient=recipient,
             request=request,
+        )
+    )
+
+    c.registerTokens(sp.record(
+        poolId=poolId2,
+        tokens=assets2,
+        assetManagers=assetManagers
+    ))
+
+    c.joinPool(
+        sp.record(
+            poolId=poolId2,
+            sender=sender,
+            recipient=recipient,
+            request=request2,
         )
     )
 
@@ -208,3 +250,41 @@ def test():
     )
 
     c.swap(swapParams2)
+
+    batchAssets = {
+        0: assets[0],
+        1: assets[1],
+        2: assets2[0],
+        3: assets2[1],
+    }
+
+    swaps = {
+        0: sp.record(
+            poolId=poolId,
+            assetInIndex=sp.nat(0),
+            assetOutIndex=sp.nat(1),
+            amount=sp.nat(12384759483945037),
+        ),
+        1: sp.record(
+            poolId=poolId2,
+            assetInIndex=sp.nat(2),
+            assetOutIndex=sp.nat(3),
+            amount=sp.nat(123847594839450),
+        ),
+    }
+
+    limits2 = {
+        0: 100000000000000000000,
+        1: 100000000000000000000,
+        2: 100000000000000000000,
+        3: 100000000000000000000,
+    }
+
+    c.batchSwap(sp.record(
+        kind='GIVEN_IN',
+        swaps=swaps,
+        assets=batchAssets,
+        funds=funds,
+        limits=limits2,
+        deadline=sp.timestamp(1,)
+    ))
