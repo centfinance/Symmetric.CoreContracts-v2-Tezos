@@ -1,5 +1,9 @@
 import smartpy as sp
 
+from contracts.pool_utils.external_fees.InvariantGrowthProtocolSwapFees import InvariantGrowthProtocolSwapFees
+
+import contracts.utils.math.FixedPoint as FixedPoint
+
 
 class WeightedPoolProtocolFees:
     def __init__(self):
@@ -26,3 +30,11 @@ class WeightedPoolProtocolFees:
                 exempt.value = False
 
         return exempt.value
+
+    def _getSwapProtocolFeesPoolPercentage(self, preJoinExitInvariant):
+        return InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
+            FixedPoint.divDown(preJoinExitInvariant,
+                               self.getLastPostJoinExitInvariant()),
+            FixedPoint.ONE,
+            self.data.protocolSwapFeePercentage,
+        )
