@@ -6,6 +6,8 @@ import contracts.utils.math.FixedPoint as FixedPoint
 
 from contracts.pool_weighted.BaseWeightedPool import BaseWeightedPool
 
+from contracts.pool_weighted.WeightedPoolProtocolFees import WeightedPoolProtocolFees
+
 from contracts.pool_weighted.WeightedMath import WeightedMath
 
 
@@ -22,13 +24,16 @@ class Types:
         scalingFactors=sp.TMap(sp.TNat, sp.TNat),
         tokens=sp.TMap(sp.TNat, TOKEN),
         totalTokens=sp.TNat,
+        athRateProduct=sp.TNat,
         balances=sp.TBigMap(sp.TAddress, sp.TRecord(
             approvals=sp.TMap(sp.TAddress, sp.TNat),
             balance=sp.TNat)),
+        exemptFromYieldFees=sp.TBool,
         initialized=sp.TBool,
         metadata=sp.TBigMap(sp.TString, sp.TBytes),
         poolId=sp.TOption(sp.TBytes),
         protocolFeesCollector=sp.TOption(sp.TAddress),
+        rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
         swapFeePercentage=sp.TNat,
         token_metadata=sp.TBigMap(sp.TNat, sp.TRecord(
             token_id=sp.TNat,
@@ -46,6 +51,7 @@ class Types:
         normalizedWeights=STORAGE.normalizedWeights,
         tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
         swapFeePercentage=STORAGE.swapFeePercentage,
+        rateProviders=STORAGE.rateProviders,
     )
 
 
@@ -70,6 +76,7 @@ def getTokenValue(t):
 
 
 class WeightedPool(
+    WeightedPoolProtocolFees,
     BaseWeightedPool
 ):
     MAX_TOKENS = 8
@@ -92,8 +99,7 @@ class WeightedPool(
         self.init_type(Types.STORAGE)
         # TODO: ProtocolFeeCache
 
-        # TODO: WeightedPoolProtocolFees
-
+        WeightedPoolProtocolFees.__init__(self)
         BaseWeightedPool.__init__(
             self,
             vault,
@@ -136,6 +142,11 @@ class WeightedPool(
         specialization = sp.local('specialization', sp.nat(1))
         with sp.if_(numTokens == sp.nat(2)):
             specialization.value = sp.nat(2)
+
+        self._initializeProtocolFees(sp.record(
+            numTokens=numTokens,
+            rateProviders=params.rateProviders,
+        ))
 
         super().initialize.f(
             self,
