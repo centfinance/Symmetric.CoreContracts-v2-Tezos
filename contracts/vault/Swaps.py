@@ -270,6 +270,7 @@ class Swaps(PoolBalances):
             balanceTokenIn=tokenInTotal,
             balanceTokenOut=tokenOutTotal,
             request=sp.record(
+                kind=params.request.kind,
                 tokenIn=params.request.tokenIn,
                 tokenOut=params.request.tokenOut,
                 amount=params.request.amount,

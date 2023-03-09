@@ -2,7 +2,7 @@ import smartpy as sp
 
 
 class WeightedPoolProtocolFees:
-    def __init__(self, params):
+    def __init__(self):
         self.update_initial_storage(
             exemptFromYieldFees=False,
             athRateProduct=sp.nat(0),
@@ -10,8 +10,8 @@ class WeightedPoolProtocolFees:
                                  tvalue=sp.TOption(sp.TAddress)),
         )
 
-    def initialize(self, params):
-        sp.verify(sp.len(params.numTokens) == sp.len(params.rateProviders))
+    def _initializeProtocolFees(self, params):
+        sp.verify(params.numTokens == sp.len(params.rateProviders))
 
         self.data.exemptFromYieldFees = self._getYieldFeeExemption(
             params.rateProviders)

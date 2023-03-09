@@ -16,6 +16,7 @@ class Types:
         balanceTokenIn=sp.TNat,
         balanceTokenOut=sp.TNat,
         request=sp.TRecord(
+            kind=sp.TString,
             tokenIn=TOKEN,
             tokenOut=TOKEN,
             amount=sp.TNat,

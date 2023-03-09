@@ -14,13 +14,16 @@ STORAGE = sp.TRecord(
     scalingFactors=sp.TMap(sp.TNat, sp.TNat),
     tokens=sp.TMap(sp.TNat, TOKEN),
     totalTokens=sp.TNat,
+    athRateProduct=sp.TNat,
     balances=sp.TBigMap(sp.TAddress, sp.TRecord(
         approvals=sp.TMap(sp.TAddress, sp.TNat),
         balance=sp.TNat)),
+    exemptFromYieldFees=sp.TBool,
     initialized=sp.TBool,
     metadata=sp.TBigMap(sp.TString, sp.TBytes),
     poolId=sp.TOption(sp.TBytes),
     protocolFeesCollector=sp.TOption(sp.TAddress),
+    rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
     swapFeePercentage=sp.TNat,
     swapGivenIn=sp.TNat,
     swapGivenOut=sp.TNat,
@@ -142,6 +145,11 @@ def test():
         1: sp.nat(12),
     })
 
+    rateProviders = sp.map({
+        0: sp.none,
+        1: sp.none,
+    })
+
     p = MockWeightedPool(
         vault=v.address,
         name="Symm Liqudidty Pool Token",
@@ -156,7 +164,8 @@ def test():
             tokens=tokens,
             normalizedWeights=weights,
             tokenDecimals=decimals,
-            swapFeePercentage=sp.nat(15000000000000000)
+            swapFeePercentage=sp.nat(15000000000000000),
+            rateProviders=rateProviders,
         )
     )
 
@@ -207,6 +216,11 @@ def test():
         1: sp.nat(12),
     })
 
+    rateProviders = sp.map({
+        0: sp.none,
+        1: sp.none,
+    })
+
     p = MockWeightedPool(
         vault=v.address,
         name="Symm Liqudidty Pool Token",
@@ -221,7 +235,8 @@ def test():
             tokens=tokens,
             normalizedWeights=weights,
             tokenDecimals=decimals,
-            swapFeePercentage=sp.nat(15000000000000000)
+            swapFeePercentage=sp.nat(15000000000000000),
+            rateProviders=rateProviders,
         )
     )
 

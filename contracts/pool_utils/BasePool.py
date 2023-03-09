@@ -42,6 +42,8 @@ class BasePool(
         self,
         params,
     ):
+        sp.verify(self.data.initialized == False)
+
         tokensAmount = sp.len(params.tokens)
         sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)
         sp.verify(tokensAmount <= self.MAX_TOKENS, Errors.MAX_TOKENS)
