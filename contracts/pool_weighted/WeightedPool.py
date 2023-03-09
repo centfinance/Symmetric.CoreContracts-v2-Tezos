@@ -32,6 +32,7 @@ class Types:
         initialized=sp.TBool,
         metadata=sp.TBigMap(sp.TString, sp.TBytes),
         poolId=sp.TOption(sp.TBytes),
+        postJoinExitInvariant=sp.TNat,
         protocolFeesCollector=sp.TOption(sp.TAddress),
         rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
         swapFeePercentage=sp.TNat,

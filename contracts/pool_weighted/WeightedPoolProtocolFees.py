@@ -12,6 +12,7 @@ class WeightedPoolProtocolFees:
             athRateProduct=sp.nat(0),
             rateProviders=sp.map(l={}, tkey=sp.TNat,
                                  tvalue=sp.TOption(sp.TAddress)),
+            postJoinExitInvariant=sp.nat(0),
         )
 
     def _initializeProtocolFees(self, params):
@@ -34,7 +35,7 @@ class WeightedPoolProtocolFees:
     def _getSwapProtocolFeesPoolPercentage(self, preJoinExitInvariant):
         return InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
             FixedPoint.divDown(preJoinExitInvariant,
-                               self.getLastPostJoinExitInvariant()),
+                               self.data.postJoinExitInvariant),
             FixedPoint.ONE,
             self.data.protocolSwapFeePercentage,
         )
