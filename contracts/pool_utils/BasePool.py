@@ -20,16 +20,34 @@ _SWAP_FEE_PERCENTAGE_BIT_LENGTH = 100000000000000000
 
 
 class IBasePool:
+    JOIN_USER_DATA = sp.TRecord(
+        kind=sp.TString,
+        amountsIn=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
+        minSPTAmountOut=sp.TOption(sp.TNat),
+        sptAmountOut=sp.TOption(sp.TNat),
+        tokenIndex=sp.TOption(sp.TNat),
+        allT=sp.TOption(sp.TNat),
+    )
+
+    EXIT_USER_DATA = sp.TRecord(
+        kind=sp.TString,
+        amountsOut=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
+        maxSPTAmountIn=sp.TOption(sp.TNat),
+        sptAmountIn=sp.TOption(sp.TNat),
+        tokenIndex=sp.TOption(sp.TNat),
+        recoveryModeExit=sp.TBool,
+    )
+
     t_on_join_pool_params = sp.TRecord(
         balances=sp.TMap(sp.TNat, sp.TNat),
         recipient=sp.TAddress,
-        userData=sp.TBytes,
+        userData=JOIN_USER_DATA,
     )
 
     t_on_exit_pool_params = sp.TRecord(
         balances=sp.TMap(sp.TNat, sp.TNat),
         sender=sp.TAddress,
-        userData=sp.TBytes,
+        userData=EXIT_USER_DATA,
     )
 
 
@@ -152,6 +170,8 @@ class BasePool(
                     userData=userData
                 )
             )
+            self._burnPoolTokens(sender, sptAmountIn)
+
         with sp.else_():
             scalingFactors = self.data.scalingFactors
             (sptAmountIn, amountsOut) = self._onExitPool(
@@ -161,7 +181,7 @@ class BasePool(
                     userData=userData
                 )
             )
-        self._burnPoolTokens(sender, sptAmountIn)
+            self._burnPoolTokens(sender, sptAmountIn)
 
     # @ sp.entry_point
     # def setSwapFeePercentage(self, swapFeePercentage):
