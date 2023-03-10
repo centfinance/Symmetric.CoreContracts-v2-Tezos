@@ -19,6 +19,12 @@ class Types:
         FA2=sp.TBool,
     )
 
+    FEE_CACHE = sp.TRecord(
+        swapFee=sp.TNat,
+        yieldFee=sp.TNat,
+        aumFee=sp.TNat,
+    )
+
     STORAGE = sp.TRecord(
         normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
         scalingFactors=sp.TMap(sp.TNat, sp.TNat),
@@ -29,6 +35,7 @@ class Types:
             approvals=sp.TMap(sp.TAddress, sp.TNat),
             balance=sp.TNat)),
         exemptFromYieldFees=sp.TBool,
+        feeCache=FEE_CACHE,
         initialized=sp.TBool,
         metadata=sp.TBigMap(sp.TString, sp.TBytes),
         poolId=sp.TOption(sp.TBytes),
