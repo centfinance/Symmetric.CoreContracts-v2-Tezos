@@ -26,6 +26,12 @@ class IBasePool:
         userData=sp.TBytes,
     )
 
+    t_on_exit_pool_params = sp.TRecord(
+        balances=sp.TMap(sp.TNat, sp.TNat),
+        sender=sp.TAddress,
+        userData=sp.TBytes,
+    )
+
 
 class BasePool(
     SymmetricPoolToken,
@@ -127,67 +133,35 @@ class BasePool(
         # // This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
         # return (amountsIn, new uint256[](balances.length));
 
-    # @sp.entry_point
-    # def onExitPool(
-    #     self,
-    #     poolId,
-    #     sender,
-    #     recipient,
-    #     balances,
-    #     lastChangeBlock,
-    #     protocolSwapFeePercentage,
-    #     userData
-    # ):
-    #     """
-    #       * @dev Called by the Vault when a user calls `IVault.exitPool` to remove liquidity from this Pool.  how many
-    #       * tokens the Vault should deduct from the Pool's balances, as well as the amount of protocol fees the Pool owes
-    #       * to the Vault. The Vault will then take tokens from the Pool's balances and send them to `recipient`,
-    #       * as well as collect the reported amount in protocol fees, which the Pool should calculate based on
-    #       * `protocolSwapFeePercentage`.
-    #       *
-    #       * Protocol fees are charged on exit events to guarantee that users exiting the Pool have paid their share.
-    #       *
-    #       * `sender` is the account performing the exit (typically the pool shareholder), and `recipient` is the account
-    #       * to which the Vault will send the proceeds. `balances` contains the total token balances for each token
-    #       * the Pool registered in the Vault, in the same order that `IVault.getPoolTokens` would return.
-    #       *
-    #       * `lastChangeBlock` is the last block in which *any* of the Pool's registered tokens last changed its total
-    #       * balance.
-    #       *
-    #       * `userData` contains any pool-specific instructions needed to perform the calculations, such as the type of
-    #       * exit (e.g., proportional given an amount of pool shares, single-asset, multi-asset, etc.)
-    #       *
-    #       * Contracts implementing this def should check that the caller is indeed the Vault before performing any
-    #       * state-changing operations, such as burning pool shares.
-    #     """
-    #     with sp.if_(userData.recoveryModeExit):
-    #         # TODO: Check that it's in recovery mode
-    #         # _ensureInRecoveryMode();
-    #         # Note that we don't upscale balances nor downscale amountsOut - we don't care about scaling factors during
-    #         # a recovery mode exit.
-    #         (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
-    #             sp.record(
-    #                 balances=balances,
-    #                 totalSupply=self.data.totalSupply,
-    #                 userData=userData
-    #             )
-    #         )
-    #     with sp.else_():
-    #         scalingFactors = self.data.scalingFactors
-    #         (sptAmountIn, amountsOut) = self._onExitPool(
-    #             sp.record(
-    #                 poolId=poolId,
-    #                 sender=sender,
-    #                 recipient=recipient,
-    #                 balances=balances,
-    #                 lastChangeBlock=lastChangeBlock,
-    #                 # inRecoveryMode() ? 0 : protocolSwapFeePercentage, // Protocol fees are disabled while in recovery mode
-    #                 protocolSwapFeePercentage=protocolSwapFeePercentage,
-    #                 scalingFactors=scalingFactors,
-    #                 userData=userData
-    #             )
-    #         )
-    #     self._burnPoolTokens(sender, sptAmountIn)
+    @sp.entry_point(parameter_type=IBasePool.t_on_exit_pool_params)
+    def onExitPool(
+        self,
+        sender,
+        balances,
+        userData
+    ):
+        with sp.if_(userData.recoveryModeExit):
+            # TODO: Check that it's in recovery mode
+            # _ensureInRecoveryMode();
+            # Note that we don't upscale balances nor downscale amountsOut - we don't care about scaling factors during
+            # a recovery mode exit.
+            (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
+                sp.record(
+                    balances=balances,
+                    totalSupply=self.data.totalSupply,
+                    userData=userData
+                )
+            )
+        with sp.else_():
+            scalingFactors = self.data.scalingFactors
+            (sptAmountIn, amountsOut) = self._onExitPool(
+                sp.record(
+                    balances=balances,
+                    scalingFactors=scalingFactors,
+                    userData=userData
+                )
+            )
+        self._burnPoolTokens(sender, sptAmountIn)
 
     # @ sp.entry_point
     # def setSwapFeePercentage(self, swapFeePercentage):
