@@ -19,6 +19,14 @@ _SWAP_FEE_PERCENTAGE_OFFSET = 1000000000000
 _SWAP_FEE_PERCENTAGE_BIT_LENGTH = 100000000000000000
 
 
+class IBasePool:
+    t_on_join_pool_params = sp.TRecord(
+        balances=sp.TMap(sp.TNat, sp.TNat),
+        recipient=sp.TAddress,
+        userData=sp.TBytes,
+    )
+
+
 class BasePool(
     SymmetricPoolToken,
 ):
@@ -62,98 +70,62 @@ class BasePool(
         # TODO: Add protocolFeesCollector call to vault
         # self.data.protocolFeesCollector = vault.getProtocolFeesCollector();
 
-    # @sp.entry_point
-    # def onJoinPool(
-    #     self,
-    #     poolId,
-    #     sender,
-    #     recipient,
-    #     balances,
-    #     lastChangeBlock,
-    #     protocolSwapFeePercentage,
-    #     userData
-    # ):
-    #     """
-    #           @dev Called by the Vault when a user calls `IVault.joinPool` to add liquidity to this Pool.  how many of
-    #           each registered token the user should provide, as well as the amount of protocol fees the Pool owes to the Vault.
-    #           The Vault will then take tokens from `sender` and add them to the Pool's balances, as well as collect
-    #           the reported amount in protocol fees, which the pool should calculate based on `protocolSwapFeePercentage`.
+    @sp.entry_point(parameter_type=IBasePool.t_on_join_pool_params)
+    def onJoinPool(
+        self,
+        recipient,
+        balances,
+        userData
+    ):
+        # only vault and vailid pool id can call
 
-    #           Protocol fees are reported and charged on join events so that the Pool is free of debt whenever new users join.
+        # ensureNotPaused
+        # self._beforeSwapJoinExit()
+        scalingFactors = self.data.scalingFactors
 
-    #           `sender` is the account performing the join (from which tokens will be withdrawn), and `recipient` is the account
-    #           designated to receive any benefits (typically pool shares). `balances` contains the total balances
-    #           for each token the Pool registered in the Vault, in the same order that `IVault.getPoolTokens` would return.
+        with sp.if_(self.data.totalSupply == 0):
+            (sptAmountOut, amountsIn) = self._onInitializePool(
+                sp.record(
+                    scalingFactors=scalingFactors,
+                    userData=userData,
+                )
+            )
 
-    #           `lastChangeBlock` is the last block in which any of the Pool's registered tokens last changed its total
-    #           balance.
+            # // On initialization, we lock _getMinimumBpt() by minting it for the zero address. This BPT acts as a
+            # // minimum as it will never be burned, which reduces potential issues with rounding, and also prevents the
+            # // Pool from ever being fully drained.
+            sp.verify(sptAmountOut >= _DEFAULT_MINIMUM_SPT,
+                      Errors.MINIMUM_SPT)
+            # Mint to Tezos Null address
+            self._mintPoolTokens(sp.address(
+                'tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU'), _DEFAULT_MINIMUM_SPT)
+            self._mintPoolTokens(
+                recipient, sp.as_nat(sptAmountOut - _DEFAULT_MINIMUM_SPT))
 
-    #           `userData` contains any pool-specific instructions needed to perform the calculations, such as the type of
-    #           join (e.g., proportional given an amount of pool shares, single-asset, multi-asset, etc.)
+            # // amountsIn are amounts entering the Pool, so we round up.
+            # ScalingHelpers._downscaleUpArray(amountsIn, scalingFactors)
 
-    #           Contracts implementing this def should check that the caller is indeed the Vault before performing any
-    #           state-changing operations, such as minting pool shares.
-    #     """
-    #     # only vault and vailid pool id can call
+        with sp.else_():
+            upScaledBalances = ScalingHelpers._upscaleArray(
+                balances, scalingFactors)
+            (sptAmountOut, amountsIn) = self._onJoinPool(
+                sp.record(
+                    balances=upScaledBalances,
+                    scalingFactors=scalingFactors,
+                    userData=userData,
+                )
+            )
 
-    #     # ensureNotPaused
-    #     # self._beforeSwapJoinExit()
-    #     sp.set_type(balances, sp.TMap(sp.TNat, sp.TNat))
-    #     scalingFactors = self.data.scalingFactors
+            # // Note we no longer use `balances` after calling `_onJoinPool`, which may mutate it.
 
-    #     with sp.if_(self.data.totalSupply == 0):
-    #         (sptAmountOut, amountsIn) = self._onInitializePool(
-    #             sp.record(
-    #                 poolId=poolId,
-    #                 sender=sender,
-    #                 recipient=recipient,
-    #                 scalingFactors=scalingFactors,
-    #                 userData=userData,
-    #             )
-    #         )
+            self._mintPoolTokens(recipient, sptAmountOut)
 
-    #         # // On initialization, we lock _getMinimumBpt() by minting it for the zero address. This BPT acts as a
-    #         # // minimum as it will never be burned, which reduces potential issues with rounding, and also prevents the
-    #         # // Pool from ever being fully drained.
-    #         sp.verify(sptAmountOut >= _DEFAULT_MINIMUM_SPT,
-    #                   Errors.MINIMUM_SPT)
-    #         # Mint to Tezos Null address
-    #         self._mintPoolTokens(sp.address(
-    #             'tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU'), _DEFAULT_MINIMUM_SPT)
-    #         self._mintPoolTokens(
-    #             recipient, sp.as_nat(sptAmountOut - _DEFAULT_MINIMUM_SPT))
+        # // amountsIn are amounts entering the Pool, so we round up.
+        # downscaledAmounts = ScalingHelpers._downscaleUpArray(
+        #     amountsIn, scalingFactors)
 
-    #         # // amountsIn are amounts entering the Pool, so we round up.
-    #         # ScalingHelpers._downscaleUpArray(amountsIn, scalingFactors)
-
-    #     with sp.else_():
-    #         upScaledBalances = ScalingHelpers._upscaleArray(
-    #             balances, scalingFactors)
-    #         (sptAmountOut, amountsIn) = self._onJoinPool(
-    #             sp.record(
-    #                 poolId=poolId,
-    #                 sender=sender,
-    #                 recipient=recipient,
-    #                 upScaledBalances=upScaledBalances,
-    #                 lastChangeBlock=lastChangeBlock,
-    #                 # // Protocol fees are disabled while in recovery mode
-    #                 # self.inRecoveryMode() ? 0: protocolSwapFeePercentage,
-    #                 protocolSwapFeePercentage=protocolSwapFeePercentage,
-    #                 scalingFactors=scalingFactors,
-    #                 userData=userData,
-    #             )
-    #         )
-
-    #         # // Note we no longer use `balances` after calling `_onJoinPool`, which may mutate it.
-
-    #         self._mintPoolTokens(recipient, sptAmountOut)
-
-    #     # // amountsIn are amounts entering the Pool, so we round up.
-    #     # downscaledAmounts = ScalingHelpers._downscaleUpArray(
-    #     #     amountsIn, scalingFactors)
-
-    #     # // This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
-    #     # return (amountsIn, new uint256[](balances.length));
+        # // This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
+        # return (amountsIn, new uint256[](balances.length));
 
     # @sp.entry_point
     # def onExitPool(
