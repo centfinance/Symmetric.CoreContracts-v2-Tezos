@@ -58,3 +58,23 @@ class WeightedPoolProtocolFees:
                 )
 
         return percentages.value
+
+    def _getRateFactor(self, params):
+        return sp.nat(1)
+
+    def _getRateProduct(self, normalizedWeights):
+        rateProduct = sp.local('rateProduct', FixedPoint.mulDown(
+            self._getRateFactor(sp.record(
+                normalizedWeights=normalizedWeights, provider=self.data.rateProviders[0])),
+            self._getRateFactor(sp.record(
+                normalizedWeights=normalizedWeights, provider=self.data.rateProviders[1])),
+        ))
+        with sp.if_(sp.len(normalizedWeights) > 2):
+            with sp.for_('i', sp.range(2, sp.len(normalizedWeights))) as i:
+                rateProduct.value = FixedPoint.mulDown(
+                    rateProduct.value,
+                    self._getRateFactor(sp.record(
+                        normalizedWeights=normalizedWeights, provider=self.data.rateProviders[i]))
+                )
+
+        return rateProduct.value
