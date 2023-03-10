@@ -48,10 +48,13 @@ class WeightedPoolProtocolFees:
     def _getYieldProtocolFeesPoolPercentage(self, normalizedWeights):
         percentages = sp.local('percentages', (0, 0))
         with sp.if_(self.data.exemptFromYieldFees == False):
+            rateProduct = self._getRateProduct(normalizedWeights)
+            with sp.if_(rateProduct > self.data.athRateProduct):
+                percentages.value = InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
+                    FixedPoint.divDown(rateProduct,
+                                       self.data.athRateProduct),
+                    FixedPoint.ONE,
+                    self.data.feeCache.yieldFee,
+                )
 
-            InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
-                FixedPoint.divDown(rateProduct,
-                                   self.data.athRateProduct),
-                FixedPoint.ONE,
-                self.data.feeCache.yieldFee,
-            )
+        return percentages.value
