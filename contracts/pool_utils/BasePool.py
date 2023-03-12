@@ -50,6 +50,16 @@ class IBasePool:
         userData=EXIT_USER_DATA,
     )
 
+    t_before_join_pool_params = sp.TRecord(
+        balances=sp.TMap(sp.TNat, sp.TNat),
+        userData=JOIN_USER_DATA,
+    )
+
+    t_before_exit_pool_params = sp.TRecord(
+        balances=sp.TMap(sp.TNat, sp.TNat),
+        userData=EXIT_USER_DATA,
+    )
+
 
 class BasePool(
     SymmetricPoolToken,
@@ -187,85 +197,70 @@ class BasePool(
     # def setSwapFeePercentage(self, swapFeePercentage):
     #     pass
 
-    # @sp.onchain_view()
-    # def beforeJoinPool(
-    #     self,
-    #     params,
-    # ):
-    #     scalingFactors = self.data.scalingFactors
+    @sp.onchain_view()
+    def beforeJoinPool(
+        self,
+        params,
+    ):
+        sp.set_type(params, IBasePool.t_before_join_pool_params)
+        scalingFactors = self.data.scalingFactors
+        result = sp.local('result', (0, {}))
+        with sp.if_(self.data.totalSupply == 0):
+            result.value = self._onInitializePool(
+                sp.record(
+                    scalingFactors=scalingFactors,
+                    userData=params.userData,
+                )
+            )
 
-    #     with sp.if_(self.data.totalSupply == 0):
-    #         (sptAmountOut, amountsIn) = self._onInitializePool(
-    #             sp.record(
-    #                 poolId=params.poolId,
-    #                 sender=params.sender,
-    #                 recipient=params.recipient,
-    #                 scalingFactors=scalingFactors,
-    #                 userData=params.userData,
-    #             )
-    #         )
+        with sp.else_():
+            upScaledBalances = ScalingHelpers._upscaleArray(
+                params.balances, scalingFactors)
+            result.value = self._onJoinPool(
+                sp.record(
+                    balances=upScaledBalances,
+                    scalingFactors=scalingFactors,
+                    userData=params.userData,
+                )
+            )
+        # amountsIn are amounts entering the Pool, so we round up.
+        downscaledAmounts = ScalingHelpers._downscaleUpArray(
+            sp.snd(result.value), scalingFactors)
 
-    #     with sp.else_():
-    #         upScaledBalances = ScalingHelpers._upscaleArray(
-    #             params.balances, scalingFactors)
-    #         (sptAmountOut, amountsIn) = self._onJoinPool(
-    #             sp.record(
-    #                 poolId=params.poolId,
-    #                 sender=params.sender,
-    #                 recipient=params.recipient,
-    #                 upScaledBalances=upScaledBalances,
-    #                 lastChangeBlock=params.lastChangeBlock,
-    #                 # // Protocol fees are disabled while in recovery mode
-    #                 # self.inRecoveryMode() ? 0: protocolSwapFeePercentage,
-    #                 protocolSwapFeePercentage=params.protocolSwapFeePercentage,
-    #                 scalingFactors=scalingFactors,
-    #                 userData=params.userData,
-    #             )
-    #         )
-    #     # amountsIn are amounts entering the Pool, so we round up.
-    #     downscaledAmounts = ScalingHelpers._downscaleUpArray(
-    #         amountsIn, scalingFactors)
+        # This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
+        sp.result((sp.fst(result.value), downscaledAmounts))
 
-    #     # This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
-    #     sp.result((sptAmountOut, downscaledAmounts))
+    @sp.onchain_view()
+    def beforeExitPool(
+        self,
+        params,
+    ):
+        sp.set_type(params, IBasePool.t_before_exit_pool_params)
+        result = sp.local('result', (0, {}))
+        with sp.if_(params.userData.recoveryModeExit):
+            # TODO: Check that it's in recovery mode
+            # _ensureInRecoveryMode();
 
-    # @sp.onchain_view()
-    # def beforeExitPool(
-    #     self,
-    #     params,
-    # ):
-    #     downscaledAmounts = sp.local('downScaledAmounts', {})
-    #     with sp.if_(params.userData.recoveryModeExit):
-    #         # TODO: Check that it's in recovery mode
-    #         # _ensureInRecoveryMode();
-    #         # Note that we don't upscale balances nor downscale amountsOut - we don't care about scaling factors during
-    #         # a recovery mode exit.
-    #         (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
-    #             sp.record(
-    #                 balances=params.balances,
-    #                 totalSupply=self.data.totalSupply,
-    #                 userData=params.userData
-    #             )
-    #         )
-    #     with sp.else_():
-    #         scalingFactors = self.data.scalingFactors
-    #         (sptAmountIn, amountsOut) = self._onExitPool(
-    #             sp.record(
-    #                 poolId=params.poolId,
-    #                 sender=params.sender,
-    #                 recipient=params.recipient,
-    #                 balances=params.balances,
-    #                 lastChangeBlock=params.lastChangeBlock,
-    #                 # inRecoveryMode() ? 0 : protocolSwapFeePercentage, // Protocol fees are disabled while in recovery mode
-    #                 protocolSwapFeePercentage=params.protocolSwapFeePercentage,
-    #                 scalingFactors=scalingFactors,
-    #                 userData=params.userData
-    #             )
-    #         )
+            result.value = self._doRecoveryModeExit(
+                sp.record(
+                    balances=params.balances,
+                    totalSupply=self.data.totalSupply,
+                    userData=params.userData
+                )
+            )
+        with sp.else_():
+            scalingFactors = self.data.scalingFactors
+            result.value = self._onExitPool(
+                sp.record(
+                    balances=params.balances,
+                    scalingFactors=scalingFactors,
+                    userData=params.userData
+                )
+            )
 
-    #     downscaledAmounts.value = ScalingHelpers._downscaleDownArray(
-    #         amountsOut, scalingFactors)
-    #     sp.result((sptAmountIn, downscaledAmounts.value))
+        downscaledAmounts = ScalingHelpers._downscaleDownArray(
+            sp.snd(result.value), scalingFactors)
+        sp.result((sp.fst(result.value), downscaledAmounts))
 
     # @ sp.onchain_view()
     # def getPoolId(self):
