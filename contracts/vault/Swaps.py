@@ -154,7 +154,7 @@ class Swaps(PoolBalances):
         assetDeltas = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TInt))
 
         previousTokenCalculated = sp.local(
-            'previousTokenCalculated', sp.record(address=sp.address('tz1'), id=sp.nat(0), FA2=False))
+            'previousTokenCalculated', sp.record(address=sp.address('tz1burnburnburnburnburnburnburjAYjjX'), id=sp.nat(0), FA2=False))
         previousAmountCalculated = sp.local(
             'previousAmountCalculated', sp.nat(0))
 
