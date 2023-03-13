@@ -30,14 +30,12 @@ class BaseMinimalSwapInfoPool(BasePool):
         vault,
         name,
         symbol,
-        owner,
     ):
         BasePool.__init__(
             self,
             vault,
             name,
             symbol,
-            owner,
         )
 
     @sp.onchain_view()

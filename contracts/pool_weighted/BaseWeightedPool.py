@@ -19,14 +19,12 @@ class BaseWeightedPool(
         vault,
         name,
         symbol,
-        owner,
     ):
         BaseMinimalSwapInfoPool.__init__(
             self,
             vault,
             name,
             symbol,
-            owner,
         )
 
     def _onSwapGivenIn(self, params):

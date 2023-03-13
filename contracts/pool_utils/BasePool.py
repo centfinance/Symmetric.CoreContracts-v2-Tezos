@@ -70,7 +70,6 @@ class BasePool(
         vault,
         name,
         symbol,
-        owner,
     ):
         self.update_initial_storage(
             poolId=sp.none,
@@ -102,7 +101,9 @@ class BasePool(
         self.data.poolId = sp.some(poolId)
 
         # TODO: Add protocolFeesCollector call to vault
-        # self.data.protocolFeesCollector = vault.getProtocolFeesCollector();
+        # self.data.protocolFeesCollector = vault.getProtocolFeesCollector()
+        self.data.protocolFeesCollector = sp.some(
+            sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'))
 
     @sp.entry_point(parameter_type=IBasePool.t_on_join_pool_params)
     def onJoinPool(

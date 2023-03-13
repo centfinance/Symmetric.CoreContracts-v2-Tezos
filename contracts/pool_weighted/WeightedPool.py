@@ -94,7 +94,6 @@ class WeightedPool(
         vault,
         name,
         symbol,
-        owner,
     ):
         self.init(
             tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
@@ -104,7 +103,7 @@ class WeightedPool(
             initialized=sp.bool(False),
             getTokenValue=getTokenValue
         )
-        self.init_type(Types.STORAGE)
+        # self.init_type(Types.STORAGE)
         # TODO: ProtocolFeeCache
 
         WeightedPoolProtocolFees.__init__(self)
@@ -113,7 +112,6 @@ class WeightedPool(
             vault,
             name,
             symbol,
-            owner,
         )
 
     @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS)
