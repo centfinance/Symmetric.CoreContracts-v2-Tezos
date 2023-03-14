@@ -52,6 +52,8 @@ class Types:
             TOKEN,
             sp.TMap(sp.TNat, TOKEN),
             sp.TMap(sp.TNat, sp.TNat)), sp.TNat),
+        fixedPoint=sp.TBigMap(sp.TString, sp.TLambda(
+            sp.TPair(sp.TNat, sp.TNat), sp.TNat))
     )
 
     INITIALIZE_PARAMS = sp.TRecord(
@@ -61,6 +63,10 @@ class Types:
         swapFeePercentage=STORAGE.swapFeePercentage,
         rateProviders=STORAGE.rateProviders,
     )
+
+
+ONE = 1000000000000000000
+_MIN_WEIGHT = 10000000000000000  # 0.01e18
 
 
 def getTokenValue(t):
@@ -83,9 +89,16 @@ def getTokenValue(t):
     sp.result(entry.value)
 
 
+def mulDown(p):
+    sp.set_type(p, sp.TPair(sp.TNat, sp.TNat))
+    product = sp.fst(p) * sp.snd(p)
+    sp.result(product // ONE)
+
+
 class WeightedPool(
     WeightedPoolProtocolFees,
-    BaseWeightedPool
+    BaseWeightedPool,
+    sp.Contract
 ):
     MAX_TOKENS = 8
 
@@ -95,13 +108,23 @@ class WeightedPool(
         name,
         symbol,
     ):
+        sp.Contract.__init__(self)
         self.init(
             tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
             scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             totalTokens=sp.nat(0),
             initialized=sp.bool(False),
-            getTokenValue=getTokenValue
+            getTokenValue=getTokenValue,
+            fixedPoint=sp.big_map({
+                "mulDown": FixedPoint.mulDown,
+                "mulUp": FixedPoint.mulUp,
+                "divDown": FixedPoint.divDown,
+                "divUp": FixedPoint.divUp,
+                "powDown": FixedPoint.powDown,
+                "powUp": FixedPoint.powUp,
+                "pow": FixedPoint.pow,
+            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
         )
         # self.init_type(Types.STORAGE)
         # TODO: ProtocolFeeCache
@@ -114,7 +137,7 @@ class WeightedPool(
             symbol,
         )
 
-    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=True)
+    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=False)
     def initialize(self, params):
 
         sp.verify(self.data.initialized == False)

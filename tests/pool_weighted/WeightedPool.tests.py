@@ -44,6 +44,8 @@ STORAGE = sp.TRecord(
         TOKEN,
         sp.TMap(sp.TNat, TOKEN),
         sp.TMap(sp.TNat, sp.TNat)), sp.TNat),
+    fixedPoint=sp.TBigMap(sp.TString, sp.TLambda(
+        sp.TPair(sp.TNat, sp.TNat), sp.TNat))
 )
 
 
@@ -100,7 +102,7 @@ class MockWeightedPool(WeightedPool):
             swapGivenIn=sp.nat(0),
             swapGivenOut=sp.nat(0),
         )
-        self.init_type(STORAGE)
+        # self.init_type(STORAGE)
 
     @sp.entry_point
     def test_onSwapGivenIn(self, params):

@@ -42,6 +42,7 @@ class BaseWeightedPool(
                 self.data.normalizedWeights,
             ))),
             params.swapRequest.amount,
+            self.data.fixedPoint,
         )
 
     def _onSwapGivenOut(self, params):
@@ -59,6 +60,7 @@ class BaseWeightedPool(
                 self.data.normalizedWeights,
             ))),
             params.swapRequest.amount,
+            self.data.fixedPoint,
         )
 
     def _onInitializePool(self, params):
@@ -72,10 +74,10 @@ class BaseWeightedPool(
         sp.verify(length == sp.len(params.scalingFactors))
 
         upscaledAmounts = ScalingHelpers._upscaleArray(
-            amountsIn, params.scalingFactors)
+            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])
 
         invariantAfterJoin = WeightedMath._calculateInvariant(
-            self.data.normalizedWeights, upscaledAmounts)
+            self.data.normalizedWeights, upscaledAmounts, self.data.fixedPoint['powDown'])
 
         # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
         # consistent in Pools with similar compositions but different number of tokens.
@@ -146,7 +148,7 @@ class BaseWeightedPool(
         sp.verify(sp.len(params.balances) == sp.len(amountsIn))
 
         upscaledAmounts = ScalingHelpers._upscaleArray(
-            amountsIn, params.scalingFactors)
+            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])
 
         sptAmountOut = WeightedMath._calcSptOutGivenExactTokensIn(
             balances=params.balances,
@@ -154,6 +156,7 @@ class BaseWeightedPool(
             amountsIn=upscaledAmounts,
             totalSupply=params.totalSupply,
             swapFeePercentage=self.data.swapFeePercentage,
+            math=self.data.fixedPoint,
         )
 
         sp.verify(sptAmountOut >= params.userData.minSPTAmountOut.open_some(),
@@ -176,7 +179,8 @@ class BaseWeightedPool(
             params.normalizedWeights[tokenIndex],
             sptAmountOut,
             params.totalSupply,
-            self.data.swapFeePercentage
+            self.data.swapFeePercentage,
+            self.data.fixedPoint
         )
 
         # // We join in a single token, so we initialize amountsIn with zeros
@@ -194,7 +198,7 @@ class BaseWeightedPool(
         # // Note that there is no maximum amountsIn parameter: this is handled by `IVault.joinPool`.
 
         amountsIn = BasePoolMath.computeProportionalAmountsIn(
-            params.balances, params.totalSupply, sptAmountOut)
+            params.balances, params.totalSupply, sptAmountOut, self.data.fixedPoint)
 
         return (sptAmountOut, amountsIn)
 
@@ -264,7 +268,8 @@ class BaseWeightedPool(
             params.normalizedWeights[tokenIndex],
             sptAmountIn,
             params.totalSupply,
-            self.data.swapFeePercentage
+            self.data.swapFeePercentage,
+            self.data.fixedPoint,
         )
 
         # // We join in a single token, so we initialize amountsIn with zeros
@@ -281,7 +286,7 @@ class BaseWeightedPool(
         sptAmountIn = params.userData.sptAmountIn.open_some()
         # Note that there is no minimum amountOut parameter: this is handled by `IVault.exitPool`.
         amountsOut = BasePoolMath.computeProportionalAmountsOut(
-            params.balances, params.totalSupply, sptAmountIn)
+            params.balances, params.totalSupply, sptAmountIn, self.data.fixedPoint)
 
         return (sptAmountIn, amountsOut)
 
@@ -294,13 +299,14 @@ class BaseWeightedPool(
                   sp.len(amountsOut))
 
         upscaledAmounts = ScalingHelpers._upscaleArray(
-            amountsOut, params.scalingFactors)
+            amountsOut, params.scalingFactors, self.data.fixedPoint['mulDown'])
         sptAmountIn = WeightedMath._calcSptInGivenExactTokensOut(
             balances=params.balances,
             normalizedWeights=params.normalizedWeights,
             amountsOut=upscaledAmounts,
             totalSupply=params.totalSupply,
             swapFeePercentage=self.data.swapFeePercentage,
+            math=self.data.fixedPoint,
         )
 
         sp.verify(sptAmountIn >= params.userData.maxSPTAmountIn.open_some(),
@@ -314,5 +320,5 @@ class BaseWeightedPool(
     ):
         sptAmountIn = params.userData.sptAmountIn.open_some()
         amountsOut = BasePoolMath.computeProportionalAmountsOut(
-            params.balances, params.totalSupply, sptAmountIn)
+            params.balances, params.totalSupply, sptAmountIn, self.data.fixedPoint)
         return (sptAmountIn, amountsOut)

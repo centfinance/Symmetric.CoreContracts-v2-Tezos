@@ -56,18 +56,18 @@ class BaseMinimalSwapInfoPool(BasePool):
             self.data.scalingFactors,
         )))
 
-        balanceTokenIn = ScalingHelpers._upscale(
-            params.balanceTokenIn, scalingFactorTokenIn)
-        balanceTokenOut = ScalingHelpers._upscale(
-            params.balanceTokenOut, scalingFactorTokenOut)
+        balanceTokenIn = self.data.fixedPoint['mulDown']((
+            params.balanceTokenIn, scalingFactorTokenIn))
+        balanceTokenOut = self.data.fixedPoint['mulDown']((
+            params.balanceTokenOut, scalingFactorTokenOut))
 
         swapAmount = sp.local('swapAmount.value', 0)
         with sp.if_(params.request.kind == 'GIVEN_IN'):
             swapAmount.value = self._subtractSwapFeeAmount(
                 params.request.amount)
-
-            swapAmount.value = ScalingHelpers._upscale(
-                swapAmount.value, scalingFactorTokenIn)
+            # upscale
+            swapAmount.value = self.data.fixedPoint['mulDown'](
+                (swapAmount.value, scalingFactorTokenIn))
 
             swapRequest = sp.record(
                 tokenIn=params.request.tokenIn,
@@ -81,12 +81,13 @@ class BaseMinimalSwapInfoPool(BasePool):
                 currentBalanceTokenOut=balanceTokenOut,
             ))
 
-            swapAmount.value = ScalingHelpers._downscaleDown(
-                amountOut, scalingFactorTokenOut)
+            swapAmount.value = self.data.fixedPoint['divDown']((
+                amountOut, scalingFactorTokenOut))
 
         with sp.else_():
-            swapAmount.value = ScalingHelpers._upscale(
-                params.request.amount, scalingFactorTokenOut)
+            # upscale
+            swapAmount.value = self.data.fixedPoint['mulDown']((
+                params.request.amount, scalingFactorTokenOut))
 
             swapRequest = sp.record(
                 tokenIn=params.request.tokenIn,
@@ -100,8 +101,8 @@ class BaseMinimalSwapInfoPool(BasePool):
                 currentBalanceTokenOut=balanceTokenOut,
             ))
 
-            downscaleAmount = ScalingHelpers._downscaleUp(
-                amountIn, scalingFactorTokenIn)
+            downscaleAmount = self.data.fixedPoint['divUp']((
+                amountIn, scalingFactorTokenIn))
 
             swapAmount.value = self._addSwapFeeAmount(downscaleAmount)
 

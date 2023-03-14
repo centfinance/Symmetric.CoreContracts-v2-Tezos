@@ -39,10 +39,11 @@ class WeightedPoolProtocolFees:
 
     def _getSwapProtocolFeesPoolPercentage(self, params):
         return InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
-            FixedPoint.divDown(params.preJoinExitInvariant,
-                               self.data.postJoinExitInvariant),
+            FixedPoint.divDown((params.preJoinExitInvariant,
+                               self.data.postJoinExitInvariant)),
             FixedPoint.ONE,
             params.protocolSwapFeePercentage,
+            self.data.fixedPoint,
         )
 
     def _getYieldProtocolFeesPoolPercentage(self, normalizedWeights):
@@ -51,10 +52,11 @@ class WeightedPoolProtocolFees:
             rateProduct = self._getRateProduct(normalizedWeights)
             with sp.if_(rateProduct > self.data.athRateProduct):
                 percentages.value = InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
-                    FixedPoint.divDown(rateProduct,
-                                       self.data.athRateProduct),
+                    FixedPoint.divDown((rateProduct,
+                                       self.data.athRateProduct)),
                     FixedPoint.ONE,
                     self.data.feeCache.yieldFee,
+                    self.data.fixedPoint,
                 )
 
         return percentages.value
@@ -63,18 +65,18 @@ class WeightedPoolProtocolFees:
         return sp.nat(1)
 
     def _getRateProduct(self, normalizedWeights):
-        rateProduct = sp.local('rateProduct', FixedPoint.mulDown(
+        rateProduct = sp.local('rateProduct', self.data.fixedPoint['mulDown']((
             self._getRateFactor(sp.record(
                 normalizedWeights=normalizedWeights, provider=self.data.rateProviders[0])),
             self._getRateFactor(sp.record(
                 normalizedWeights=normalizedWeights, provider=self.data.rateProviders[1])),
-        ))
+        )))
         with sp.if_(sp.len(normalizedWeights) > 2):
             with sp.for_('i', sp.range(2, sp.len(normalizedWeights))) as i:
-                rateProduct.value = FixedPoint.mulDown(
+                rateProduct.value = self.data.fixedPoint['mulDown']((
                     rateProduct.value,
                     self._getRateFactor(sp.record(
                         normalizedWeights=normalizedWeights, provider=self.data.rateProviders[i]))
-                )
+                ))
 
         return rateProduct.value

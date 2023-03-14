@@ -78,7 +78,7 @@ class BasePool(
         )
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
-    @sp.entry_point(lazify=True)
+    @sp.entry_point(lazify=False)
     def initialize(
         self,
         params,
@@ -105,7 +105,7 @@ class BasePool(
         self.data.protocolFeesCollector = sp.some(
             sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'))
 
-    @sp.entry_point(parameter_type=IBasePool.t_on_join_pool_params, lazify=True)
+    @sp.entry_point(parameter_type=IBasePool.t_on_join_pool_params, lazify=False)
     def onJoinPool(
         self,
         recipient,
@@ -142,7 +142,7 @@ class BasePool(
 
         with sp.else_():
             upScaledBalances = ScalingHelpers._upscaleArray(
-                balances, scalingFactors)
+                balances, scalingFactors, self.data.fixedPoint['mulDown'])
             (sptAmountOut, amountsIn) = self._onJoinPool(
                 sp.record(
                     balances=upScaledBalances,
@@ -162,7 +162,7 @@ class BasePool(
         # // This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
         # return (amountsIn, new uint256[](balances.length));
 
-    @sp.entry_point(parameter_type=IBasePool.t_on_exit_pool_params, lazify=True)
+    @sp.entry_point(parameter_type=IBasePool.t_on_exit_pool_params, lazify=False)
     def onExitPool(
         self,
         sender,
@@ -194,9 +194,9 @@ class BasePool(
             )
             self._burnPoolTokens(sender, sptAmountIn)
 
-    # @ sp.entry_point
-    # def setSwapFeePercentage(self, swapFeePercentage):
-    #     pass
+    # # @ sp.entry_point
+    # # def setSwapFeePercentage(self, swapFeePercentage):
+    # #     pass
 
     @sp.onchain_view()
     def beforeJoinPool(
@@ -216,7 +216,7 @@ class BasePool(
 
         with sp.else_():
             upScaledBalances = ScalingHelpers._upscaleArray(
-                params.balances, scalingFactors)
+                params.balances, scalingFactors, self.data.fixedPoint['mulDown'])
             result.value = self._onJoinPool(
                 sp.record(
                     balances=upScaledBalances,
@@ -226,7 +226,7 @@ class BasePool(
             )
         # amountsIn are amounts entering the Pool, so we round up.
         downscaledAmounts = ScalingHelpers._downscaleUpArray(
-            sp.snd(result.value), scalingFactors)
+            sp.snd(result.value), scalingFactors, self.data.fixedPoint['divUp'])
 
         # This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
         sp.result((sp.fst(result.value), downscaledAmounts))
@@ -260,7 +260,7 @@ class BasePool(
             )
 
         downscaledAmounts = ScalingHelpers._downscaleDownArray(
-            sp.snd(result.value), scalingFactors)
+            sp.snd(result.value), scalingFactors, self.data.fixedPoint['divDown'])
         sp.result((sp.fst(result.value), downscaledAmounts))
 
     # @ sp.onchain_view()
@@ -292,11 +292,12 @@ class BasePool(
 
     def _addSwapFeeAmount(self, amount):
         # This returns amount + fee amount, so we round up (favoring a higher fee amount).
-        return FixedPoint.divUp(amount, FixedPoint.complement(self.data.swapFeePercentage))
+        return self.data.fixedPoint['divUp']((amount, FixedPoint.complement(self.data.swapFeePercentage)))
 
     def _subtractSwapFeeAmount(self, amount):
         # This returns amount - fee amount, so we round up (favoring a higher fee amount).
-        feeAmount = FixedPoint.mulUp(amount, self.data.swapFeePercentage)
+        feeAmount = self.data.fixedPoint['mulUp'](
+            (amount, self.data.swapFeePercentage))
         return sp.as_nat(amount - feeAmount)
 
     def _setSwapFeePercentage(self, swapFeePercentage):
@@ -312,7 +313,7 @@ class BasePool(
     def _computeScalingFactor(self, decimals):
         sp.set_type(decimals, sp.TNat)
         decimalsDifference = sp.as_nat(18 - decimals)
-        return FixedPoint.ONE * (FixedPoint.pow(sp.nat(10), decimalsDifference))
+        return FixedPoint.ONE * (self.data.fixedPoint['pow']((sp.nat(10), decimalsDifference)))
 
     # def _onInitializePool(
     #     self,
