@@ -78,7 +78,7 @@ class BasePool(
         )
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
-    @sp.entry_point
+    @sp.entry_point(lazify=True)
     def initialize(
         self,
         params,
@@ -105,7 +105,7 @@ class BasePool(
         self.data.protocolFeesCollector = sp.some(
             sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'))
 
-    @sp.entry_point(parameter_type=IBasePool.t_on_join_pool_params)
+    @sp.entry_point(parameter_type=IBasePool.t_on_join_pool_params, lazify=True)
     def onJoinPool(
         self,
         recipient,
@@ -162,7 +162,7 @@ class BasePool(
         # // This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
         # return (amountsIn, new uint256[](balances.length));
 
-    @sp.entry_point(parameter_type=IBasePool.t_on_exit_pool_params)
+    @sp.entry_point(parameter_type=IBasePool.t_on_exit_pool_params, lazify=True)
     def onExitPool(
         self,
         sender,

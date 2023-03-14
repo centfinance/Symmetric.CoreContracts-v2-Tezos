@@ -74,7 +74,7 @@ class WeightedPoolFactory(sp.Contract):
             'WPI'
         )
 
-    @sp.entry_point
+    @sp.entry_point(lazify=True)
     def create(self, params):
         """
             Deploys a new WeightedPool

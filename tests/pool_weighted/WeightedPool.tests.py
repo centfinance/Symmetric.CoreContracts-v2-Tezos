@@ -89,14 +89,12 @@ class MockWeightedPool(WeightedPool):
         vault,
         name,
         symbol,
-        owner,
     ):
         WeightedPool.__init__(
             self,
             vault,
             name,
             symbol,
-            owner,
         )
         self.update_initial_storage(
             swapGivenIn=sp.nat(0),
@@ -162,7 +160,6 @@ def test():
         vault=v.address,
         name="Symm Liqudidty Pool Token",
         symbol="SYMMLP",
-        owner=sp.address("tz1"),
     )
 
     sc += p
@@ -233,7 +230,6 @@ def test():
         vault=v.address,
         name="Symm Liqudidty Pool Token",
         symbol="SYMMLP",
-        owner=sp.address("tz1"),
     )
 
     sc += p

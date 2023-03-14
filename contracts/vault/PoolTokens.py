@@ -36,7 +36,7 @@ class PoolTokens(
         TwoTokenPoolsBalance.__init__(self)
         GeneralPoolsBalance.__init__(self)
 
-    @sp.entry_point
+    @sp.entry_point(lazify=True)
     def registerTokens(self, params):
         sp.set_type(params, Types.REGISTER_TOKENS_PARAMS)
 

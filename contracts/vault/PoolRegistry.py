@@ -12,7 +12,7 @@ class PoolRegistry:
             nextPoolNonce=sp.nat(1)
         )
 
-    @sp.entry_point
+    @sp.entry_point(lazify=True)
     def registerPool(self, specialization):
         sp.set_type(specialization, sp.TNat)
 
