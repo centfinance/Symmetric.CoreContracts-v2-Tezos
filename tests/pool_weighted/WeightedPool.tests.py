@@ -77,7 +77,7 @@ class MockVault(sp.Contract):
                 address=sp.TAddress, id=sp.TNat, FA2=sp.TBool)),
             assetManagers=sp.TOption(sp.TMap(sp.TNat, sp.TAddress))
         ))
-        pass
+        self.data.tokens_set = True
 
     def _toPoolId(self, pool, specialization, nonce):
         pack = sp.record(nonce=nonce, pool=pool, specialization=specialization)

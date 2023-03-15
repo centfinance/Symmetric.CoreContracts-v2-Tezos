@@ -24,13 +24,13 @@ class Types:
         yieldFee=sp.TNat,
         aumFee=sp.TNat,
     )
+    # TOKEN = sp.TTuple(sp.TAddress, sp.TNat, sp.TBool)
+    # FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
 
     STORAGE = sp.TRecord(
         normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
         scalingFactors=sp.TMap(sp.TNat, sp.TNat),
         tokens=sp.TMap(sp.TNat, TOKEN),
-        totalTokens=sp.TNat,
-        athRateProduct=sp.TNat,
         balances=sp.TBigMap(sp.TAddress, sp.TRecord(
             approvals=sp.TMap(sp.TAddress, sp.TNat),
             balance=sp.TNat)),
@@ -39,10 +39,8 @@ class Types:
         initialized=sp.TBool,
         metadata=sp.TBigMap(sp.TString, sp.TBytes),
         poolId=sp.TOption(sp.TBytes),
-        postJoinExitInvariant=sp.TNat,
         protocolFeesCollector=sp.TOption(sp.TAddress),
         rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
-        swapFeePercentage=sp.TNat,
         token_metadata=sp.TBigMap(sp.TNat, sp.TRecord(
             token_id=sp.TNat,
             token_info=sp.TMap(sp.TString, sp.TBytes))),
@@ -53,14 +51,15 @@ class Types:
             sp.TMap(sp.TNat, TOKEN),
             sp.TMap(sp.TNat, sp.TNat)), sp.TNat),
         fixedPoint=sp.TBigMap(sp.TString, sp.TLambda(
-            sp.TPair(sp.TNat, sp.TNat), sp.TNat))
+            sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
+        entries=sp.TBigMap(sp.TString, sp.TNat),
     )
 
     INITIALIZE_PARAMS = sp.TRecord(
         tokens=STORAGE.tokens,
         normalizedWeights=STORAGE.normalizedWeights,
         tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
-        swapFeePercentage=STORAGE.swapFeePercentage,
+        swapFeePercentage=sp.TNat,
         rateProviders=STORAGE.rateProviders,
     )
 
@@ -98,7 +97,6 @@ def mulDown(p):
 class WeightedPool(
     WeightedPoolProtocolFees,
     BaseWeightedPool,
-    sp.Contract
 ):
     MAX_TOKENS = 8
 
@@ -108,12 +106,10 @@ class WeightedPool(
         name,
         symbol,
     ):
-        sp.Contract.__init__(self)
         self.init(
             tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
             scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
-            totalTokens=sp.nat(0),
             initialized=sp.bool(False),
             getTokenValue=getTokenValue,
             fixedPoint=sp.big_map({
@@ -125,6 +121,12 @@ class WeightedPool(
                 "powUp": FixedPoint.powUp,
                 "pow": FixedPoint.pow,
             }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
+            entries=sp.big_map({
+                'totalTokens': sp.nat(0),
+                'athRateProduct': sp.nat(0),
+                'postJoinExitInvariant': sp.nat(0),
+                'swapFeePercentage': sp.nat(0),
+            }),
         )
         # self.init_type(Types.STORAGE)
         # TODO: ProtocolFeeCache
@@ -137,7 +139,7 @@ class WeightedPool(
             symbol,
         )
 
-    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=False)
+    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=True)
     def initialize(self, params):
 
         sp.verify(self.data.initialized == False)
@@ -147,7 +149,7 @@ class WeightedPool(
                   & (numTokens == sp.len(params.tokenDecimals)))
 
         self.data.tokens = params.tokens
-        self.data.totalTokens = numTokens
+        self.data.entries['totalTokens'] = numTokens
 
         # // Ensure each normalized weight is above the minimum
         normalizedSum = sp.local('normalizedSum', 0)

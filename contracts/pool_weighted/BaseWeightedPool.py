@@ -155,7 +155,7 @@ class BaseWeightedPool(
             normalizedWeights=params.normalizedWeights,
             amountsIn=upscaledAmounts,
             totalSupply=params.totalSupply,
-            swapFeePercentage=self.data.swapFeePercentage,
+            swapFeePercentage=self.data.entries['swapFeePercentage'],
             math=self.data.fixedPoint,
         )
 
@@ -179,7 +179,7 @@ class BaseWeightedPool(
             params.normalizedWeights[tokenIndex],
             sptAmountOut,
             params.totalSupply,
-            self.data.swapFeePercentage,
+            self.data.entries['swapFeePercentage'],
             self.data.fixedPoint
         )
 
@@ -268,7 +268,7 @@ class BaseWeightedPool(
             params.normalizedWeights[tokenIndex],
             sptAmountIn,
             params.totalSupply,
-            self.data.swapFeePercentage,
+            self.data.entries['swapFeePercentage'],
             self.data.fixedPoint,
         )
 
@@ -305,7 +305,7 @@ class BaseWeightedPool(
             normalizedWeights=params.normalizedWeights,
             amountsOut=upscaledAmounts,
             totalSupply=params.totalSupply,
-            swapFeePercentage=self.data.swapFeePercentage,
+            swapFeePercentage=self.data.entries['swapFeePercentage'],
             math=self.data.fixedPoint,
         )
 

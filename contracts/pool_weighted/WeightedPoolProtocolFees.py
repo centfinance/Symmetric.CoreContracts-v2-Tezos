@@ -9,10 +9,8 @@ class WeightedPoolProtocolFees:
     def __init__(self):
         self.update_initial_storage(
             exemptFromYieldFees=False,
-            athRateProduct=sp.nat(0),
             rateProviders=sp.map(l={}, tkey=sp.TNat,
                                  tvalue=sp.TOption(sp.TAddress)),
-            postJoinExitInvariant=sp.nat(0),
             feeCache=sp.record(
                 swapFee=sp.nat(0),
                 yieldFee=sp.nat(0),
@@ -40,7 +38,7 @@ class WeightedPoolProtocolFees:
     def _getSwapProtocolFeesPoolPercentage(self, params):
         return InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
             FixedPoint.divDown((params.preJoinExitInvariant,
-                               self.data.postJoinExitInvariant)),
+                               self.data.entries['postJoinExitInvariant'])),
             FixedPoint.ONE,
             params.protocolSwapFeePercentage,
             self.data.fixedPoint,
@@ -50,10 +48,10 @@ class WeightedPoolProtocolFees:
         percentages = sp.local('percentages', (0, 0))
         with sp.if_(self.data.exemptFromYieldFees == False):
             rateProduct = self._getRateProduct(normalizedWeights)
-            with sp.if_(rateProduct > self.data.athRateProduct):
+            with sp.if_(rateProduct > self.data.entries['athRateProduct']):
                 percentages.value = InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
                     FixedPoint.divDown((rateProduct,
-                                       self.data.athRateProduct)),
+                                       self.data.entries['athRateProduct'])),
                     FixedPoint.ONE,
                     self.data.feeCache.yieldFee,
                     self.data.fixedPoint,

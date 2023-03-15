@@ -6,6 +6,8 @@ from contracts.pool_utils.BasePoolFactory import BasePoolFactory
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.utils.math.FixedPoint as FixedPoint
+
 # class Types:
 
 #     CREATE_PARAMS = sp.TRecord(
@@ -85,8 +87,6 @@ class WeightedPoolFactory(sp.Contract):
             normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             tokens=sp.map(l={}, tkey=sp.TNat, tvalue=TOKEN),
-            totalTokens=sp.nat(0),
-            athRateProduct=sp.nat(0),
             balances=sp.big_map(
                 tvalue=sp.TRecord(approvals=sp.TMap(
                     sp.TAddress, sp.TNat), balance=sp.TNat),
@@ -102,11 +102,9 @@ class WeightedPoolFactory(sp.Contract):
                 "": params.metadata
             }),
             poolId=sp.none,
-            postJoinExitInvariant=sp.nat(0),
             protocolFeesCollector=sp.none,
             rateProviders=sp.map(l={}, tkey=sp.TNat,
                                  tvalue=sp.TOption(sp.TAddress)),
-            swapFeePercentage=sp.nat(0),
             token_metadata=sp.big_map(
                 {0: sp.record(
                     token_id=0, token_info=params.token_metadata)},
@@ -117,6 +115,21 @@ class WeightedPoolFactory(sp.Contract):
             totalSupply=sp.nat(0),
             vault=self.data._vault,
             getTokenValue=getTokenValue,
+            fixedPoint=sp.big_map({
+                "mulDown": FixedPoint.mulDown,
+                "mulUp": FixedPoint.mulUp,
+                "divDown": FixedPoint.divDown,
+                "divUp": FixedPoint.divUp,
+                "powDown": FixedPoint.powDown,
+                "powUp": FixedPoint.powUp,
+                "pow": FixedPoint.pow,
+            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
+            entries=sp.big_map({
+                'totalTokens': sp.nat(0),
+                'athRateProduct': sp.nat(0),
+                'postJoinExitInvariant': sp.nat(0),
+                'swapFeePercentage': sp.nat(0),
+            }),
         )
         self._create(self, STORAGE)
 

@@ -73,18 +73,15 @@ class BasePool(
     ):
         self.update_initial_storage(
             poolId=sp.none,
-            swapFeePercentage=sp.nat(0),
             protocolFeesCollector=sp.none
         )
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
-    @sp.entry_point(lazify=False)
+    @sp.entry_point(lazify=True)
     def initialize(
         self,
         params,
     ):
-        sp.verify(self.data.initialized == False)
-
         tokensAmount = sp.len(params.tokens)
         sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)
         sp.verify(tokensAmount <= self.MAX_TOKENS, Errors.MAX_TOKENS)
@@ -292,12 +289,12 @@ class BasePool(
 
     def _addSwapFeeAmount(self, amount):
         # This returns amount + fee amount, so we round up (favoring a higher fee amount).
-        return self.data.fixedPoint['divUp']((amount, FixedPoint.complement(self.data.swapFeePercentage)))
+        return self.data.fixedPoint['divUp']((amount, FixedPoint.complement(self.data.entries['swapFeePercentage'])))
 
     def _subtractSwapFeeAmount(self, amount):
         # This returns amount - fee amount, so we round up (favoring a higher fee amount).
         feeAmount = self.data.fixedPoint['mulUp'](
-            (amount, self.data.swapFeePercentage))
+            (amount, self.data.entries['swapFeePercentage']))
         return sp.as_nat(amount - feeAmount)
 
     def _setSwapFeePercentage(self, swapFeePercentage):
@@ -306,9 +303,9 @@ class BasePool(
         sp.verify(swapFeePercentage <= _MAX_SWAP_FEE_PERCENTAGE,
                   Errors.MAX_SWAP_FEE_PERCENTAGE)
 
-        self.data.swapFeePercentage = swapFeePercentage
+        self.data.entries['swapFeePercentage'] = swapFeePercentage
 
-        sp.emit(swapFeePercentage, 'SwapFeePercentageChanged')
+        # sp.emit(swapFeePercentage, 'SwapFeePercentageChanged')
 
     def _computeScalingFactor(self, decimals):
         sp.set_type(decimals, sp.TNat)
