@@ -64,10 +64,6 @@ class Types:
     )
 
 
-ONE = 1000000000000000000
-_MIN_WEIGHT = 10000000000000000  # 0.01e18
-
-
 def getTokenValue(t):
     sp.set_type(t, sp.TTuple(
         Types.TOKEN,
@@ -86,12 +82,6 @@ def getTokenValue(t):
         sp.failwith(Errors.INVALID_TOKEN)
 
     sp.result(entry.value)
-
-
-def mulDown(p):
-    sp.set_type(p, sp.TPair(sp.TNat, sp.TNat))
-    product = sp.fst(p) * sp.snd(p)
-    sp.result(product // ONE)
 
 
 class WeightedPool(
