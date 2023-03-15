@@ -51,7 +51,7 @@ class ExternalWeightedMath(sp.Contract):
         ))
 
     @sp.onchain_view()
-    def _calcSptOutGivenExactTokensIn(self, params):
+    def calcSptOutGivenExactTokensIn(self, params):
         sp.result(WeightedMath._calcSptOutGivenExactTokensIn(
             params.balances,
             params.normalizedWeights,
@@ -62,7 +62,7 @@ class ExternalWeightedMath(sp.Contract):
         ))
 
     @sp.onchain_view()
-    def _calcSptInGivenExactTokensOut(self, params):
+    def calcSptInGivenExactTokensOut(self, params):
         sp.result(WeightedMath._calcSptInGivenExactTokensOut(
             params.balances,
             params.normalizedWeights,
@@ -73,7 +73,7 @@ class ExternalWeightedMath(sp.Contract):
         ))
 
     @sp.onchain_view()
-    def _calcTokenInGivenExactSptOut(self, params):
+    def calcTokenInGivenExactSptOut(self, params):
         sp.result(WeightedMath._calcTokenInGivenExactSptOut(
             params.balance,
             params.normalizedWeight,
@@ -84,7 +84,7 @@ class ExternalWeightedMath(sp.Contract):
         ))
 
     @sp.onchain_view()
-    def _calcTokenOutGivenExactSptIn(self, params):
+    def calcTokenOutGivenExactSptIn(self, params):
         sp.result(WeightedMath._calcTokenOutGivenExactSptIn(
             params.balance,
             params.normalizedWeight,
