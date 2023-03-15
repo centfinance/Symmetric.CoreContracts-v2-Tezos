@@ -207,6 +207,7 @@ def test():
         )
     )
 
+    sc.simulation(p)
 
 # @sp.add_test(name="BaseMinimalSwapInfoPoolTest_1", profile=True)
 # def test():

@@ -57,24 +57,41 @@ def getTokenValue(t):
 
 class WeightedPoolFactory(sp.Contract):
 
-    def __init__(self, params):
-        self.init_type(
-            sp.TRecord(
-                _vault=sp.TAddress,
-                _protocolFeeProvider=sp.TAddress,
-                _isPoolFromFactory=sp.TBigMap(sp.TAddress, sp.TUnit)
-            )
+    def __init__(
+        self,
+        vault,
+        weightedMathLib,
+        protocolFeeProvider,
+    ):
+        self.init(
+            fixedPoint=sp.big_map({
+                "mulDown": FixedPoint.mulDown,
+                "mulUp": FixedPoint.mulUp,
+                "divDown": FixedPoint.divDown,
+                "divUp": FixedPoint.divUp,
+                "powDown": FixedPoint.powDown,
+                "powUp": FixedPoint.powUp,
+                "pow": FixedPoint.pow,
+            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
+            weightedMathLib=weightedMathLib,
         )
+
+        # self.init_type(
+        #     sp.TRecord(
+        #         vault=sp.TAddress,
+        #         protocolFeeProvider=sp.TAddress,
+        #         isPoolFromFactory=sp.TBigMap(sp.TAddress, sp.TUnit),
+        #         weightedMathLib=sp.TAddress,
+        #     )
+        # )
 
         BasePoolFactory.__init__(
             self,
-            params,
+            vault,
+            protocolFeeProvider,
         )
-        self._creationCode = WeightedPool(
-            params.vault,
-            'Weighted Pool Implementation',
-            'WPI'
-        )
+
+        self._creationCode = WeightedPool()
 
     @sp.entry_point(lazify=True)
     def create(self, params):
@@ -102,7 +119,7 @@ class WeightedPoolFactory(sp.Contract):
                 "": params.metadata
             }),
             poolId=sp.none,
-            protocolFeesCollector=sp.none,
+            protocolFeesCollector=self.data.protocolFeeProvider,
             rateProviders=sp.map(l={}, tkey=sp.TNat,
                                  tvalue=sp.TOption(sp.TAddress)),
             token_metadata=sp.big_map(
@@ -113,23 +130,16 @@ class WeightedPoolFactory(sp.Contract):
                                   token_info=sp.TMap(sp.TString, sp.TBytes)),
             ),
             totalSupply=sp.nat(0),
-            vault=self.data._vault,
+            vault=self.data.vault,
             getTokenValue=getTokenValue,
-            fixedPoint=sp.big_map({
-                "mulDown": FixedPoint.mulDown,
-                "mulUp": FixedPoint.mulUp,
-                "divDown": FixedPoint.divDown,
-                "divUp": FixedPoint.divUp,
-                "powDown": FixedPoint.powDown,
-                "powUp": FixedPoint.powUp,
-                "pow": FixedPoint.pow,
-            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
+            fixedPoint=self.data.fixedPoint,
             entries=sp.big_map({
                 'totalTokens': sp.nat(0),
                 'athRateProduct': sp.nat(0),
                 'postJoinExitInvariant': sp.nat(0),
                 'swapFeePercentage': sp.nat(0),
             }),
+            weightedMathLib=self.data.weightedMathLib,
         )
         self._create(self, STORAGE)
 

@@ -93,10 +93,10 @@ class WeightedPool(
 
     def __init__(
         self,
-        vault,
-        name,
-        symbol,
-        weightedMathLib,
+        vault=sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
+        name='Symmetric Weighted Pool',
+        symbol='SYMMLP',
+        weightedMathLib=sp.address('KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
     ):
         self.init(
             tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),

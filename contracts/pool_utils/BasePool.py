@@ -73,7 +73,8 @@ class BasePool(
     ):
         self.update_initial_storage(
             poolId=sp.none,
-            protocolFeesCollector=sp.none
+            protocolFeesCollector=sp.address(
+                'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF')
         )
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
@@ -99,8 +100,6 @@ class BasePool(
 
         # TODO: Add protocolFeesCollector call to vault
         # self.data.protocolFeesCollector = vault.getProtocolFeesCollector()
-        self.data.protocolFeesCollector = sp.some(
-            sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'))
 
     @sp.entry_point(parameter_type=IBasePool.t_on_join_pool_params, lazify=False)
     def onJoinPool(

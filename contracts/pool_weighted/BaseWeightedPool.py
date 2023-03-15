@@ -85,15 +85,15 @@ class BaseWeightedPool(
         length = sp.len(amountsIn)
         sp.verify(length == sp.len(params.scalingFactors))
 
-        upscaledAmounts = ScalingHelpers._upscaleArray(
-            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])
+        upscaledAmounts = sp.compute(ScalingHelpers._upscaleArray(
+            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown']))
 
-        invariantAfterJoin = IExternalWeightedMath.calculateInvariant(
+        invariantAfterJoin = sp.compute(IExternalWeightedMath.calculateInvariant(
             self.data.weightedMathLib,
             sp.record(
                 normalizedWeights=self.data.normalizedWeights,
                 balances=upscaledAmounts,
-            ))
+            )))
 
         # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
         # consistent in Pools with similar compositions but different number of tokens.
@@ -163,10 +163,10 @@ class BaseWeightedPool(
         amountsIn = params.userData.amountsIn.open_some()
         sp.verify(sp.len(params.balances) == sp.len(amountsIn))
 
-        upscaledAmounts = ScalingHelpers._upscaleArray(
-            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])
+        upscaledAmounts = sp.compute(ScalingHelpers._upscaleArray(
+            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown']))
 
-        sptAmountOut = IExternalWeightedMath.calcSptOutGivenExactTokensIn(
+        sptAmountOut = sp.compute(IExternalWeightedMath.calcSptOutGivenExactTokensIn(
             self.data.weightedMathLib,
             sp.record(
                 balances=params.balances,
@@ -175,7 +175,7 @@ class BaseWeightedPool(
                 totalSupply=params.totalSupply,
                 swapFeePercentage=self.data.entries['swapFeePercentage'],
             )
-        )
+        ))
 
         sp.verify(sptAmountOut >= params.userData.minSPTAmountOut.open_some(),
                   Errors.SPT_OUT_MIN_AMOUNT)
@@ -192,7 +192,7 @@ class BaseWeightedPool(
         sp.verify(tokenIndex < sp.len(
             params.balances), Errors.OUT_OF_BOUNDS)
 
-        amountIn = IExternalWeightedMath.calcTokenInGivenExactSptOut(
+        amountIn = sp.compute(IExternalWeightedMath.calcTokenInGivenExactSptOut(
             self.data.weightedMathLib,
             sp.record(
                 balance=params.balances[tokenIndex],
@@ -201,7 +201,7 @@ class BaseWeightedPool(
                 sptTotalSupply=params.totalSupply,
                 swapFeePercentage=self.data.entries['swapFeePercentage'],
             )
-        )
+        ))
 
         # // We join in a single token, so we initialize amountsIn with zeros
         amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
@@ -217,8 +217,8 @@ class BaseWeightedPool(
         sptAmountOut = params.userData.allT.open_some()
         # // Note that there is no maximum amountsIn parameter: this is handled by `IVault.joinPool`.
 
-        amountsIn = BasePoolMath.computeProportionalAmountsIn(
-            params.balances, params.totalSupply, sptAmountOut, self.data.fixedPoint)
+        amountsIn = sp.compute(BasePoolMath.computeProportionalAmountsIn(
+            params.balances, params.totalSupply, sptAmountOut, self.data.fixedPoint))
 
         return (sptAmountOut, amountsIn)
 
