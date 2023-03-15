@@ -53,6 +53,7 @@ class Types:
         fixedPoint=sp.TBigMap(sp.TString, sp.TLambda(
             sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
         entries=sp.TBigMap(sp.TString, sp.TNat),
+        weightedMathLib=sp.TAddress
     )
 
     INITIALIZE_PARAMS = sp.TRecord(
@@ -95,6 +96,7 @@ class WeightedPool(
         vault,
         name,
         symbol,
+        weightedMathLib,
     ):
         self.init(
             tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
@@ -117,6 +119,7 @@ class WeightedPool(
                 'postJoinExitInvariant': sp.nat(0),
                 'swapFeePercentage': sp.nat(0),
             }),
+            weightedMathLib=weightedMathLib,
         )
         # self.init_type(Types.STORAGE)
         # TODO: ProtocolFeeCache
