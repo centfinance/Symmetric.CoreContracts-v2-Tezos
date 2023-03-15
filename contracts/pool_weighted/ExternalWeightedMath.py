@@ -6,32 +6,130 @@ from contracts.pool_weighted.WeightedMath import WeightedMath
 
 
 class IExternalWeightedMath:
+    # t_calcOutGivenIn_params = sp.TRecord(
+    #     balanceIn=sp.TNat,
+    #     weightIn=sp.TNat,
+    #     balanceOut=sp.TNat,
+    #     weightOut=sp.TNat,
+    #     amountIn=sp.TNat,
+    # )
+
+    # t_calcInGivenOut_params = sp.TRecord(
+    #     balanceIn=sp.TNat,
+    #     weightIn=sp.TNat,
+    #     balanceOut=sp.TNat,
+    #     weightOut=sp.TNat,
+    #     amountOut=sp.TNat,
+    # )
+
+    # t_calculateInvariant_params = sp.TRecord(
+    #     normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+    #     balances=sp.TMap(sp.TNat, sp.TNat),
+    # )
+
+    # t_calcSptOutGivenExactTokensIn_params = sp.TRecord(
+    #     normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+    #     balances=sp.TMap(sp.TNat, sp.TNat),
+    #     amountsIn=sp.TMap(sp.TNat, sp.TNat),
+    #     totalSupply=sp.TNat,
+    #     swapFeePercentage=sp.TNat,
+    # )
+
+    # t_calcSptInGivenExactTokensOut_params = sp.TRecord(
+    #     normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+    #     balances=sp.TMap(sp.TNat, sp.TNat),
+    #     amountsOut=sp.TMap(sp.TNat, sp.TNat),
+    #     totalSupply=sp.TNat,
+    #     swapFeePercentage=sp.TNat,
+    # )
+
+    # t_calcTokenInGivenExactSptOut_params = sp.TRecord(
+    #     balance=sp.TNat,
+    #     normalizedWeight=sp.TNat,
+    #     sptAmountOut=sp.TNat,
+    #     sptTotalSupply=sp.TNat,
+    #     swapFeePercentage=sp.TNat,
+    # )
+
+    # t_calcTokenOutGivenExactSptIn_params = sp.TRecord(
+    #     balance=sp.TNat,
+    #     normalizedWeight=sp.TNat,
+    #     sptAmountIn=sp.TNat,
+    #     sptTotalSupply=sp.TNat,
+    #     swapFeePercentage=sp.TNat,
+    # )
 
     def calcOutGivenIn(lib, params):
+        sp.set_type(params, sp.TRecord(
+            balanceIn=sp.TNat,
+            weightIn=sp.TNat,
+            balanceOut=sp.TNat,
+            weightOut=sp.TNat,
+            amountIn=sp.TNat,
+        ))
         return sp.view('calcOutGivenIn', lib, params,
                        t=sp.TNat).open_some("Invalid view")
 
     def calcInGivenOut(lib, params):
+        sp.set_type(params, sp.TRecord(
+            balanceIn=sp.TNat,
+            weightIn=sp.TNat,
+            balanceOut=sp.TNat,
+            weightOut=sp.TNat,
+            amountOut=sp.TNat,
+        ))
         return sp.view('calcInGivenOut', lib, params,
                        t=sp.TNat).open_some("Invalid view")
 
     def calculateInvariant(lib, params):
+        sp.set_type(params, sp.TRecord(
+            normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+            balances=sp.TMap(sp.TNat, sp.TNat),
+        ))
         return sp.view('calculateInvariant', lib, params,
                        t=sp.TNat).open_some("Invalid view")
 
     def calcSptOutGivenExactTokensIn(lib, params):
+        sp.set_type(params, sp.TRecord(
+            normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+            balances=sp.TMap(sp.TNat, sp.TNat),
+            amountsIn=sp.TMap(sp.TNat, sp.TNat),
+            totalSupply=sp.TNat,
+            swapFeePercentage=sp.TNat,
+        ))
         return sp.view('calcSptOutGivenExactTokensIn', lib, params,
                        t=sp.TNat).open_some("Invalid view")
 
     def calcSptInGivenExactTokensOut(lib, params):
+        sp.set_type(params, sp.TRecord(
+            normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+            balances=sp.TMap(sp.TNat, sp.TNat),
+            amountsOut=sp.TMap(sp.TNat, sp.TNat),
+            totalSupply=sp.TNat,
+            swapFeePercentage=sp.TNat,
+        ))
         return sp.view('calcSptInGivenExactTokensOut', lib, params,
                        t=sp.TNat).open_some("Invalid view")
 
     def calcTokenInGivenExactSptOut(lib, params):
+        sp.set_type(params, sp.TRecord(
+            balance=sp.TNat,
+            normalizedWeight=sp.TNat,
+            sptAmountOut=sp.TNat,
+            sptTotalSupply=sp.TNat,
+            swapFeePercentage=sp.TNat,
+        ))
         return sp.view('calcTokenInGivenExactSptOut', lib, params,
                        t=sp.TNat).open_some("Invalid view")
 
     def calcTokenOutGivenExactSptIn(lib, params):
+        sp.set_type(params, sp.TRecord(
+            balance=sp.TNat,
+            normalizedWeight=sp.TNat,
+            sptAmountIn=sp.TNat,
+            sptTotalSupply=sp.TNat,
+            swapFeePercentage=sp.TNat,
+        ))
         return sp.view('calcTokenOutGivenExactSptIn', lib, params,
                        t=sp.TNat).open_some("Invalid view")
 
