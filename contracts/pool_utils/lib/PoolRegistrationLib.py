@@ -39,7 +39,6 @@ def registerPool(vault, specialization, tokens, assetManagers):
 
     registerPool = sp.contract(sp.TNat, vault, "registerPool").open_some(
         "INTERFACE_MISMATCH")
-    sp.transfer(specialization, sp.tez(0), registerPool)
     # # We don't need to check that tokens and assetManagers have the same length, since the Vault already performs
     # # that check.
     # # vault.registerTokens(poolId, tokens, assetManagers)
@@ -50,6 +49,8 @@ def registerPool(vault, specialization, tokens, assetManagers):
         tokens=tokens,
         assetManagers=assetManagers
     )
+
+    sp.transfer(specialization, sp.tez(0), registerPool)
     sp.transfer(registerTokensParams, sp.tez(0), registerTokens)
 
     return poolId

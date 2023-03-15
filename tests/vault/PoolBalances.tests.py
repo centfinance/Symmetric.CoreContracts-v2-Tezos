@@ -2,6 +2,8 @@ import smartpy as sp
 
 from contracts.vault.PoolBalances import PoolBalances
 
+from contracts.pool_utils.BasePool import IBasePool
+
 t_joinUserData = sp.TRecord(
     kind=sp.TString,
     amountsIn=sp.TMap(sp.TNat, sp.TNat),
@@ -47,7 +49,7 @@ class MockPool(sp.Contract):
 
     @sp.onchain_view()
     def beforeJoinPool(self, params):
-        sp.set_type(params, t_onJoinPool_params)
+        sp.set_type(params, IBasePool.t_before_join_pool_params)
         sp.result((sp.nat(0), sp.map(l={
             0: sp.nat(1000000000000000000),
             1: sp.nat(1000000000000000000),
@@ -55,12 +57,12 @@ class MockPool(sp.Contract):
 
     @sp.entry_point
     def onJoinPool(self, params):
-        sp.set_type(params, t_onJoinPool_params)
+        sp.set_type(params, IBasePool.t_on_join_pool_params)
         pass
 
     @sp.onchain_view()
     def beforeExitPool(self, params):
-        sp.set_type(params, t_onExitPool_params)
+        sp.set_type(params, IBasePool.t_before_exit_pool_params)
         sp.result((sp.nat(0), sp.map(l={
             0: sp.nat(1000000000000000000),
             1: sp.nat(1000000000000000000),
@@ -68,7 +70,7 @@ class MockPool(sp.Contract):
 
     @sp.entry_point
     def onExitPool(self, params):
-        sp.set_type(params, t_onExitPool_params)
+        sp.set_type(params, IBasePool.t_on_exit_pool_params)
         pass
 
 
@@ -106,12 +108,12 @@ def test():
         sp.nat(1),
     )
     amountsIn = {
-        0: 1000000000000000000,
-        1: 1000000000000000000,
+        0: sp.nat(1000000000000000000),
+        1: sp.nat(1000000000000000000),
     }
     userData = sp.record(
         kind='INIT',
-        amountsIn=amountsIn,
+        amountsIn=sp.some(amountsIn),
         minSPTAmountOut=sp.none,
         tokenIndex=sp.none,
         sptAmountOut=sp.none,
@@ -164,13 +166,14 @@ def test():
             request=request,
         )
     )
+
     exitUserData = sp.record(
         kind='INIT',
-        amountsOut=amountsIn,
+        amountsOut=sp.some(amountsIn),
         maxSPTAmountIn=sp.none,
         tokenIndex=sp.none,
         sptAmountIn=sp.none,
-        allT=sp.none,
+        recoveryModeExit=False,
     )
 
     exitRequest = sp.record(

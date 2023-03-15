@@ -44,6 +44,8 @@ STORAGE = sp.TRecord(
         TOKEN,
         sp.TMap(sp.TNat, TOKEN),
         sp.TMap(sp.TNat, sp.TNat)), sp.TNat),
+    fixedPoint=sp.TBigMap(sp.TString, sp.TLambda(
+        sp.TPair(sp.TNat, sp.TNat), sp.TNat))
 )
 
 
@@ -75,7 +77,7 @@ class MockVault(sp.Contract):
                 address=sp.TAddress, id=sp.TNat, FA2=sp.TBool)),
             assetManagers=sp.TOption(sp.TMap(sp.TNat, sp.TAddress))
         ))
-        pass
+        self.data.tokens_set = True
 
     def _toPoolId(self, pool, specialization, nonce):
         pack = sp.record(nonce=nonce, pool=pool, specialization=specialization)
@@ -89,20 +91,18 @@ class MockWeightedPool(WeightedPool):
         vault,
         name,
         symbol,
-        owner,
     ):
         WeightedPool.__init__(
             self,
             vault,
             name,
             symbol,
-            owner,
         )
         self.update_initial_storage(
             swapGivenIn=sp.nat(0),
             swapGivenOut=sp.nat(0),
         )
-        self.init_type(STORAGE)
+        # self.init_type(STORAGE)
 
     @sp.entry_point
     def test_onSwapGivenIn(self, params):
@@ -162,7 +162,6 @@ def test():
         vault=v.address,
         name="Symm Liqudidty Pool Token",
         symbol="SYMMLP",
-        owner=sp.address("tz1"),
     )
 
     sc += p
@@ -233,7 +232,6 @@ def test():
         vault=v.address,
         name="Symm Liqudidty Pool Token",
         symbol="SYMMLP",
-        owner=sp.address("tz1"),
     )
 
     sc += p

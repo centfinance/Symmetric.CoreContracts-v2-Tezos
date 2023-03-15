@@ -60,7 +60,7 @@ class Swaps(PoolBalances):
     def __init__(self):
         PoolBalances.__init__(self)
 
-    @sp.entry_point(parameter_type=ISwaps.t_swap_params)
+    @sp.entry_point(parameter_type=ISwaps.t_swap_params, lazify=True)
     def swap(
         self,
         singleSwap,
@@ -110,7 +110,7 @@ class Swaps(PoolBalances):
         )
         # TODO: Handle remaining Tez
 
-    @sp.entry_point(parameter_type=ISwaps.t_batch_swap_params)
+    @sp.entry_point(parameter_type=ISwaps.t_batch_swap_params, lazify=True)
     def batchSwap(
         self,
         kind,
@@ -154,7 +154,7 @@ class Swaps(PoolBalances):
         assetDeltas = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TInt))
 
         previousTokenCalculated = sp.local(
-            'previousTokenCalculated', sp.record(address=sp.address('tz1'), id=sp.nat(0), FA2=False))
+            'previousTokenCalculated', sp.record(address=sp.address('tz1burnburnburnburnburnburnburjAYjjX'), id=sp.nat(0), FA2=False))
         previousAmountCalculated = sp.local(
             'previousAmountCalculated', sp.nat(0))
 

@@ -27,13 +27,13 @@ def sub(a,  b):
     return sp.as_nat(c)
 
 
-def mulDown(a,  b):
-    product = a * b
-    return product // ONE
+def mulDown(p):
+    product = sp.fst(p) * sp.snd(p)
+    sp.result(product // ONE)
 
 
-def mulUp(a,  b):
-    product = a * b
+def mulUp(p):
+    product = sp.fst(p) * sp.snd(p)
     # The traditional divUp formula is:
     # divUp(x, y) := (x + y - 1) / y
     # To avoid intermediate overflow in the addition, we distribute the division and get:
@@ -46,19 +46,19 @@ def mulUp(a,  b):
     # with sp.if_(product != 0):
     #     mulUp.value = (((sp.as_nat(product - 1)) // ONE) + 1)
 
-    return sp.as_nat(sp.fst(sp.ediv((product - 1), ONE).open_some()) + 1)
+    sp.result(sp.as_nat(sp.fst(sp.ediv((product - 1), ONE).open_some()) + 1))
 
 
-def divDown(a,  b):
-    sp.verify(b != 0)
-    aInflated = a * ONE
+def divDown(p):
+    sp.verify(sp.snd(p) != 0)
+    aInflated = sp.fst(p) * ONE
     # mul overflow
-    return (aInflated // b)
+    sp.result(aInflated // sp.snd(p))
 
 
-def divUp(a,  b):
-    sp.verify(b != 0)
-    aInflated = a * ONE
+def divUp(p):
+    sp.verify(sp.snd(p) != 0)
+    aInflated = sp.fst(p) * ONE
     # mul overflo
     # The traditional divUp formula is:
     # divUp(x, y) := (x + y - 1) / y
@@ -70,7 +70,7 @@ def divUp(a,  b):
     #  = a == 0 ? 0 : (a * FixedPoint.ONE - 1) / b + 1;
     # divUp = sp.local("divUp", 0)
     # with sp.if_(a != 0):
-    return (sp.as_nat(aInflated + b - 1)) // b
+    sp.result((sp.as_nat(aInflated + sp.snd(p) - 1)) // sp.snd(p))
 
 
 def square_root(x):
@@ -100,19 +100,21 @@ def square_root(x):
 #  */
 
 
-def powDown(x,  y):
+def powDown(p):
     # Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple to implement and occur often in 50/50
     # and 80/20 Weighted Pools
     # def mulDown(x, y): return (x*y)//ONE
+    def mul(x, y): return (x * y) // ONE
+    x, y = sp.match_pair(p)
     powDown = sp.local('powDown', sp.nat(0))
     with sp.if_(y == HALF):
         powDown.value = square_root(x)
     with sp.if_(y == ONE):
         powDown.value = x
     with sp.if_(y == TWO):
-        powDown.value = mulDown(x, x)
+        powDown.value = mul(x, x)
     with sp.if_(y == FOUR):
-        powDown.value = mulDown(mulDown(x, x), mulDown(x, x))
+        powDown.value = mul(mul(x, x), mul(x, x))
 
     # with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
     #     raw = powu(x, y)
@@ -123,10 +125,11 @@ def powDown(x,  y):
     #     with sp.else_():
     #         powDown.value = sp.as_nat(raw - maxError)
 
-    return powDown.value
+    sp.result(powDown.value)
 
 
-def pow(x, y):
+def pow(p):
+    x, y = sp.match_pair(p)
     powResult = sp.local('powResult', 1)
     base = sp.local('base', x)
     exponent = sp.local('exponent', y)
@@ -138,7 +141,7 @@ def pow(x, y):
         exponent.value = exponent.value >> 1  # Equivalent to exponent.value / 2
         base.value *= base.value
 
-    return powResult.value
+    sp.result(powResult.value)
 
 # /**
 #  * @dev Returns x^y, assuming both are fixed point numbers, rounding up. The  is guaranteed to not be below
@@ -146,24 +149,27 @@ def pow(x, y):
 #  */
 
 
-def powUp(x,  y):
+def powUp(p):
     # Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple to implement and occur often in 50/50
     # and 80/20 Weighted Pools
+    def mul(x, y): return sp.as_nat(
+        sp.fst(sp.ediv(((x * y) - 1), ONE).open_some()) + 1)
+    x, y = sp.match_pair(p)
     powUp = sp.local('powUp', 1)
     with sp.if_(y == HALF):
         powUp.value = square_root(x)
     with sp.if_(y == ONE):
         powUp.value = x
     with sp.if_(y == TWO):
-        powUp.value = mulUp(x, x)
+        powUp.value = mul(x, x)
     with sp.if_(y == FOUR):
-        square = mulUp(x, x)
-        powUp.value = mulUp(square, square)
+        square = mul(x, x)
+        powUp.value = mul(square, square)
     # with sp.else_():
     #     raw = pow(x, y)
     #     maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
     #     result.value = add(raw, maxError)
-    return powUp.value
+    sp.result(powUp.value)
 
 # /**
 #  * @dev Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
@@ -196,11 +202,11 @@ def powu(x,  y):
     # with sp.for_(yAux >>= 1; yAux > 0; yAux >>= 1):
     with sp.while_(yAux.value > 0):
 
-        xAbs.value = mulDown(xAbs.value, xAbs.value)
+        xAbs.value = mulDown((xAbs.value, xAbs.value))
         sp.trace(xAbs.value)
         # // Equivalent to "y % 2 == 1" but faster.
         with sp.if_(yAux.value & 1 > 0):
-            resultAbs.value = mulDown(resultAbs.value, xAbs.value)
+            resultAbs.value = mulDown((resultAbs.value, xAbs.value))
 
         yAux.value = yAux.value >> 1
 

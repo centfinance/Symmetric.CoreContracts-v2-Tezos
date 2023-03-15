@@ -8,7 +8,8 @@ class BasePoolMath:
     def computeProportionalAmountsIn(
         balances,
         sptTotalSupply,
-        sptAmountOut
+        sptAmountOut,
+        math
     ):
         # ************************************************************************************
         #  computeProportionalAmountsIn
@@ -22,18 +23,19 @@ class BasePoolMath:
         #  Since we're computing amounts in, we round up overall. This means rounding up on both the
         #  multiplication and division.
 
-        sptRatio = FixedPoint.divUp(sptAmountOut, sptTotalSupply)
+        sptRatio = math['divUp']((sptAmountOut, sptTotalSupply))
 
         amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         with sp.for_('i', sp.range(0, sp.len(balances)))as i:
-            amountsIn[i] = FixedPoint.mulUp(balances[i], sptRatio)
+            amountsIn[i] = math['mulUp']((balances[i], sptRatio))
 
         return amountsIn
 
     def computeProportionalAmountsOut(
         balances,
         sptTotalSupply,
-        sptAmountIn
+        sptAmountIn,
+        math,
     ):
         # **********************************************************************************************
         #  computeProportionalAmountsOut                                                             //
@@ -47,10 +49,10 @@ class BasePoolMath:
         #  Since we're computing an amount out, we round down overall. This means rounding down on both the
         #  multiplication and division.
 
-        sptRatio = FixedPoint.divDown(sptAmountIn, sptTotalSupply)
+        sptRatio = math['divDown']((sptAmountIn, sptTotalSupply))
 
         amountsOut = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         with sp.for_('i', sp.range(0, sp.len(balances)))as i:
-            amountsOut[i] = FixedPoint.mulDown(balances[i], sptRatio)
+            amountsOut[i] = math['mulDown']((balances[i], sptRatio))
 
         return amountsOut

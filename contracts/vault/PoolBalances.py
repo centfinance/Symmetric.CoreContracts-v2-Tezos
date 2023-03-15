@@ -5,6 +5,8 @@ from contracts.vault.PoolTokens import PoolTokens
 
 from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
 
+from contracts.pool_utils.BasePool import IBasePool
+
 import contracts.utils.helpers.InputHelpers as InputHelpers
 
 import contracts.interfaces.SymmetricErrors as Errors
@@ -19,46 +21,28 @@ class Types:
         FA2=sp.TBool,
     )
 
-    t_joinUserData = sp.TRecord(
-        kind=sp.TString,
-        amountsIn=sp.TMap(sp.TNat, sp.TNat),
-        minSPTAmountOut=sp.TOption(sp.TNat),
-        tokenIndex=sp.TOption(sp.TNat),
-        sptAmountOut=sp.TOption(sp.TNat),
-        allT=sp.TOption(sp.TNat),
-    )
+    # t_onJoinPool_params = sp.TRecord(
+    #     poolId=sp.TBytes,
+    #     sender=sp.TAddress,
+    #     recipient=sp.TAddress,
+    #     balances=sp.TMap(sp.TNat, sp.TNat),
+    #     lastChangeBlock=sp.TNat,
+    #     protocolSwapFeePercentage=sp.TNat,
+    #     userData=t_joinUserData,
+    # )
 
-    t_exitUserData = sp.TRecord(
-        kind=sp.TString,
-        amountsOut=sp.TMap(sp.TNat, sp.TNat),
-        maxSPTAmountIn=sp.TOption(sp.TNat),
-        tokenIndex=sp.TOption(sp.TNat),
-        sptAmountIn=sp.TOption(sp.TNat),
-        allT=sp.TOption(sp.TNat),
-    )
-
-    t_onJoinPool_params = sp.TRecord(
-        poolId=sp.TBytes,
-        sender=sp.TAddress,
-        recipient=sp.TAddress,
-        balances=sp.TMap(sp.TNat, sp.TNat),
-        lastChangeBlock=sp.TNat,
-        protocolSwapFeePercentage=sp.TNat,
-        userData=t_joinUserData,
-    )
-
-    t_onExitPool_params = sp.TRecord(
-        poolId=sp.TBytes,
-        sender=sp.TAddress,
-        recipient=sp.TAddress,
-        balances=sp.TMap(sp.TNat, sp.TNat),
-        lastChangeBlock=sp.TNat,
-        protocolSwapFeePercentage=sp.TNat,
-        userData=t_exitUserData,
-    )
+    # t_onExitPool_params = sp.TRecord(
+    #     poolId=sp.TBytes,
+    #     sender=sp.TAddress,
+    #     recipient=sp.TAddress,
+    #     balances=sp.TMap(sp.TNat, sp.TNat),
+    #     lastChangeBlock=sp.TNat,
+    #     protocolSwapFeePercentage=sp.TNat,
+    #     userData=t_exitUserData,
+    # )
 
     t_joinPool_request = sp.TRecord(
-        userData=t_joinUserData,
+        userData=IBasePool.JOIN_USER_DATA,
         assets=sp.TMap(sp.TNat, TOKEN),
         limits=sp.TMap(sp.TNat, sp.TNat),
         useInternalBalance=sp.TBool,
@@ -72,7 +56,7 @@ class Types:
     )
 
     t_exitPool_request = sp.TRecord(
-        userData=t_exitUserData,
+        userData=IBasePool.EXIT_USER_DATA,
         assets=sp.TMap(sp.TNat, TOKEN),
         limits=sp.TMap(sp.TNat, sp.TNat),
         useInternalBalance=sp.TBool,
@@ -113,20 +97,15 @@ class PoolBalances(
         pool = self._getPoolAddress(poolId)
 
         params = sp.record(
-            poolId=poolId,
-            sender=sender,
             recipient=recipient,
             balances=totalBalances,
-            lastChangeBlock=lastChangeBlock,
-            protocolSwapFeePercentage=sp.nat(0),
-            # protocolSwapFeePercentage=self.data.swapFeePercentage,
             userData=request.userData,
         )
         # Call BasePool view to get amounts
         pair = sp.view('beforeJoinPool', pool,
-                       params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+                       sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
         # Call BasePool entry point to perform join
-        onJoinPool = sp.contract(Types.t_onJoinPool_params, pool, "onJoinPool").open_some(
+        onJoinPool = sp.contract(IBasePool.t_on_join_pool_params, pool, "onJoinPool").open_some(
             "INTERFACE_MISMATCH")
 
         sp.transfer(params, sp.tez(0), onJoinPool)
@@ -176,20 +155,15 @@ class PoolBalances(
         pool = self._getPoolAddress(poolId)
 
         params = sp.record(
-            poolId=poolId,
             sender=sender,
-            recipient=recipient,
             balances=totalBalances,
-            lastChangeBlock=lastChangeBlock,
-            protocolSwapFeePercentage=sp.nat(0),
-            # protocolSwapFeePercentage=self.data.swapFeePercentage,
             userData=request.userData,
         )
         # Call BasePool view to get amounts
         pair = sp.view('beforeExitPool', pool,
-                       params, t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+                       sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
         # Call BasePool entry point to perform join
-        onExitPool = sp.contract(Types.t_onExitPool_params, pool, "onExitPool").open_some(
+        onExitPool = sp.contract(IBasePool.t_on_exit_pool_params, pool, "onExitPool").open_some(
             "INTERFACE_MISMATCH")
 
         sp.transfer(params, sp.tez(0), onExitPool)
