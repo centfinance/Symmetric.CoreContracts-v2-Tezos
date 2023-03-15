@@ -4,8 +4,6 @@ import { TezosToolkit } from '@taquito/taquito';
 const weightedPoolFactory = require('../../../../artifacts/WeightedPoolFactory.compile.json')
 const Tezos = new TezosToolkit('http://localhost:20000');
 
-// Tezos.setProvider({ signer: await InMemorySigner.fromSecretKey('edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq') });
-
 InMemorySigner.fromSecretKey(process.env.TEST_KEY as string)
   .then((theSigner) => {
     Tezos.setProvider({ signer: theSigner });

@@ -5,6 +5,37 @@ import contracts.utils.math.FixedPoint as FixedPoint
 from contracts.pool_weighted.WeightedMath import WeightedMath
 
 
+class IExternalWeightedMath:
+
+    def calcOutGivenIn(lib, params):
+        return sp.view('calcOutGivenIn', lib, params,
+                       t=sp.TNat).open_some("Invalid view")
+
+    def calcInGivenOut(lib, params):
+        return sp.view('calcInGivenOut', lib, params,
+                       t=sp.TNat).open_some("Invalid view")
+
+    def calculateInvariant(lib, params):
+        return sp.view('calculateInvariant', lib, params,
+                       t=sp.TNat).open_some("Invalid view")
+
+    def calcSptOutGivenExactTokensIn(lib, params):
+        return sp.view('calcSptOutGivenExactTokensIn', lib, params,
+                       t=sp.TNat).open_some("Invalid view")
+
+    def calcSptInGivenExactTokensOut(lib, params):
+        return sp.view('calcSptInGivenExactTokensOut', lib, params,
+                       t=sp.TNat).open_some("Invalid view")
+
+    def calcTokenInGivenExactSptOut(lib, params):
+        return sp.view('calcTokenInGivenExactSptOut', lib, params,
+                       t=sp.TNat).open_some("Invalid view")
+
+    def calcTokenOutGivenExactSptIn(lib, params):
+        return sp.view('calcTokenOutGivenExactSptIn', lib, params,
+                       t=sp.TNat).open_some("Invalid view")
+
+
 class ExternalWeightedMath(sp.Contract):
     def __init__(self):
         sp.Contract.__init__(self)
