@@ -93,12 +93,11 @@ class WeightedPoolFactory(sp.Contract):
 
         self._creationCode = WeightedPool()
 
-    @sp.entry_point(lazify=True)
+    @sp.entry_point(lazify=False)
     def create(self, params):
         """
             Deploys a new WeightedPool
         """
-        # TODO: Add WeightedPool params type
         # sp.set_type(params, Types.CREATE_PARAMS)
         STORAGE = sp.record(
             normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
@@ -131,8 +130,8 @@ class WeightedPoolFactory(sp.Contract):
             ),
             totalSupply=sp.nat(0),
             vault=self.data.vault,
-            getTokenValue=getTokenValue,
-            fixedPoint=self.data.fixedPoint,
+            getTokenValue=sp.compute(getTokenValue),
+            fixedPoint=sp.compute(self.data.fixedPoint),
             entries=sp.big_map({
                 'totalTokens': sp.nat(0),
                 'athRateProduct': sp.nat(0),

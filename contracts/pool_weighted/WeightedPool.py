@@ -132,7 +132,7 @@ class WeightedPool(
             symbol,
         )
 
-    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=True)
+    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=False)
     def initialize(self, params):
 
         sp.verify(self.data.initialized == False)

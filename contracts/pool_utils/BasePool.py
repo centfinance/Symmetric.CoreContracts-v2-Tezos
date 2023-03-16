@@ -78,7 +78,7 @@ class BasePool(
         )
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
-    @sp.entry_point(lazify=True)
+    @sp.entry_point(lazify=False)
     def initialize(
         self,
         params,
