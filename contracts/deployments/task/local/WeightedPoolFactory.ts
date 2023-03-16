@@ -2,9 +2,8 @@ import { InMemorySigner  } from '@taquito/signer';
 import { TezosToolkit } from '@taquito/taquito';
 
 const weightedPoolFactory = require('../../../../artifacts/WeightedPoolFactory.compile.json')
+const weightedPoolFactoryStorage = require('../../../../artifacts/WeightedPoolFactory.compile.default_storage.json')
 const Tezos = new TezosToolkit('http://localhost:20000');
-
-// Tezos.setProvider({ signer: await InMemorySigner.fromSecretKey('edsk3QoqBuvdamxouPhin7swCvkQNgq4jP5KZPbwWNnwdZpSpJiEbq') });
 
 InMemorySigner.fromSecretKey(process.env.TEST_KEY as string)
   .then((theSigner) => {
@@ -13,7 +12,7 @@ InMemorySigner.fromSecretKey(process.env.TEST_KEY as string)
   .then(() => {
     Tezos.contract.originate({
       code: weightedPoolFactory,
-      init: `(Pair {} (Pair "KT1VqarPDicMFn1emQqqshUkUXTCTXwmkCN" "KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF"))`,
+      init: weightedPoolFactoryStorage,
       storageLimit: 60000,
     })
     .then((originationOp) => {

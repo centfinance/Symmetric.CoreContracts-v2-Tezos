@@ -4,7 +4,7 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
-from contracts.pool_weighted.WeightedMath import WeightedMath
+from contracts.pool_weighted.ExternalWeightedMath import IExternalWeightedMath
 
 from contracts.pool_utils.BaseMinimalSwapInfoPool import BaseMinimalSwapInfoPool
 
@@ -28,39 +28,51 @@ class BaseWeightedPool(
         )
 
     def _onSwapGivenIn(self, params):
-        return WeightedMath._calcOutGivenIn(
-            params.currentBalanceTokenIn,
-            sp.compute(self.data.getTokenValue((
-                params.swapRequest.tokenIn,
-                self.data.tokens,
-                self.data.normalizedWeights,
-            ))),
-            params.currentBalanceTokenOut,
-            sp.compute(self.data.getTokenValue((
-                params.swapRequest.tokenOut,
-                self.data.tokens,
-                self.data.normalizedWeights,
-            ))),
-            params.swapRequest.amount,
-            self.data.fixedPoint,
+        tokens = self.data.tokens
+        normalizedWeights = self.data.normalizedWeights
+        getTokenValue = self.data.getTokenValue
+
+        return IExternalWeightedMath.calcOutGivenIn(
+            self.data.weightedMathLib,
+            sp.record(
+                balanceIn=params.currentBalanceTokenIn,
+                weightIn=sp.compute(getTokenValue((
+                    params.swapRequest.tokenIn,
+                    tokens,
+                    normalizedWeights,
+                ))),
+                balanceOut=params.currentBalanceTokenOut,
+                weightOut=sp.compute(getTokenValue((
+                    params.swapRequest.tokenOut,
+                    tokens,
+                    normalizedWeights,
+                ))),
+                amountIn=params.swapRequest.amount,
+            )
         )
 
     def _onSwapGivenOut(self, params):
-        return WeightedMath._calcInGivenOut(
-            params.currentBalanceTokenIn,
-            sp.compute(self.data.getTokenValue((
-                params.swapRequest.tokenIn,
-                self.data.tokens,
-                self.data.normalizedWeights,
-            ))),
-            params.currentBalanceTokenOut,
-            sp.compute(self.data.getTokenValue((
-                params.swapRequest.tokenOut,
-                self.data.tokens,
-                self.data.normalizedWeights,
-            ))),
-            params.swapRequest.amount,
-            self.data.fixedPoint,
+        tokens = self.data.tokens
+        normalizedWeights = self.data.normalizedWeights
+        getTokenValue = self.data.getTokenValue
+
+        return IExternalWeightedMath.calcInGivenOut(
+            self.data.weightedMathLib,
+            sp.record(
+                balanceIn=params.currentBalanceTokenIn,
+                weightIn=sp.compute(getTokenValue((
+                    params.swapRequest.tokenIn,
+                    tokens,
+                    normalizedWeights,
+                ))),
+                balanceOut=params.currentBalanceTokenOut,
+                weightOut=sp.compute(getTokenValue((
+                    params.swapRequest.tokenOut,
+                    tokens,
+                    normalizedWeights,
+                ))),
+                amountOut=params.swapRequest.amount,
+            )
         )
 
     def _onInitializePool(self, params):
@@ -73,11 +85,15 @@ class BaseWeightedPool(
         length = sp.len(amountsIn)
         sp.verify(length == sp.len(params.scalingFactors))
 
-        upscaledAmounts = ScalingHelpers._upscaleArray(
-            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])
+        upscaledAmounts = sp.compute(ScalingHelpers._upscaleArray(
+            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown']))
 
-        invariantAfterJoin = WeightedMath._calculateInvariant(
-            self.data.normalizedWeights, upscaledAmounts, self.data.fixedPoint['powDown'])
+        invariantAfterJoin = sp.compute(IExternalWeightedMath.calculateInvariant(
+            self.data.weightedMathLib,
+            sp.record(
+                normalizedWeights=self.data.normalizedWeights,
+                balances=upscaledAmounts,
+            )))
 
         # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
         # consistent in Pools with similar compositions but different number of tokens.
@@ -147,17 +163,19 @@ class BaseWeightedPool(
         amountsIn = params.userData.amountsIn.open_some()
         sp.verify(sp.len(params.balances) == sp.len(amountsIn))
 
-        upscaledAmounts = ScalingHelpers._upscaleArray(
-            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])
+        upscaledAmounts = sp.compute(ScalingHelpers._upscaleArray(
+            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown']))
 
-        sptAmountOut = WeightedMath._calcSptOutGivenExactTokensIn(
-            balances=params.balances,
-            normalizedWeights=params.normalizedWeights,
-            amountsIn=upscaledAmounts,
-            totalSupply=params.totalSupply,
-            swapFeePercentage=self.data.entries['swapFeePercentage'],
-            math=self.data.fixedPoint,
-        )
+        sptAmountOut = sp.compute(IExternalWeightedMath.calcSptOutGivenExactTokensIn(
+            self.data.weightedMathLib,
+            sp.record(
+                balances=params.balances,
+                normalizedWeights=params.normalizedWeights,
+                amountsIn=upscaledAmounts,
+                totalSupply=params.totalSupply,
+                swapFeePercentage=self.data.entries['swapFeePercentage'],
+            )
+        ))
 
         sp.verify(sptAmountOut >= params.userData.minSPTAmountOut.open_some(),
                   Errors.SPT_OUT_MIN_AMOUNT)
@@ -174,14 +192,16 @@ class BaseWeightedPool(
         sp.verify(tokenIndex < sp.len(
             params.balances), Errors.OUT_OF_BOUNDS)
 
-        amountIn = WeightedMath._calcTokenInGivenExactSptOut(
-            params.balances[tokenIndex],
-            params.normalizedWeights[tokenIndex],
-            sptAmountOut,
-            params.totalSupply,
-            self.data.entries['swapFeePercentage'],
-            self.data.fixedPoint
-        )
+        amountIn = sp.compute(IExternalWeightedMath.calcTokenInGivenExactSptOut(
+            self.data.weightedMathLib,
+            sp.record(
+                balance=params.balances[tokenIndex],
+                normalizedWeight=params.normalizedWeights[tokenIndex],
+                sptAmountOut=sptAmountOut,
+                sptTotalSupply=params.totalSupply,
+                swapFeePercentage=self.data.entries['swapFeePercentage'],
+            )
+        ))
 
         # // We join in a single token, so we initialize amountsIn with zeros
         amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
@@ -197,8 +217,8 @@ class BaseWeightedPool(
         sptAmountOut = params.userData.allT.open_some()
         # // Note that there is no maximum amountsIn parameter: this is handled by `IVault.joinPool`.
 
-        amountsIn = BasePoolMath.computeProportionalAmountsIn(
-            params.balances, params.totalSupply, sptAmountOut, self.data.fixedPoint)
+        amountsIn = sp.compute(BasePoolMath.computeProportionalAmountsIn(
+            params.balances, params.totalSupply, sptAmountOut, self.data.fixedPoint))
 
         return (sptAmountOut, amountsIn)
 
@@ -263,13 +283,15 @@ class BaseWeightedPool(
         sp.verify(tokenIndex < sp.len(
             params.balances), Errors.OUT_OF_BOUNDS)
 
-        amountOut = WeightedMath._calcTokenOutGivenExactSptIn(
-            params.balances[tokenIndex],
-            params.normalizedWeights[tokenIndex],
-            sptAmountIn,
-            params.totalSupply,
-            self.data.entries['swapFeePercentage'],
-            self.data.fixedPoint,
+        amountOut = IExternalWeightedMath.calcTokenOutGivenExactSptIn(
+            self.data.weightedMathLib,
+            sp.record(
+                balance=params.balances[tokenIndex],
+                normalizedWeight=params.normalizedWeights[tokenIndex],
+                sptAmountIn=sptAmountIn,
+                sptTotalSupply=params.totalSupply,
+                swapFeePercentage=self.data.entries['swapFeePercentage'],
+            )
         )
 
         # // We join in a single token, so we initialize amountsIn with zeros
@@ -300,13 +322,16 @@ class BaseWeightedPool(
 
         upscaledAmounts = ScalingHelpers._upscaleArray(
             amountsOut, params.scalingFactors, self.data.fixedPoint['mulDown'])
-        sptAmountIn = WeightedMath._calcSptInGivenExactTokensOut(
-            balances=params.balances,
-            normalizedWeights=params.normalizedWeights,
-            amountsOut=upscaledAmounts,
-            totalSupply=params.totalSupply,
-            swapFeePercentage=self.data.entries['swapFeePercentage'],
-            math=self.data.fixedPoint,
+
+        sptAmountIn = IExternalWeightedMath.calcSptInGivenExactTokensOut(
+            self.data.weightedMathLib,
+            sp.record(
+                balances=params.balances,
+                normalizedWeights=params.normalizedWeights,
+                amountsOut=upscaledAmounts,
+                totalSupply=params.totalSupply,
+                swapFeePercentage=self.data.entries['swapFeePercentage'],
+            )
         )
 
         sp.verify(sptAmountIn >= params.userData.maxSPTAmountIn.open_some(),

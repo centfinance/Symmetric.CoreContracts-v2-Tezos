@@ -53,6 +53,7 @@ class Types:
         fixedPoint=sp.TBigMap(sp.TString, sp.TLambda(
             sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
         entries=sp.TBigMap(sp.TString, sp.TNat),
+        weightedMathLib=sp.TAddress
     )
 
     INITIALIZE_PARAMS = sp.TRecord(
@@ -92,9 +93,10 @@ class WeightedPool(
 
     def __init__(
         self,
-        vault,
-        name,
-        symbol,
+        vault=sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
+        name='Symmetric Weighted Pool',
+        symbol='SYMMLP',
+        weightedMathLib=sp.address('KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
     ):
         self.init(
             tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
@@ -117,6 +119,7 @@ class WeightedPool(
                 'postJoinExitInvariant': sp.nat(0),
                 'swapFeePercentage': sp.nat(0),
             }),
+            weightedMathLib=weightedMathLib,
         )
         # self.init_type(Types.STORAGE)
         # TODO: ProtocolFeeCache
@@ -129,7 +132,7 @@ class WeightedPool(
             symbol,
         )
 
-    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=True)
+    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=False)
     def initialize(self, params):
 
         sp.verify(self.data.initialized == False)
