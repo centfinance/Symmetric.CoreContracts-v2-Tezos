@@ -11,8 +11,10 @@
   "author": "Symmetric Finance",
   "license": "GPL-3.0",
   "devDependencies": {
+    "@taqueria/plugin-contract-types": "^0.28.4",
     "@taqueria/plugin-core": "^0.28.0",
     "@taqueria/plugin-flextesa": "^0.28.0",
+    "@taqueria/plugin-jest": "^0.28.4",
     "@taqueria/plugin-smartpy": "^0.28.0",
     "@taqueria/plugin-taquito": "^0.28.0",
     "@tsconfig/node16": "^1.0.3"
