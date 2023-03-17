@@ -1,0 +1,13 @@
+{
+  "name": "Symmetric Weighted Pool Factory",
+  "version": "v1.0.0",
+  "description": "Symmetric Weighted Pool Factory. Used for creating liquidity pools that swap tokens by enforcing a Constant Weighted Product invariant.",
+  "authors": [
+    "Cent Finance"
+  ],
+  "homepage": "https://symmetric.exchange",
+  "license": "GPL-3.0",
+  "interfaces": [
+    "TZIP-016"
+  ]
+}

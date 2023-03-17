@@ -55,6 +55,14 @@ def getTokenValue(t):
     sp.result(entry.value)
 
 
+def normalize_metadata(self, metadata):
+    meta = {}
+    for key in metadata:
+        meta[key] = sp.utils.bytes_of_string(metadata[key])
+
+    return meta
+
+
 class WeightedPoolFactory(sp.Contract):
 
     def __init__(
@@ -62,8 +70,11 @@ class WeightedPoolFactory(sp.Contract):
         vault,
         weightedMathLib,
         protocolFeeProvider,
+        metadata
     ):
         self.init(
+            metadata=sp.big_map(
+                normalize_metadata(self, metadata)),
             fixedPoint=sp.big_map({
                 "mulDown": FixedPoint.mulDown,
                 "mulUp": FixedPoint.mulUp,
