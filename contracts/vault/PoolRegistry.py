@@ -12,7 +12,7 @@ class PoolRegistry:
             nextPoolNonce=sp.nat(1)
         )
 
-    @sp.entry_point(lazify=True)
+    @sp.entry_point(lazify=False)
     def registerPool(self, specialization):
         sp.set_type(specialization, sp.TNat)
 
@@ -30,7 +30,7 @@ class PoolRegistry:
         )
         sp.emit(poolEvent, tag='PoolRegistered', with_type=True)
 
-    @sp.onchain_view(pure=True)
+    @sp.onchain_view()
     def getNextPoolNonce(self):
         sp.result(self.data.nextPoolNonce)
 

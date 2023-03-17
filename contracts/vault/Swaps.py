@@ -60,7 +60,7 @@ class Swaps(PoolBalances):
     def __init__(self):
         PoolBalances.__init__(self)
 
-    @sp.entry_point(parameter_type=ISwaps.t_swap_params, lazify=True)
+    @sp.entry_point(parameter_type=ISwaps.t_swap_params, lazify=False)
     def swap(
         self,
         singleSwap,
@@ -110,7 +110,7 @@ class Swaps(PoolBalances):
         )
         # TODO: Handle remaining Tez
 
-    @sp.entry_point(parameter_type=ISwaps.t_batch_swap_params, lazify=True)
+    @sp.entry_point(parameter_type=ISwaps.t_batch_swap_params, lazify=False)
     def batchSwap(
         self,
         kind,
