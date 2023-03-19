@@ -13,12 +13,14 @@ class MockWeightedPoolFactory(WeightedPoolFactory):
             vault,
             weightedMathLib,
             protocolFeeProvider,
+            metadata
     ):
         WeightedPoolFactory.__init__(
             self,
             vault,
             weightedMathLib,
             protocolFeeProvider,
+            metadata,
         )
 
     @sp.onchain_view()
@@ -46,20 +48,23 @@ def test():
     #     vault=sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
     #     weightedMathLib=m.address,
     # )
-
+    CONTRACT_METADATA = {
+        "": "ipfs://QmbEE3NYTuhE2Vk8sQap4kkKyFQ2P1X6GDRCufxDCpBkLa",
+    }
     c = MockWeightedPoolFactory(
         sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
         m.address,
         sp.address('KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN'),
+        CONTRACT_METADATA,
     )
 
     sc += c
 
     token_metadata = {
-        "name": "Symmetric Pool Token",
+        "name": "SYMM/CTEZ 50:50",
         "symbol": "SYMMLP",
         "decimals": "18",
-        "thumbnailUri": "ipfs://......",
+        "thumbnailUri": "ipfs://QmRzY4YdHBFUeuGPhmPRAUWkVN9qhH3pW14et5V6kZqFZM",
     }
 
     create_params = sp.record(
@@ -68,4 +73,5 @@ def test():
         metadata=sp.utils.bytes_of_string("<ipfs://....>"),
         token_metadata=normalize_metadata(token_metadata),
     )
+    sp.trace(normalize_metadata(token_metadata))
     c.create(create_params)
