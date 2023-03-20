@@ -20,7 +20,7 @@ class Types:
     REGISTER_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TBytes,
         tokens=sp.TMap(sp.TNat, TOKEN),
-        assetManagers=sp.TOption(sp.TList(sp.TAddress))
+        assetManagers=sp.TOption(sp.TMap(sp.TNat, sp.TAddress))
     )
 
 

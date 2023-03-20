@@ -17,7 +17,7 @@ class PoolRegistry:
         sp.set_type(specialization, sp.TNat)
 
         poolId = self._toPoolId(
-            sp.sender, specialization, self.data.nextPoolNonce)
+            sp.sender, specialization, sp.compute(self.data.nextPoolNonce))
 
         self.data._isPoolRegistered[poolId] = sp.unit
 

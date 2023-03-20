@@ -32,7 +32,7 @@ def registerPool(vault, specialization, tokens, assetManagers):
             specialization=specialization,
             pool=pool,
         ))
-    nonce = sp.view('getNextNonce', vault, sp.unit,
+    nonce = sp.view('getNextPoolNonce', vault, sp.unit,
                     t=sp.TNat).open_some("Invalid view")
 
     poolId = _toPoolId(sp.self_address, specialization, nonce)

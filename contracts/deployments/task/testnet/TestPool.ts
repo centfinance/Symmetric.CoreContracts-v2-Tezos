@@ -12,7 +12,7 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     Tezos.setProvider({ signer: theSigner });
   })
   .then( async () => {
-    const contract = await Tezos.contract.at<ContractType>('KT1MPScnKibWNrpDqmBioNoZ3Koj55Z4mpHa');
+    const contract = await Tezos.contract.at<ContractType>('KT1GbudAkmBszsGntQ2VpiktUTLPKna6X1qm');
     const initializeRequest = await contract.methodsObject.initialize({
       normalizedWeights: tas.map([{ 
           key: tas.nat('0'), 

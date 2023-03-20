@@ -56,10 +56,10 @@ class BaseMinimalSwapInfoPool(BasePool):
             self.data.scalingFactors,
         )))
 
-        balanceTokenIn = self.data.fixedPoint['mulDown']((
-            params.balanceTokenIn, scalingFactorTokenIn))
-        balanceTokenOut = self.data.fixedPoint['mulDown']((
-            params.balanceTokenOut, scalingFactorTokenOut))
+        balanceTokenIn = sp.compute(self.data.fixedPoint['mulDown']((
+            params.balanceTokenIn, scalingFactorTokenIn)))
+        balanceTokenOut = sp.compute(self.data.fixedPoint['mulDown']((
+            params.balanceTokenOut, scalingFactorTokenOut)))
 
         swapAmount = sp.local('swapAmount.value', 0)
         with sp.if_(params.request.kind == 'GIVEN_IN'):
