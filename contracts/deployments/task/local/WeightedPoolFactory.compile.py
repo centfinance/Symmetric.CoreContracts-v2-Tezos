@@ -16,13 +16,13 @@ CONTRACT_METADATA = {
 }
 
 CONTRACT_STORAGE = sp.record(
-    vault=sp.address('KT1MqSjzZHwAjrB8ZkFm8f3fDBKxRnNeGiFB'),
+    vault=sp.address('KT1MH9fswimVr7ek5Cd76WeEKLXs7wG4qQMG'),
     weightedMathlib=sp.address('KT1XrNpj8TBdpfMmjF2wod6yZisAzm6c3TCY'),
     protocolFeeProvider=sp.address('KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN'),
 )
 
 sp.add_compilation_target('local', WeightedPoolFactory(
-    sp.address('KT1MqSjzZHwAjrB8ZkFm8f3fDBKxRnNeGiFB'),
+    sp.address('KT1MH9fswimVr7ek5Cd76WeEKLXs7wG4qQMG'),
     sp.address('KT1XrNpj8TBdpfMmjF2wod6yZisAzm6c3TCY'),
     sp.address('KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
     CONTRACT_METADATA,
