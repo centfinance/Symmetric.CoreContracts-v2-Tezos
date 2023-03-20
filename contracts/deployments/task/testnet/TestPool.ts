@@ -12,7 +12,7 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     Tezos.setProvider({ signer: theSigner });
   })
   .then( async () => {
-    const contract = await Tezos.contract.at<ContractType>('KT1GbudAkmBszsGntQ2VpiktUTLPKna6X1qm');
+    const contract = await Tezos.contract.at<ContractType>('KT1KaT3tmp5dxeqeJoTCfsRZ5RmWngWvykk5');
     const initializeRequest = await contract.methodsObject.initialize({
       normalizedWeights: tas.map([{ 
           key: tas.nat('0'), 
@@ -25,11 +25,11 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     ]),
       rateProviders: tas.map([{ 
           key: tas.nat('0'), 
-          value: tas.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
+          value: null,
       },
       { 
         key: tas.nat('1'), 
-        value: tas.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
+        value: null,
     }]),
       swapFeePercentage: tas.nat('1000000000000'),
       tokenDecimals: tas.map([{ 
@@ -56,8 +56,9 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
           id: tas.nat('1'),
         },
     }]),
-  }).toTransferParams({});
-  await Tezos.estimate.transfer(initializeRequest)
-  // await initializeRequest.confirmation(0);
+  }).send();
+  // const estimate = await Tezos.estimate.transfer(initializeRequest)
+  // console.log(estimate)
+    await initializeRequest.confirmation(0);
   })
   .catch((error) => console.table(`Error: ${JSON.stringify(error, null, 2)}`));

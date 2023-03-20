@@ -13,15 +13,15 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     Tezos.setProvider({ signer: theSigner });
   })
   .then( async () => {
-    const contract = await Tezos.contract.at<ContractType>('KT1B3DinmvQp2eWNZhVXWUveBeaty2Kx24rF');
+    const contract = await Tezos.contract.at<ContractType>('KT1HPfQwTKxm71gJFfSHgLtpcV1jVLjsxYtf');
     const createRequest = await contract.methodsObject.default({
       metadata: tas.bytes(
-        "697066733a2f2f516d527a593459644842465565754750686d50524155576b564e39716848337057313465743556366b5a71465a4d"),
+        char2Bytes('SYMM/CTEZ-50:50')),
       token_metadata: tas.map({
-        "name": tas.bytes("53594d4d2f4354455a2035303a3530"),
-        "symbol": tas.bytes("53594d4d4c50"),
-        "decimals": tas.bytes("3138"),
-        "thumbnailUri":tas.bytes("697066733a2f2f516d527a593459644842465565754750686d50524155576b564e39716848337057313465743556366b5a71465a4d"),
+        "name": tas.bytes(char2Bytes('SYMM/CTEZ-50:50')),
+        "symbol": tas.bytes(char2Bytes('SYMMLP')),
+        "decimals": tas.bytes(char2Bytes('18')),
+        "thumbnailUri":tas.bytes(char2Bytes('https://assets.coingecko.com/coins/images/18525/small/SYMM-Coin-2.png?1632276841')),
         }),
   }).send();
     await createRequest.confirmation(1);

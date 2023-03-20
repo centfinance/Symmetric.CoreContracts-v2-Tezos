@@ -12,17 +12,17 @@ metdata = {
     'interfaces': ['TZIP-016']
 }
 CONTRACT_METADATA = {
-    "": "ipfs://QmbEE3NYTuhE2Vk8sQap4kkKyFQ2P1X6GDRCufxDCpBkLa",
+    "": "https://raw.githubusercontent.com/centfinance/Symmetric.CoreContracts-v2-Tezos/main/metadata/testnet/WeightedPoolFactory.json",
 }
 
 CONTRACT_STORAGE = sp.record(
-    vault=sp.address('KT1MH9fswimVr7ek5Cd76WeEKLXs7wG4qQMG'),
+    vault=sp.address('KT1XV3C2twmrgVaHv2jNtUpymQZ39C6mM7Kp'),
     weightedMathlib=sp.address('KT1XrNpj8TBdpfMmjF2wod6yZisAzm6c3TCY'),
     protocolFeeProvider=sp.address('KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN'),
 )
 
 sp.add_compilation_target('local', WeightedPoolFactory(
-    sp.address('KT1MH9fswimVr7ek5Cd76WeEKLXs7wG4qQMG'),
+    sp.address('KT1XV3C2twmrgVaHv2jNtUpymQZ39C6mM7Kp'),
     sp.address('KT1XrNpj8TBdpfMmjF2wod6yZisAzm6c3TCY'),
     sp.address('KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
     CONTRACT_METADATA,

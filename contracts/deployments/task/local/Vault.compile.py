@@ -13,7 +13,7 @@ metadata = {
 }
 
 CONTRACT_METADATA = {
-    "": "ipfs://QmV9JXh13x6YQ3ngGorhd5WWxYarKNn1ejLc5sgCf3C48j",
+    "": "https://raw.githubusercontent.com/centfinance/Symmetric.CoreContracts-v2-Tezos/main/metadata/testnet/Vault.json",
 }
 
 sp.add_compilation_target('local', Vault(CONTRACT_METADATA))
