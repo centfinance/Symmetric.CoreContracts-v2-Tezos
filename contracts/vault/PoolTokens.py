@@ -20,7 +20,7 @@ class Types:
     REGISTER_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TBytes,
         tokens=sp.TMap(sp.TNat, TOKEN),
-        assetManagers=sp.TList(sp.TAddress)
+        assetManagers=sp.TOption(sp.TMap(sp.TNat, sp.TAddress))
     )
 
 
@@ -36,7 +36,7 @@ class PoolTokens(
         TwoTokenPoolsBalance.__init__(self)
         GeneralPoolsBalance.__init__(self)
 
-    @sp.entry_point(lazify=True)
+    @sp.entry_point(lazify=False)
     def registerTokens(self, params):
         sp.set_type(params, Types.REGISTER_TOKENS_PARAMS)
 

@@ -60,7 +60,7 @@ class Swaps(PoolBalances):
     def __init__(self):
         PoolBalances.__init__(self)
 
-    @sp.entry_point(parameter_type=ISwaps.t_swap_params, lazify=True)
+    @sp.entry_point(parameter_type=ISwaps.t_swap_params, lazify=False)
     def swap(
         self,
         singleSwap,
@@ -87,7 +87,6 @@ class Swaps(PoolBalances):
         )
 
         (amountCalculated, amountIn, amountOut) = self._swapWithPool(request)
-
         checkLimits = sp.eif(
             singleSwap.kind == 'GIVEN_IN',
             (amountOut >= limit),
@@ -110,7 +109,7 @@ class Swaps(PoolBalances):
         )
         # TODO: Handle remaining Tez
 
-    @sp.entry_point(parameter_type=ISwaps.t_batch_swap_params, lazify=True)
+    @sp.entry_point(parameter_type=ISwaps.t_batch_swap_params, lazify=False)
     def batchSwap(
         self,
         kind,
@@ -205,13 +204,13 @@ class Swaps(PoolBalances):
         pool = self._getPoolAddress(request.poolId)
         specialization = self._getPoolSpecialization(request.poolId)
 
-        amountCalculated = sp.local('amountCalculated', 0)
+        # amountCalculated = sp.local('amountCalculated', 0)
         # with sp.if_(specialization == sp.nat(2)):
         #     amountCalculated = self._processTwoTokenPoolSwapRequest(
         #         request, pool)
         # with sp.else_():
         #     with sp.if_(specialization == sp.nat(1)):
-        amountCalculated.value = self._processMinimalSwapInfoPoolSwapRequest(
+        amountCalculated = self._processMinimalSwapInfoPoolSwapRequest(
             sp.record(
                 request=request,
                 pool=pool,
@@ -222,8 +221,8 @@ class Swaps(PoolBalances):
 
         amountsIn, amountsOut = sp.match_pair(sp.eif(
             request.kind == 'GIVEN_IN',
-            (request.amount, amountCalculated.value),
-            (amountCalculated.value, request.amount),
+            (request.amount, amountCalculated),
+            (amountCalculated, request.amount),
         ))
 
         sp.emit(sp.record(
@@ -236,7 +235,7 @@ class Swaps(PoolBalances):
             amountOut=amountsOut
         ), tag='Swap', with_type=True)
 
-        return (amountCalculated.value, amountsIn, amountsOut)
+        return (amountCalculated, amountsIn, amountsOut)
 
     def _processMinimalSwapInfoPoolSwapRequest(self, params):
         tokenInBalance = self._getMinimalSwapInfoPoolBalance(
@@ -251,7 +250,6 @@ class Swaps(PoolBalances):
                 tokenInBalance=tokenInBalance,
                 tokenOutBalance=tokenOutBalance,
             ))
-
         self.data._minimalSwapInfoPoolsBalances[params.request.poolId][params.request.tokenIn] = tokenInBalance
         self.data._minimalSwapInfoPoolsBalances[params.request.poolId][params.request.tokenOut] = tokenOutBalance
 
@@ -277,8 +275,8 @@ class Swaps(PoolBalances):
             ),
         )
 
-        amountCalculated = sp.view('onSwap', params.pool,
-                                   swapParams, t=sp.TNat).open_some("Invalid view")
+        amountCalculated = sp.compute(sp.view('onSwap', params.pool,
+                                              swapParams, t=sp.TNat).open_some("Invalid view"))
 
         amountsIn, amountsOut = sp.match_pair(sp.compute(sp.eif(
             params.request.kind == 'GIVEN_IN',

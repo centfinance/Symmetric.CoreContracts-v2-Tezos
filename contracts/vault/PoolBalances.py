@@ -101,9 +101,10 @@ class PoolBalances(
             balances=totalBalances,
             userData=request.userData,
         )
+
         # Call BasePool view to get amounts
-        pair = sp.view('beforeJoinPool', pool,
-                       sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+        pair = sp.compute(sp.view('beforeJoinPool', pool,
+                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view"))
         # Call BasePool entry point to perform join
         onJoinPool = sp.contract(IBasePool.t_on_join_pool_params, pool, "onJoinPool").open_some(
             "INTERFACE_MISMATCH")
@@ -160,16 +161,15 @@ class PoolBalances(
             userData=request.userData,
         )
         # Call BasePool view to get amounts
-        pair = sp.view('beforeExitPool', pool,
-                       sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+        pair = sp.compute(sp.view('beforeExitPool', pool,
+                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view"))
+
         # Call BasePool entry point to perform join
         onExitPool = sp.contract(IBasePool.t_on_exit_pool_params, pool, "onExitPool").open_some(
             "INTERFACE_MISMATCH")
-
         sp.transfer(params, sp.tez(0), onExitPool)
 
         amountsOut = sp.snd(pair)
-
         sp.verify(sp.len(balances) == sp.len(amountsOut))
         #  The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
         #  their participation.
@@ -206,12 +206,12 @@ class PoolBalances(
             managed=sp.TNat,
             lastChangeBlock=sp.TNat,
         )))
-        with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
-            amountIn = amountsIn[i]
-            sp.verify(amountIn <= change.limits[i], Errors.JOIN_ABOVE_MAX)
+        with sp.for_('x', sp.range(0, sp.len(change.assets))) as x:
+            amountIn = amountsIn[x]
+            sp.verify(amountIn <= change.limits[x], Errors.JOIN_ABOVE_MAX)
 
             # Receive assets from the sender - possibly from Internal Balance.
-            asset = change.assets[i]
+            asset = change.assets[x]
             AssetTransfersHandler._receiveAsset(asset, amountIn, sender,
                                                 change.useInternalBalance)
             # TODO: Handle Native Tez
@@ -219,12 +219,12 @@ class PoolBalances(
             #     wrappedXtz = wrappedXtz.add(amountIn)
 
             updated_balance = sp.record(
-                cash=(balances[i].cash + amountIn),
-                managed=balances[i].managed,
-                lastChangeBlock=balances[i].lastChangeBlock,
+                cash=(balances[x].cash + amountIn),
+                managed=balances[x].managed,
+                lastChangeBlock=balances[x].lastChangeBlock,
             )
 
-            joinBalances[i] = updated_balance
+            joinBalances[x] = updated_balance
 
         # TODO: Handle Native Tez
         # self._handleRemainingXtz(wrappedXtz)
@@ -243,21 +243,20 @@ class PoolBalances(
             managed=sp.TNat,
             lastChangeBlock=sp.TNat,
         )))
-        with sp.for_('i', sp.range(0, sp.len(change.assets))) as i:
-            amountOut = amountsOut[i]
-            sp.verify(amountOut <= change.limits[i], Errors.EXIT_BELOW_MIN)
+        with sp.for_('x', sp.range(0, sp.len(change.assets))) as x:
+            amountOut = amountsOut[x]
+            sp.verify(amountOut <= change.limits[x], Errors.EXIT_BELOW_MIN)
 
-            asset = change.assets[i]
+            asset = change.assets[x]
             AssetTransfersHandler._sendAsset(asset, amountOut, recipient,
                                              change.useInternalBalance)
-
             updated_balance = sp.record(
-                cash=sp.as_nat(balances[i].cash - amountOut),
-                managed=balances[i].managed,
-                lastChangeBlock=balances[i].lastChangeBlock,
+                cash=sp.as_nat(balances[x].cash - amountOut),
+                managed=balances[x].managed,
+                lastChangeBlock=balances[x].lastChangeBlock,
             )
 
-            exitBalances[i] = updated_balance
+            exitBalances[x] = updated_balance
 
         return exitBalances
 

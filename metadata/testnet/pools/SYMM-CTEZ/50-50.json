@@ -1,0 +1,13 @@
+{
+  "name": "SYMM/CTEZ 50-50 Weighted Pool",
+  "version": "v1.0.0",
+  "description": "Symmetric Weighted Pool",
+  "authors": [
+    "Cent Finance"
+  ],
+  "homepage": "https://symmetric.exchange",
+  "license": "GPL-3.0",
+  "interfaces": [
+    "TZIP-016"
+  ]
+}
