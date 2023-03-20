@@ -103,8 +103,8 @@ class PoolBalances(
         )
 
         # Call BasePool view to get amounts
-        pair = sp.view('beforeJoinPool', pool,
-                       sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+        pair = sp.compute(sp.view('beforeJoinPool', pool,
+                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view"))
         # Call BasePool entry point to perform join
         onJoinPool = sp.contract(IBasePool.t_on_join_pool_params, pool, "onJoinPool").open_some(
             "INTERFACE_MISMATCH")
@@ -161,8 +161,8 @@ class PoolBalances(
             userData=request.userData,
         )
         # Call BasePool view to get amounts
-        pair = sp.view('beforeExitPool', pool,
-                       sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view")
+        pair = sp.compute(sp.view('beforeExitPool', pool,
+                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view"))
 
         # Call BasePool entry point to perform join
         onExitPool = sp.contract(IBasePool.t_on_exit_pool_params, pool, "onExitPool").open_some(
