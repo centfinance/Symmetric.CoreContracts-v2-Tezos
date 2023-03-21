@@ -211,3 +211,22 @@ class WeightedPool(
         self._payProtocolFees(sp.compute(protocolFeesToBeMinted))
 
         return ((supplyBeforeFeeCollection + protocolFeesToBeMinted), invariant)
+
+    def _afterJoinExit(
+        self,
+        preJoinExitInvariant,
+        preBalances,
+        balanceDeltas,
+        normalizedWeights,
+        preJoinExitSupply,
+        postJoinExitSupply
+    ):
+        protocolFeesToBeMinted = self._getPostJoinExitProtocolFees(
+            preJoinExitInvariant,
+            preBalances,
+            balanceDeltas,
+            normalizedWeights,
+            preJoinExitSupply,
+            postJoinExitSupply
+        )
+        self._payProtocolFees(sp.compute(protocolFeesToBeMinted))

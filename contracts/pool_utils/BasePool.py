@@ -311,6 +311,11 @@ class BasePool(
         decimalsDifference = sp.as_nat(18 - decimals)
         return FixedPoint.ONE * (self.data.fixedPoint['pow']((sp.nat(10), decimalsDifference)))
 
+    def _payProtocolFees(self, sptAmount):
+        with sp.if_(sptAmount > 0):
+            self._mintPoolTokens(
+                sp.some(self.data.protocolFeesCollector), sptAmount)
+
     # def _onInitializePool(
     #     self,
     #     poolId,
