@@ -10,6 +10,8 @@ from contracts.pool_weighted.WeightedPoolProtocolFees import WeightedPoolProtoco
 
 from contracts.pool_weighted.WeightedMath import WeightedMath
 
+from contracts.pool_weighted.ExternalWeightedMath import IExternalWeightedMath
+
 
 class Types:
 
@@ -184,3 +186,28 @@ class WeightedPool(
         )
 
         self.data.initialized = True
+
+    def _beforeJoinExit(
+        self,
+        preBalances,
+        normalizedWeights,
+    ):
+        supplyBeforeFeeCollection = sp.compute(self.data.totalSupply)
+
+        invariant = IExternalWeightedMath.calculateInvaraint(self.data.weightedMathLib, sp.record(
+            normalizedWeights=normalizedWeights,
+            balances=preBalances,
+        ))
+
+        (protocolFeesToBeMinted, athRateProduct) = self._getPreJoinExitProtocolFees(
+            invariant,
+            normalizedWeights,
+            supplyBeforeFeeCollection
+        )
+
+        with sp.if_(athRateProduct > 0):
+            self.data.entries['athRateProduct'] = sp.compute(athRateProduct)
+
+        self._payProtocolFees(sp.compute(protocolFeesToBeMinted))
+
+        return ((supplyBeforeFeeCollection + protocolFeesToBeMinted), invariant)
