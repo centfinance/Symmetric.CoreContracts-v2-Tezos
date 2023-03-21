@@ -75,6 +75,32 @@ class BaseWeightedPool(
             )
         )
 
+    def _beforeInitializePool(self, params):
+        kind = params.userData.kind
+        # TODO: Use an enum
+        sp.verify(kind == 'INIT', Errors.UNINITIALIZED)
+
+        amountsIn = params.userData.amountsIn.open_some()
+
+        length = sp.len(amountsIn)
+        sp.verify(length == sp.len(params.scalingFactors))
+
+        upscaledAmounts = sp.compute(ScalingHelpers._upscaleArray(
+            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown']))
+
+        invariantAfterJoin = sp.compute(IExternalWeightedMath.calculateInvariant(
+            self.data.weightedMathLib,
+            sp.record(
+                normalizedWeights=self.data.normalizedWeights,
+                balances=upscaledAmounts,
+            )))
+
+        sptAmountOut = invariantAfterJoin * length
+
+        self.data.entries['postJoinExitInvariant'] = invariantAfterJoin
+
+        return (sptAmountOut, amountsIn)
+
     def _onInitializePool(self, params):
         kind = params.userData.kind
         # TODO: Use an enum
@@ -107,11 +133,27 @@ class BaseWeightedPool(
 
         return (sptAmountOut, amountsIn)
 
-    def _onJoinPool(self, params):
-        # TODO: Implement protocol fees
-        # (preJoinExitSupply,  preJoinExitInvariant) = self._beforeJoinExit(params.balances, params.normalizedWeights);
+    def _beforeJoinPool(self, params):
+        preJoinExitSupply = self._beforeJoinExit(
+            params.balances, params.normalizedWeights)
 
         (sptAmpountOut, amountsIn) = self._doJoin(
+            sp.record(
+                balances=params.balances,
+                normalizedWeights=self.data.normalizedWeights,
+                scalingFactors=params.scalingFactors,
+                totalSupply=preJoinExitSupply,
+                userData=params.userData
+            )
+        )
+
+        return (sptAmpountOut, amountsIn)
+
+    def _onJoinPool(self, params):
+        (preJoinExitSupply,  preJoinExitInvariant) = self._beforeOnJoinExit(
+            params.balances, params.normalizedWeights)
+
+        (sptAmountOut, amountsIn) = self._doJoin(
             sp.record(
                 balances=params.balances,
                 normalizedWeights=self.data.normalizedWeights,
@@ -120,17 +162,16 @@ class BaseWeightedPool(
                 userData=params.userData
             )
         )
-        # TODO: Implement protocol fees
-        # self._afterJoinExit(
-        #     preJoinExitInvariant= preJoinExitInvariant,
-        #     balances = params.balances,
-        #     amountsIn = amountsIn,
-        #     normalizedWeights = self.data.normalizedWeights,
-        #     preJoinExitSupply = preJoinExitInvariant,
-        #     preJoinExitSupply.add(bptAmountOut)
-        # );
+        self._afterJoinExit(
+            preJoinExitInvariant,
+            params.balances,
+            amountsIn,
+            self.data.normalizedWeights,
+            preJoinExitSupply,
+            (preJoinExitSupply + sptAmountOut),
+        )
 
-        return (sptAmpountOut, amountsIn)
+        return (sptAmountOut, amountsIn)
 
     def _doJoin(self, params):
         doJoin = sp.local('doJoin', (0, {}))
@@ -222,30 +263,46 @@ class BaseWeightedPool(
 
         return (sptAmountOut, amountsIn)
 
-    def _onExitPool(self, params):
-        # TODO: Implement protocol fees
-        # (preJoinExitSupply,  preJoinExitInvariant) = self._beforeJoinExit(params.balances, params.normalizedWeights);
+    def _beforeExitPool(self, params):
+        preJoinExitSupply = self._beforeJoinExit(
+            params.balances, params.normalizedWeights)
 
         (sptAmpountIn, amountsOut) = self._doExit(
             sp.record(
                 balances=params.balances,
                 normalizedWeights=self.data.normalizedWeights,
                 scalingFactors=params.scalingFactors,
-                totalSupply=self.data.totalSupply,
+                totalSupply=preJoinExitSupply,
+                userData=params.userData
+            )
+        )
+
+        return (sptAmpountIn, amountsOut)
+
+    def _onExitPool(self, params):
+        (preJoinExitSupply,  preJoinExitInvariant) = self._beforeOnJoinExit(
+            params.balances, params.normalizedWeights)
+
+        (sptAmountIn, amountsOut) = self._doExit(
+            sp.record(
+                balances=params.balances,
+                normalizedWeights=self.data.normalizedWeights,
+                scalingFactors=params.scalingFactors,
+                totalSupply=preJoinExitSupply,
                 userData=params.userData
             )
         )
         # TODO: Implement protocol fees
-        # self._afterJoinExit(
-        #     preJoinExitInvariant= preJoinExitInvariant,
-        #     balances = params.balances,
-        #     amountsIn = amountsIn,
-        #     normalizedWeights = self.data.normalizedWeights,
-        #     preJoinExitSupply = preJoinExitInvariant,
-        #     preJoinExitSupply.add(bptAmountOut)
-        # );
+        self._afterJoinExit(
+            preJoinExitInvariant,
+            params.balances,
+            amountsOut,
+            self.data.normalizedWeights,
+            preJoinExitSupply,
+            (preJoinExitSupply + sptAmountIn),
+        )
 
-        return (sptAmpountIn, amountsOut)
+        return (sptAmountIn, amountsOut)
 
     def _doExit(self, params):
         doExit = sp.local('doExit', (0, {}))

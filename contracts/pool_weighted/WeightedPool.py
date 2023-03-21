@@ -205,6 +205,26 @@ class WeightedPool(
             supplyBeforeFeeCollection
         )
 
+        return (supplyBeforeFeeCollection + protocolFeesToBeMinted)
+
+    def _beforeOnJoinExit(
+        self,
+        preBalances,
+        normalizedWeights,
+    ):
+        supplyBeforeFeeCollection = sp.compute(self.data.totalSupply)
+
+        invariant = IExternalWeightedMath.calculateInvaraint(self.data.weightedMathLib, sp.record(
+            normalizedWeights=normalizedWeights,
+            balances=preBalances,
+        ))
+
+        (protocolFeesToBeMinted, athRateProduct) = self._getPreJoinExitProtocolFees(
+            invariant,
+            normalizedWeights,
+            supplyBeforeFeeCollection
+        )
+
         with sp.if_(athRateProduct > 0):
             self.data.entries['athRateProduct'] = sp.compute(athRateProduct)
 

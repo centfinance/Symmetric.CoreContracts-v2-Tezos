@@ -203,7 +203,7 @@ class BasePool(
         scalingFactors = self.data.scalingFactors
         result = sp.local('result', (0, {}))
         with sp.if_(self.data.totalSupply == 0):
-            result.value = self._onInitializePool(
+            result.value = self._beforeInitializePool(
                 sp.record(
                     scalingFactors=scalingFactors,
                     userData=params.userData,
@@ -213,7 +213,7 @@ class BasePool(
         with sp.else_():
             upScaledBalances = ScalingHelpers._upscaleArray(
                 params.balances, scalingFactors, self.data.fixedPoint['mulDown'])
-            result.value = self._onJoinPool(
+            result.value = self._beforeJoinPool(
                 sp.record(
                     balances=upScaledBalances,
                     scalingFactors=scalingFactors,
@@ -247,7 +247,7 @@ class BasePool(
             )
         with sp.else_():
             scalingFactors = self.data.scalingFactors
-            result.value = self._onExitPool(
+            result.value = self._beforeExitPool(
                 sp.record(
                     balances=params.balances,
                     scalingFactors=scalingFactors,
@@ -315,26 +315,3 @@ class BasePool(
         with sp.if_(sptAmount > 0):
             self._mintPoolTokens(
                 sp.some(self.data.protocolFeesCollector), sptAmount)
-
-    # def _onInitializePool(
-    #     self,
-    #     poolId,
-    #     sender,
-    #     receipient,
-    #     scalingFactors,
-    #     userData,
-    # ):
-    #     pass
-
-    # def _onJoinPool(
-    #     self,
-    #     poolId,
-    #     sender,
-    #     receipient,
-    #     balances,
-    #     lastchangeBlock,
-    #     protocolSwapFeePercentage,
-    #     scalingFactors,
-    #     userData,
-    # ):
-    #     pass
