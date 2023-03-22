@@ -169,13 +169,18 @@ class BasePool(
 
         with sp.else_():
             scalingFactors = self.data.scalingFactors
+
+            upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
+                balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+
             (sptAmountIn, amountsOut) = self._onExitPool(
                 sp.record(
-                    balances=balances,
+                    balances=upScaledBalances,
                     scalingFactors=scalingFactors,
                     userData=userData
                 )
             )
+
             self._burnPoolTokens(sender, sptAmountIn)
 
     # # @ sp.entry_point
@@ -191,7 +196,7 @@ class BasePool(
         scalingFactors = self.data.scalingFactors
         result = sp.local('result', (0, {}))
         with sp.if_(self.data.totalSupply == 0):
-            result.value = self._onInitializePool(
+            result.value = self._beforeInitializePool(
                 sp.record(
                     scalingFactors=scalingFactors,
                     userData=params.userData,
@@ -201,7 +206,7 @@ class BasePool(
         with sp.else_():
             upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
                 params.balances, scalingFactors, self.data.fixedPoint['mulDown'])))
-            result.value = self._onJoinPool(
+            result.value = self._beforeJoinPool(
                 sp.record(
                     balances=upScaledBalances,
                     scalingFactors=scalingFactors,
@@ -236,9 +241,13 @@ class BasePool(
             )
         with sp.else_():
             scalingFactors = self.data.scalingFactors
-            result.value = self._onExitPool(
+
+            upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
+                params.balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+
+            result.value = self._beforeExitPool(
                 sp.record(
-                    balances=params.balances,
+                    balances=upScaledBalances,
                     scalingFactors=scalingFactors,
                     userData=params.userData
                 )

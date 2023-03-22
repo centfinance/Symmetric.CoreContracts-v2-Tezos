@@ -136,6 +136,16 @@ def test():
             request=joinRequest,
         )
     )
+
+    v.joinPool(
+        sp.record(
+            poolId=sp.bytes(
+                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+            sender=sender,
+            recipient=recipient,
+            request=joinRequest,
+        )
+    )
     exitUserData = sp.record(
         kind='EXACT_SPT_IN_FOR_TOKENS_OUT',
         amountsOut=sp.none,

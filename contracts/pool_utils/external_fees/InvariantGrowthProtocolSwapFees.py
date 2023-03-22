@@ -5,28 +5,29 @@ import contracts.utils.math.FixedPoint as FixedPoint
 
 class InvariantGrowthProtocolSwapFees:
 
-    def getProtocolOwnershipPercentage(invariantGrowthRatio, supplyGrowthRatio, protocolSwapFeePercentage, math):
+    # def getProtocolOwnershipPercentage(invariantGrowthRatio, supplyGrowthRatio, protocolSwapFeePercentage, math):
+    #     with sp.if_((supplyGrowthRatio < invariantGrowthRatio) | (protocolSwapFeePercentage != sp.nat(0))):
+    #         percent = sp.as_nat(
+    #             FixedPoint.ONE - math['divDown']((supplyGrowthRatio, invariantGrowthRatio)))
+
+    #         percent = math['mulDown']((percent, protocolSwapFeePercentage))
+    #         return percent
+    #     return sp.nat(0)  # or any default value if conditions are not met
+
+    def getProtocolOwnershipPercentage(
+        invariantGrowthRatio,
+        supplyGrowthRatio,
+        protocolSwapFeePercentage,
+        math,
+    ):
         with sp.if_((supplyGrowthRatio < invariantGrowthRatio) | (protocolSwapFeePercentage != sp.nat(0))):
             percent = sp.as_nat(
                 FixedPoint.ONE - math['divDown']((supplyGrowthRatio, invariantGrowthRatio)))
-            percent = math['mulDown']((percent, protocolSwapFeePercentage))
+            percent = math['mulDown']((
+                percent, protocolSwapFeePercentage))
             return percent
-        return sp.nat(0)  # or any default value if conditions are not met
 
-    # def getProtocolOwnershipPercentage(
-    #     invariantGrowthRatio,
-    #     supplyGrowthRatio,
-    #     protocolSwapFeePercentage,
-    #     math,
-    # ):
-    #     percent = sp.local('percent', sp.nat(0))
-    #     with sp.if_((supplyGrowthRatio < invariantGrowthRatio) | (protocolSwapFeePercentage != sp.nat(0))):
-    #         percent.value = sp.as_nat(
-    #             FixedPoint.ONE - math['divDown']((supplyGrowthRatio, invariantGrowthRatio)))
-    #         percent.value = math['mulDown']((
-    #             percent.value, protocolSwapFeePercentage))
-
-    #     return percent.value
+        return sp.nat(0)
 
     def calcDueProtocolFees(
         invariantGrowthRatio,

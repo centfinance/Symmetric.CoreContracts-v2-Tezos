@@ -259,6 +259,7 @@ class WeightedPool(
         preJoinExitSupply,
         postJoinExitSupply
     ):
+
         protocolFeesToBeMinted = self._getPostJoinExitProtocolFees(
             preJoinExitInvariant,
             preBalances,

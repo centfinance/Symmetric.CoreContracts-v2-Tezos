@@ -4,7 +4,7 @@ from contracts.pool_utils.external_fees.InvariantGrowthProtocolSwapFees import I
 
 import contracts.utils.math.FixedPoint as FixedPoint
 
-from contracts.pool_weighted.ExternalWeightedMath import IExternalWeightedMath
+from contracts.pool_weighted.WeightedMath import WeightedMath
 
 
 class WeightedPoolProtocolFees:
@@ -42,10 +42,12 @@ class WeightedPoolProtocolFees:
             preJoinExitInvariant,
             protocolSwapFeePercentage
     ):
-        fpm = sp.compute(self.data.fixedPoint)
+        fpm = self.data.fixedPoint
+
+        #                          self.data.entries['postJoinExitInvariant'])))
         return InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
-            fpm['divDown']((preJoinExitInvariant,
-                            self.data.entries['postJoinExitInvariant'])),
+            sp.compute(fpm['divDown']((preJoinExitInvariant,
+                                       self.data.entries['postJoinExitInvariant']))),
             FixedPoint.ONE,
             protocolSwapFeePercentage,
             fpm,
@@ -103,6 +105,7 @@ class WeightedPoolProtocolFees:
         preJoinExitSupply,
         postJoinExitSupply
     ):
+
         fpm = self.data.fixedPoint
         isJoin = (postJoinExitSupply >= preJoinExitSupply)
 
@@ -110,17 +113,14 @@ class WeightedPoolProtocolFees:
             preBalances[i] = sp.eif(
                 isJoin,
                 (preBalances[i] + balanceDeltas[i]),
-                sp.as_nat(preBalances[i] - balanceDeltas[i]),
+                (sp.as_nat(preBalances[i] - balanceDeltas[i])),
             )
 
-        postJoinExitInvariant = IExternalWeightedMath.calculateInvariant(
-            sp.compute(self.data.weightedMathLib),
-            sp.record(
-                normalizedWeights=normalizedWeights,
-                balances=preBalances,
-            ),
-        )
-
+        postJoinExitInvariant = sp.compute(WeightedMath._calculateInvariant(
+            normalizedWeights,
+            preBalances,
+            fpm['powDown']
+        ))
         protocolSwapFeePercentage = sp.compute(self.data.feeCache.swapFee)
 
         self.data.entries['postJoinExitInvariant'] = postJoinExitInvariant
