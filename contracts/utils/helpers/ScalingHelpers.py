@@ -32,16 +32,25 @@ def _downscaleUp(amount, scalingFactor):
 #  * @dev Same as `_upscale`, but for an entire array. This function does not return anything, but instead *mutates*
 #  * the `amounts` array.
 #  */
-def _upscaleArray(amounts, scalingFactors, mulDown):
+
+def scale_amounts(params):
+    sp.set_type(params, sp.TTuple(
+        sp.TMap(sp.TNat, sp.TNat),
+        sp.TMap(sp.TNat, sp.TNat),
+        sp.TLambda(
+            sp.TPair(sp.TNat, sp.TNat), sp.TNat)))
+
+    amounts, scaling_factors, scale_func = sp.match_tuple(
+        params, 'amounts', 'scaling_factors', 'scale_func')
+
     length = sp.len(amounts)
-    # InputHelpers.ensureInputLengthMatch(length, scalingFactors.length)
-    upscaledAmounts = sp.compute(sp.map(
+    scaled_amounts = sp.compute(sp.map(
         {}, tkey=sp.TNat, tvalue=sp.TNat))
     with sp.for_('i', sp.range(0, length)) as i:
-        upscaledAmounts[i] = mulDown((
-            amounts[i], scalingFactors[i]))
+        scaled_amounts[i] = scale_func((
+            amounts[i], scaling_factors[i]))
 
-    return upscaledAmounts
+    sp.result(scaled_amounts)
 
 
 # /**
