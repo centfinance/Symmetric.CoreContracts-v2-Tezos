@@ -121,7 +121,6 @@ class BasePool(
                     userData=userData,
                 )
             )
-
             # // On initialization, we lock _getMinimumBpt() by minting it for the zero address. This BPT acts as a
             # // minimum as it will never be burned, which reduces potential issues with rounding, and also prevents the
             # // Pool from ever being fully drained.
@@ -133,12 +132,10 @@ class BasePool(
             self._mintPoolTokens(
                 recipient, sp.as_nat(sptAmountOut - _DEFAULT_MINIMUM_SPT))
 
-            # // amountsIn are amounts entering the Pool, so we round up.
-            # ScalingHelpers._downscaleUpArray(amountsIn, scalingFactors)
-
         with sp.else_():
-            upScaledBalances = ScalingHelpers._upscaleArray(
-                balances, scalingFactors, self.data.fixedPoint['mulDown'])
+            upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
+                balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+
             (sptAmountOut, amountsIn) = self._onJoinPool(
                 sp.record(
                     balances=upScaledBalances,
@@ -147,16 +144,7 @@ class BasePool(
                 )
             )
 
-            # // Note we no longer use `balances` after calling `_onJoinPool`, which may mutate it.
-
             self._mintPoolTokens(recipient, sptAmountOut)
-
-        # // amountsIn are amounts entering the Pool, so we round up.
-        # downscaledAmounts = ScalingHelpers._downscaleUpArray(
-        #     amountsIn, scalingFactors)
-
-        # // This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
-        # return (amountsIn, new uint256[](balances.length));
 
     @sp.entry_point(parameter_type=IBasePool.t_on_exit_pool_params, lazify=False)
     def onExitPool(
@@ -203,7 +191,7 @@ class BasePool(
         scalingFactors = self.data.scalingFactors
         result = sp.local('result', (0, {}))
         with sp.if_(self.data.totalSupply == 0):
-            result.value = self._beforeInitializePool(
+            result.value = self._onInitializePool(
                 sp.record(
                     scalingFactors=scalingFactors,
                     userData=params.userData,
@@ -211,9 +199,9 @@ class BasePool(
             )
 
         with sp.else_():
-            upScaledBalances = ScalingHelpers._upscaleArray(
-                params.balances, scalingFactors, self.data.fixedPoint['mulDown'])
-            result.value = self._beforeJoinPool(
+            upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
+                params.balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+            result.value = self._onJoinPool(
                 sp.record(
                     balances=upScaledBalances,
                     scalingFactors=scalingFactors,
@@ -221,8 +209,9 @@ class BasePool(
                 )
             )
         # amountsIn are amounts entering the Pool, so we round up.
-        downscaledAmounts = ScalingHelpers._downscaleUpArray(
-            sp.snd(result.value), scalingFactors, self.data.fixedPoint['divUp'])
+
+        downscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
+            sp.snd(result.value), scalingFactors, self.data.fixedPoint['divUp'])))
 
         # This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
         sp.result((sp.fst(result.value), downscaledAmounts))
@@ -247,7 +236,7 @@ class BasePool(
             )
         with sp.else_():
             scalingFactors = self.data.scalingFactors
-            result.value = self._beforeExitPool(
+            result.value = self._onExitPool(
                 sp.record(
                     balances=params.balances,
                     scalingFactors=scalingFactors,
@@ -255,8 +244,9 @@ class BasePool(
                 )
             )
 
-        downscaledAmounts = ScalingHelpers._downscaleDownArray(
-            sp.snd(result.value), scalingFactors, self.data.fixedPoint['divDown'])
+        downscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
+            sp.snd(result.value), scalingFactors, self.data.fixedPoint['divDown'])))
+
         sp.result((sp.fst(result.value), downscaledAmounts))
 
     # @ sp.onchain_view()
@@ -314,4 +304,4 @@ class BasePool(
     def _payProtocolFees(self, sptAmount):
         with sp.if_(sptAmount > 0):
             self._mintPoolTokens(
-                sp.some(self.data.protocolFeesCollector), sptAmount)
+                self.data.protocolFeesCollector, sptAmount)

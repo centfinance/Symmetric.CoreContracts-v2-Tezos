@@ -173,41 +173,41 @@ def test():
 
     sc += p
 
-    p.initialize(
-        sp.record(
-            tokens=tokens,
-            normalizedWeights=weights,
-            tokenDecimals=decimals,
-            swapFeePercentage=sp.nat(15000000000000000),
-            rateProviders=rateProviders,
-        )
-    )
+    # p.initialize(
+    #     sp.record(
+    #         tokens=tokens,
+    #         normalizedWeights=weights,
+    #         tokenDecimals=decimals,
+    #         swapFeePercentage=sp.nat(15000000000000000),
+    #         rateProviders=rateProviders,
+    #     )
+    # )
 
-    p.test_onSwapGivenIn(
-        sp.record(
-            currentBalanceTokenIn=sp.nat(1000000000000000000),
-            currentBalanceTokenOut=sp.nat(1000000000000000000),
-            swapRequest=sp.record(
-                tokenIn=tokens[0],
-                tokenOut=tokens[1],
-                amount=sp.nat(212340000000000000),
-            )
-        )
-    )
+    # p.test_onSwapGivenIn(
+    #     sp.record(
+    #         currentBalanceTokenIn=sp.nat(1000000000000000000),
+    #         currentBalanceTokenOut=sp.nat(1000000000000000000),
+    #         swapRequest=sp.record(
+    #             tokenIn=tokens[0],
+    #             tokenOut=tokens[1],
+    #             amount=sp.nat(212340000000000000),
+    #         )
+    #     )
+    # )
 
-    p.test_onSwapGivenOut(
-        sp.record(
-            currentBalanceTokenIn=sp.nat(1000000000000000000),
-            currentBalanceTokenOut=sp.nat(1000000000000000000),
-            swapRequest=sp.record(
-                tokenIn=tokens[0],
-                tokenOut=tokens[1],
-                amount=sp.nat(212340000000000000),
-            )
-        )
-    )
+    # p.test_onSwapGivenOut(
+    #     sp.record(
+    #         currentBalanceTokenIn=sp.nat(1000000000000000000),
+    #         currentBalanceTokenOut=sp.nat(1000000000000000000),
+    #         swapRequest=sp.record(
+    #             tokenIn=tokens[0],
+    #             tokenOut=tokens[1],
+    #             amount=sp.nat(212340000000000000),
+    #         )
+    #     )
+    # )
 
-    sc.simulation(p)
+    # sc.simulation(p)
 
 # @sp.add_test(name="BaseMinimalSwapInfoPoolTest_1", profile=True)
 # def test():

@@ -4,6 +4,8 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.utils.math.FixedPoint as FixedPoint
 
+import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
+
 from contracts.pool_weighted.BaseWeightedPool import BaseWeightedPool
 
 from contracts.pool_weighted.WeightedPoolProtocolFees import WeightedPoolProtocolFees
@@ -29,6 +31,18 @@ class Types:
     # TOKEN = sp.TTuple(sp.TAddress, sp.TNat, sp.TBool)
     # FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
 
+    helper = sp.TLambda(
+        sp.TTuple(
+            sp.TMap(sp.TNat, sp.TNat),
+            sp.TMap(sp.TNat, sp.TNat),
+            sp.TLambda(
+                sp.TPair(sp.TNat, sp.TNat), sp.TNat)
+        ),
+        sp.TMap(sp.TNat, sp.TNat)
+    )
+
+    scaling_helpers = sp.TBigMap(sp.TString, helper)
+
     STORAGE = sp.TRecord(
         normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
         scalingFactors=sp.TMap(sp.TNat, sp.TNat),
@@ -43,6 +57,7 @@ class Types:
         poolId=sp.TOption(sp.TBytes),
         protocolFeesCollector=sp.TOption(sp.TAddress),
         rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
+        scaling_helpers=scaling_helpers,
         token_metadata=sp.TBigMap(sp.TNat, sp.TRecord(
             token_id=sp.TNat,
             token_info=sp.TMap(sp.TString, sp.TBytes))),
@@ -121,6 +136,9 @@ class WeightedPool(
                 'postJoinExitInvariant': sp.nat(0),
                 'swapFeePercentage': sp.nat(0),
             }),
+            scaling_helpers=sp.big_map({
+                "scale": ScalingHelpers.scale_amounts,
+            }),
             weightedMathLib=weightedMathLib,
         )
         # self.init_type(Types.STORAGE)
@@ -194,7 +212,7 @@ class WeightedPool(
     ):
         supplyBeforeFeeCollection = sp.compute(self.data.totalSupply)
 
-        invariant = IExternalWeightedMath.calculateInvaraint(self.data.weightedMathLib, sp.record(
+        invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
             normalizedWeights=normalizedWeights,
             balances=preBalances,
         ))
@@ -214,7 +232,7 @@ class WeightedPool(
     ):
         supplyBeforeFeeCollection = sp.compute(self.data.totalSupply)
 
-        invariant = IExternalWeightedMath.calculateInvaraint(self.data.weightedMathLib, sp.record(
+        invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
             normalizedWeights=normalizedWeights,
             balances=preBalances,
         ))
