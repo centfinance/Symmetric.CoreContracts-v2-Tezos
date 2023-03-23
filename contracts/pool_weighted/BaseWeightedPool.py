@@ -27,6 +27,14 @@ class BaseWeightedPool(
             symbol,
         )
 
+    @sp.onchain_view()
+    def getInvariant(self):
+        t = sp.compute(sp.view('getPoolTokens', self.data.vault, self.data.poolId, t=sp.TTuple(
+            sp.TMap(sp.TNat, sp.TNat),
+            sp.TMap(sp.TNat, sp.TNat),
+            sp.TNat
+        )).open_some('Inavalid View'))
+
     def _onSwapGivenIn(self, params):
         tokens = self.data.tokens
         normalizedWeights = self.data.normalizedWeights

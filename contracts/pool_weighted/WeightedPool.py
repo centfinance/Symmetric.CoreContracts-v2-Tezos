@@ -307,3 +307,26 @@ class WeightedPool(
             postJoinExitSupply
         )
         self._payProtocolFees(sp.compute(protocolFeesToBeMinted))
+
+    @sp.onchain_view()
+    def getActualSupply(self):
+        supply = sp.compute(self.data.totalSupply)
+
+        (protocolFeesToBeMinted, ) = self._getPreJoinExitProtocolFees(
+            getInvariant(),
+            sp.compute(self.data.scalingFactors),
+            supply
+        )
+
+        return (supply + protocolFeesToBeMinted)
+
+    # def _onDisableRecoveryMode(self):
+    #     self._updatePostJoinExit(getInvariant())
+
+    #     with sp.if_(self.data.exemptFromYieldFees == False):
+    #         athRateProduct = self.data.entries['athRateProduct']
+    #         rateProduct = self._getRateProduct(
+    #             sp.compute(self.data.normalizedWeights))
+
+    #         with sp.if_(rateProduct > athRateProduct):
+    #             self.data.entries['athRateProduct'] = rateProduct
