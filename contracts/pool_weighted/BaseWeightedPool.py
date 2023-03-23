@@ -10,6 +10,12 @@ from contracts.pool_utils.BaseMinimalSwapInfoPool import BaseMinimalSwapInfoPool
 
 from contracts.pool_utils.lib.BasePoolMath import BasePoolMath
 
+TOKEN = sp.TRecord(
+    address=sp.TAddress,
+    id=sp.TNat,
+    FA2=sp.TBool,
+)
+
 
 class BaseWeightedPool(
     BaseMinimalSwapInfoPool
@@ -28,8 +34,8 @@ class BaseWeightedPool(
         )
 
     def _getInvariant(self):
-        t = sp.compute(sp.view('getPoolTokens', self.data.vault, self.data.poolId, t=sp.TTuple(
-            sp.TMap(sp.TNat, sp.TNat),
+        t = sp.compute(sp.view('getPoolTokens', self.data.vault, self.data.poolId.open_some(), t=sp.TTuple(
+            sp.TMap(sp.TNat, TOKEN),
             sp.TMap(sp.TNat, sp.TNat),
             sp.TNat
         )).open_some('Inavalid View'))

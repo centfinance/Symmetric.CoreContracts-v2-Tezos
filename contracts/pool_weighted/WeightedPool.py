@@ -312,9 +312,6 @@ class WeightedPool(
     def getActualSupply(self):
         supply = sp.compute(self.data.totalSupply)
 
-        # invariant = sp.compute(sp.view(
-        #     'getInvariant', self.address, sp.unit, t=sp.TNat).open_some('Inavalid View'))
-
         invariant = self._getInvariant()
 
         (protocolFeesToBeMinted, athRateProduct) = self._getPreJoinExitProtocolFees(

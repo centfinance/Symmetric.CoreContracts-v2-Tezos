@@ -196,6 +196,9 @@ def test():
     )
 
     v.swap(swapParams)
+
+    supply = p.getActualSupply()
+    sc.show(supply)
     # f = WeightedPoolFactory(
     #     v.address,
     #     m.address,
