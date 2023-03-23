@@ -4,6 +4,9 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
 
+MAX_PROTOCOL_SWAP_FEE_PERCENTAGE = 500000000000000000  # 50%
+MAX_PROTOCOL_FLASH_LOAN_FEE_PERCENTAGE = 10000000000000000  # 1%
+
 
 class ProtocolFeesCollector(sp.Contract):
     def __init__(
@@ -38,6 +41,23 @@ class ProtocolFeesCollector(sp.Contract):
                 token.id,
                 token.FA2,
             )
+
+    @sp.entry_point
+    def setSwapFeePercentage(self, newSwapFeePercentage):
+        sp.verify(newSwapFeePercentage <= MAX_PROTOCOL_SWAP_FEE_PERCENTAGE,
+                  Errors.SWAP_FEE_PERCENTAGE_TOO_HIGH)
+        self.data.swapFeePercentage = newSwapFeePercentage
+        sp.emit(newSwapFeePercentage, 'SwapFeePercentageChanged', with_type=True)
+
+    @sp.entry_point
+    def setFlashLoanFeePercentage(self, newFlashLoanFeePercentage):
+        sp.verify(
+            newFlashLoanFeePercentage <= MAX_PROTOCOL_FLASH_LOAN_FEE_PERCENTAGE,
+            Errors.FLASH_LOAN_FEE_PERCENTAGE_TOO_HIGH
+        )
+        self.data.flashLoanFeePercentage = newFlashLoanFeePercentage
+        sp.emit(newFlashLoanFeePercentage,
+                'FlashLoanFeePercentageChanged', with_type=True)
 
     @sp.onchain_view()
     def getCollectedFeeAmounts(self, tokens):
