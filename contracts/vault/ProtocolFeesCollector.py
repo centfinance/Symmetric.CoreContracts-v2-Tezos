@@ -66,14 +66,14 @@ class ProtocolFeesCollector(sp.Contract):
         sp.emit(newFlashLoanFeePercentage,
                 'FlashLoanFeePercentageChanged', with_type=True)
 
-    @sp.onchain_view()
-    def getCollectedFeeAmounts(self, tokens):
-        sp.set_type(tokens, sp.TMap(sp.TNat, TOKEN))
-        feeAmounts = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
-        with sp.for_('i', sp.range(0, sp.len(tokens))) as i:
-            feeAmounts[i] = sp.compute(sp.view(
-                'getBalance',
-                tokens[i].address,
-                self.address,
-                t=sp.TNat
-            ).open_some('Invalid View'))
+    # @sp.onchain_view()
+    # def getCollectedFeeAmounts(self, tokens):
+    #     sp.set_type(tokens, sp.TMap(sp.TNat, TOKEN))
+    #     feeAmounts = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
+    #     with sp.for_('i', sp.range(0, sp.len(tokens))) as i:
+    #         feeAmounts[i] = sp.compute(sp.view(
+    #             'getBalance',
+    #             tokens[i].address,
+    #             self.address,
+    #             t=sp.TNat
+    #         ).open_some('Invalid View'))
