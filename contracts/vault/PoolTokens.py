@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.vault.balances.BalanceAllocation as BalanceAllocation
+
 from contracts.vault.PoolRegistry import PoolRegistry
 
 from contracts.vault.balances.MinimalSwapInfoPoolsBalance import MinimalSwapInfoPoolsBalance
@@ -69,6 +71,18 @@ class PoolTokens(
             specialization=sp.nat(1)
         )
         sp.emit(poolEvent, tag='TokensRegistered', with_type=True)
+
+    @sp.onchain_view()
+    def getPoolTokens(self, poolId):
+        sp.set_type(poolId, sp.TBytes)
+        (tokens, rawBalances) = self._getPoolTokens(poolId)
+        (balances, lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
+            rawBalances)
+        sp.result((
+            tokens,
+            balances,
+            lastChangeBlock,
+        ))
 
     def _getPoolTokens(self, poolId):
         # specialization = self._getPoolSpecialization(poolId)

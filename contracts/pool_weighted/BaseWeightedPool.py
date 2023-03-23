@@ -10,6 +10,12 @@ from contracts.pool_utils.BaseMinimalSwapInfoPool import BaseMinimalSwapInfoPool
 
 from contracts.pool_utils.lib.BasePoolMath import BasePoolMath
 
+TOKEN = sp.TRecord(
+    address=sp.TAddress,
+    id=sp.TNat,
+    FA2=sp.TBool,
+)
+
 
 class BaseWeightedPool(
     BaseMinimalSwapInfoPool
@@ -26,6 +32,30 @@ class BaseWeightedPool(
             name,
             symbol,
         )
+
+    def _getInvariant(self):
+        t = sp.compute(sp.view('getPoolTokens', self.data.vault, self.data.poolId.open_some(), t=sp.TTuple(
+            sp.TMap(sp.TNat, TOKEN),
+            sp.TMap(sp.TNat, sp.TNat),
+            sp.TNat
+        )).open_some('Inavalid View'))
+
+        (tokens, balances, lastChangeBlock) = sp.match_tuple(
+            t, 'tokens', 'balances', 'lastChangeBlock')
+
+        upscaledBalances = sp.compute(self.data.scaling_helpers['scale']((
+            balances, self.data.scalingFactors, self.data.fixedPoint['mulDown'])))
+
+        invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
+            normalizedWeights=self.data.normalizedWeights,
+            balances=upscaledBalances
+        ))
+        return invariant
+
+    @sp.onchain_view()
+    def getInvariant(self):
+        invariant = self._getInvariant()
+        sp.result(invariant)
 
     def _onSwapGivenIn(self, params):
         tokens = self.data.tokens
