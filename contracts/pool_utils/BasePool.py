@@ -314,3 +314,11 @@ class BasePool(
         with sp.if_(sptAmount > 0):
             self._mintPoolTokens(
                 self.data.protocolFeesCollector, sptAmount)
+
+    def _setRecoveryMode(self, enabled):
+        self.data.recoveryMode = enabled
+
+        with sp.if_(enabled == False):
+            self._onDisableRecoveryMode()
+
+        sp.emit(enabled, 'RecoverModeStateChanged', with_type=True)

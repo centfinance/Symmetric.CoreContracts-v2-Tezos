@@ -57,6 +57,7 @@ class Types:
         poolId=sp.TOption(sp.TBytes),
         protocolFeesCollector=sp.TOption(sp.TAddress),
         rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
+        recoveryMode=sp.TBool,
         scaling_helpers=scaling_helpers,
         token_metadata=sp.TBigMap(sp.TNat, sp.TRecord(
             token_id=sp.TNat,
@@ -120,6 +121,7 @@ class WeightedPool(
             scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             initialized=sp.bool(False),
+            recoveryMode=sp.bool(False),
             getTokenValue=getTokenValue,
             fixedPoint=sp.big_map({
                 "mulDown": FixedPoint.mulDown,
@@ -322,13 +324,13 @@ class WeightedPool(
 
         sp.result(supply + protocolFeesToBeMinted)
 
-    # def _onDisableRecoveryMode(self):
-    #     self._updatePostJoinExit(getInvariant())
+    def _onDisableRecoveryMode(self):
+        self.data.entries['postJoinExitInvariant'] = self.getInvariant()
 
-    #     with sp.if_(self.data.exemptFromYieldFees == False):
-    #         athRateProduct = self.data.entries['athRateProduct']
-    #         rateProduct = self._getRateProduct(
-    #             sp.compute(self.data.normalizedWeights))
+        with sp.if_(self.data.exemptFromYieldFees == False):
+            athRateProduct = self.data.entries['athRateProduct']
+            rateProduct = self._getRateProduct(
+                sp.compute(self.data.normalizedWeights))
 
-    #         with sp.if_(rateProduct > athRateProduct):
-    #             self.data.entries['athRateProduct'] = rateProduct
+            with sp.if_(rateProduct > athRateProduct):
+                self.data.entries['athRateProduct'] = rateProduct
