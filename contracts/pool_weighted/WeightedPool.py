@@ -205,6 +205,44 @@ class WeightedPool(
 
         self.data.initialized = True
 
+    def _onInitializePool(
+        self,
+        params,
+    ):
+        with sp.if_(self.data.exemptFromYieldFees == False):
+            self.data.entries['athRateProduct'] = self._getRateProduct(
+                self.data.normalizedWeights)
+
+        kind = params.userData.kind
+        # TODO: Use an enum
+        sp.verify(kind == 'INIT', Errors.UNINITIALIZED)
+
+        amountsIn = params.userData.amountsIn.open_some()
+
+        length = sp.len(amountsIn)
+        sp.verify(length == sp.len(params.scalingFactors))
+
+        upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
+            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])))
+
+        invariantAfterJoin = sp.compute(IExternalWeightedMath.calculateInvariant(
+            self.data.weightedMathLib,
+            sp.record(
+                normalizedWeights=self.data.normalizedWeights,
+                balances=upscaledAmounts,
+            )))
+
+        # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
+        # consistent in Pools with similar compositions but different number of tokens.
+        # sptAmountOut = Math.mul(invariantAfterJoin, amountsIn.length)
+        sptAmountOut = invariantAfterJoin * length
+
+        # Initialization is still a join, so we need to do post-join work. Since we are not paying protocol fees,
+        # and all we need to do is update the invariant, call `_updatePostJoinExit` here instead of `_afterJoinExit`.
+        self.data.entries['postJoinExitInvariant'] = invariantAfterJoin
+
+        return (sptAmountOut, amountsIn)
+
     def _beforeJoinExit(
         self,
         preBalances,

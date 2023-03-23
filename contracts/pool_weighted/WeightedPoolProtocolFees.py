@@ -10,7 +10,7 @@ from contracts.pool_weighted.WeightedMath import WeightedMath
 class WeightedPoolProtocolFees:
     def __init__(self):
         self.update_initial_storage(
-            exemptFromYieldFees=False,
+            exemptFromYieldFees=True,
             rateProviders=sp.map(l={}, tkey=sp.TNat,
                                  tvalue=sp.TOption(sp.TAddress)),
             feeCache=sp.record(
