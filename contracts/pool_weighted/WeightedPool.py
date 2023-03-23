@@ -207,6 +207,10 @@ class WeightedPool(
 
         self.data.initialized = True
 
+    @sp.entry_point
+    def updateProtocolFeePercentageCache(self):
+        self._beforeProtocolFeeCacheUpdate()
+
     def _onInitializePool(
         self,
         params,
@@ -324,8 +328,27 @@ class WeightedPool(
 
         sp.result(supply + protocolFeesToBeMinted)
 
+    def _beforeProtocolFeeCacheUpdate(self):
+        # TODO: Ensure not Paused
+        supply = sp.compute(self.data.totalSupply)
+
+        invariant = self._getInvariant()
+
+        (protocolFeesToBeMinted, athRateProduct) = self._getPreJoinExitProtocolFees(
+            invariant,
+            sp.compute(self.data.scalingFactors),
+            supply,
+        )
+
+        self._payProtocolFees(protocolFeesToBeMinted)
+
+        self.data.entries['postJoinExitInvariant'] = invariant
+
+        with sp.if_(self.data.entries['athRateProduct'] > 0):
+            self.data.entries['athRateProduct'] = athRateProduct
+
     def _onDisableRecoveryMode(self):
-        self.data.entries['postJoinExitInvariant'] = self.getInvariant()
+        self.data.entries['postJoinExitInvariant'] = self._getInvariant()
 
         with sp.if_(self.data.exemptFromYieldFees == False):
             athRateProduct = self.data.entries['athRateProduct']
