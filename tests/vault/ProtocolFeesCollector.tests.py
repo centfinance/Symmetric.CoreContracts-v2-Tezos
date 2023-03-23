@@ -31,6 +31,7 @@ def test():
     sc = sp.test_scenario()
 
     vault = sp.test_account('Vault')
+    protocolFeeWithdrawer = sp.test_account('protocolFeeWithdrawer')
 
     pt1 = MockPoolToken('PoolToken1', 'PT1', vault.address)
     pt2 = MockPoolToken('PoolToken2', 'PT2', vault.address)
@@ -40,7 +41,10 @@ def test():
     sc += pt2
     sc += pt3
 
-    pfc = ProtocolFeesCollector(vault=vault.address)
+    pfc = ProtocolFeesCollector(
+        vault.address,
+        protocolFeeWithdrawer.address
+    )
 
     sc += pfc
 
@@ -90,6 +94,8 @@ def test():
             amounts=amounts,
             recipient=vault.address,
         )
+    ).run(
+        sender=protocolFeeWithdrawer.address
     )
 
     pt1Balance = pt1.getBalance(pfc.address)
@@ -101,6 +107,10 @@ def test():
     pt3Balance = pt3.getBalance(pfc.address)
     sc.verify(pt3Balance == sp.nat(56400000000000000000000))
 
-    pfc.setSwapFeePercentage(sp.nat(10000000000000000))
+    pfc.setSwapFeePercentage(sp.nat(10000000000000000)).run(
+        sender=protocolFeeWithdrawer.address
+    )
 
-    pfc.setFlashLoanFeePercentage(sp.nat(1000000000000000))
+    pfc.setFlashLoanFeePercentage(sp.nat(1000000000000000)).run(
+        sender=protocolFeeWithdrawer.address
+    )

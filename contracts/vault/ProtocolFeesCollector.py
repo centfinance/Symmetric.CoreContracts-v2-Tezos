@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+from contracts.utils.mixins.Administrable import Administrable
+
 from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
 
 MAX_PROTOCOL_SWAP_FEE_PERCENTAGE = 500000000000000000  # 50%
@@ -13,16 +15,21 @@ TOKEN = sp.TRecord(
 )
 
 
-class ProtocolFeesCollector(sp.Contract):
+class ProtocolFeesCollector(
+    sp.Contract,
+    Administrable
+):
     def __init__(
             self,
             vault,
+            admin,
     ):
         self.init(
             vault=vault,
             swapFeePercentage=sp.nat(0),
             flashLoanFeePercentage=sp.nat(0),
         )
+        Administrable.__init__(self, admin)
 
     @sp.entry_point
     def withdrawCollectedFees(
@@ -33,6 +40,7 @@ class ProtocolFeesCollector(sp.Contract):
     ):
         sp.set_type(tokens, sp.TMap(sp.TNat, TOKEN))
         sp.set_type(amounts, sp.TMap(sp.TNat, sp.TNat))
+        self.onlyAdministrator()
 
         sp.verify((sp.len(tokens) == sp.len(amounts)),
                   Errors.INPUT_LENGTH_MISMATCH)
@@ -51,6 +59,8 @@ class ProtocolFeesCollector(sp.Contract):
 
     @sp.entry_point
     def setSwapFeePercentage(self, newSwapFeePercentage):
+        self.onlyAdministrator()
+
         sp.verify(newSwapFeePercentage <= MAX_PROTOCOL_SWAP_FEE_PERCENTAGE,
                   Errors.SWAP_FEE_PERCENTAGE_TOO_HIGH)
         self.data.swapFeePercentage = newSwapFeePercentage
@@ -58,6 +68,8 @@ class ProtocolFeesCollector(sp.Contract):
 
     @sp.entry_point
     def setFlashLoanFeePercentage(self, newFlashLoanFeePercentage):
+        self.onlyAdministrator()
+
         sp.verify(
             newFlashLoanFeePercentage <= MAX_PROTOCOL_FLASH_LOAN_FEE_PERCENTAGE,
             Errors.FLASH_LOAN_FEE_PERCENTAGE_TOO_HIGH
