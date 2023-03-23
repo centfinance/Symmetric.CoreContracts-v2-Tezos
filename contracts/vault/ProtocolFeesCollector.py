@@ -6,6 +6,11 @@ from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
 
 MAX_PROTOCOL_SWAP_FEE_PERCENTAGE = 500000000000000000  # 50%
 MAX_PROTOCOL_FLASH_LOAN_FEE_PERCENTAGE = 10000000000000000  # 1%
+TOKEN = sp.TRecord(
+    address=sp.TAddress,
+    id=sp.TNat,
+    FA2=sp.TBool,
+)
 
 
 class ProtocolFeesCollector(sp.Contract):
@@ -13,11 +18,10 @@ class ProtocolFeesCollector(sp.Contract):
             self,
             vault,
     ):
-        sp.Contract.__init__(self)
         self.init(
             vault=vault,
             swapFeePercentage=sp.nat(0),
-            flashFeePercentage=sp.nat(0),
+            flashLoanFeePercentage=sp.nat(0),
         )
 
     @sp.entry_point
@@ -27,6 +31,9 @@ class ProtocolFeesCollector(sp.Contract):
         amounts,
         recipient
     ):
+        sp.set_type(tokens, sp.TMap(sp.TNat, TOKEN))
+        sp.set_type(amounts, sp.TMap(sp.TNat, sp.TNat))
+
         sp.verify((sp.len(tokens) == sp.len(amounts)),
                   Errors.INPUT_LENGTH_MISMATCH)
 
@@ -34,7 +41,7 @@ class ProtocolFeesCollector(sp.Contract):
             token = tokens[i]
             amount = amounts[i]
             AssetTransfersHandler.TransferToken(
-                self.address,
+                sp.self_address,
                 recipient,
                 amount,
                 token.address,
@@ -61,6 +68,7 @@ class ProtocolFeesCollector(sp.Contract):
 
     @sp.onchain_view()
     def getCollectedFeeAmounts(self, tokens):
+        sp.set_type(tokens, sp.TMap(sp.TNat, TOKEN))
         feeAmounts = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         with sp.for_('i', sp.range(0, sp.len(tokens))) as i:
             feeAmounts[i] = sp.compute(sp.view(
