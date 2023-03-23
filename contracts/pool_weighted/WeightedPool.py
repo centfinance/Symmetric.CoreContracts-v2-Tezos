@@ -312,13 +312,18 @@ class WeightedPool(
     def getActualSupply(self):
         supply = sp.compute(self.data.totalSupply)
 
-        (protocolFeesToBeMinted, ) = self._getPreJoinExitProtocolFees(
-            getInvariant(),
+        # invariant = sp.compute(sp.view(
+        #     'getInvariant', self.address, sp.unit, t=sp.TNat).open_some('Inavalid View'))
+
+        invariant = self._getInvariant()
+
+        (protocolFeesToBeMinted, athRateProduct) = self._getPreJoinExitProtocolFees(
+            invariant,
             sp.compute(self.data.scalingFactors),
             supply
         )
 
-        return (supply + protocolFeesToBeMinted)
+        sp.result(supply + protocolFeesToBeMinted)
 
     # def _onDisableRecoveryMode(self):
     #     self._updatePostJoinExit(getInvariant())
