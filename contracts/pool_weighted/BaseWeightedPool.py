@@ -165,7 +165,6 @@ class BaseWeightedPool(
 
         preJoinExitSupply = self._beforeJoinExit(
             params.balances, weights)
-
         (sptAmpountOut, amountsIn) = self._doJoin(
             sp.record(
                 balances=params.balances,
@@ -294,7 +293,7 @@ class BaseWeightedPool(
         return (sptAmountOut, amountsIn)
 
     def _beforeExitPool(self, params):
-        weights = sp.compute(self.data.normalizedWeights)
+        weights = self.data.normalizedWeights
 
         preJoinExitSupply = self._beforeJoinExit(
             params.balances, weights)

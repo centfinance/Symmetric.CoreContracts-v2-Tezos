@@ -16,6 +16,13 @@ def normalize_metadata(metadata):
 
     return meta
 
+class MockRateProvider(sp.Contract):
+    def __init__(self):
+      sp.Contract.__init__(self)
+
+    @sp.onchain_view()
+    def getRate(self):
+      sp.result(sp.nat(1100000000000000000))
 
 @sp.add_test(name="VaultIntegrationTest_1", profile=True)
 def test():
@@ -41,6 +48,10 @@ def test():
 
     sc += p
 
+    rp = MockRateProvider()
+
+    sc += rp
+
     tokens = sp.map({
         0: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(0), FA2=False),
         1: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(1), FA2=False),
@@ -58,8 +69,14 @@ def test():
 
     rateProviders = sp.map({
         0: sp.none,
-        1: sp.none,
+        1: sp.some(rp.address),
     })
+
+    feeCache=sp.record(
+        swapFee=sp.nat(40000000000000000),
+        yieldFee=sp.nat(40000000000000000),
+        aumFee=sp.nat(0),
+    )
 
     p.initialize(
         sp.record(
@@ -68,6 +85,7 @@ def test():
             tokenDecimals=decimals,
             swapFeePercentage=sp.nat(1500000000000000),
             rateProviders=rateProviders,
+            feeCache=feeCache,
         )
     )
 
@@ -137,15 +155,6 @@ def test():
         )
     )
 
-    v.joinPool(
-        sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
-            sender=sender,
-            recipient=recipient,
-            request=joinRequest,
-        )
-    )
     exitUserData = sp.record(
         kind='EXACT_SPT_IN_FOR_TOKENS_OUT',
         amountsOut=sp.none,
@@ -199,23 +208,13 @@ def test():
 
     supply = p.getActualSupply()
     sc.show(supply)
-    # f = WeightedPoolFactory(
-    #     v.address,
-    #     m.address,
-    #     sp.address('KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN'),
-    #     CONTRACT_METADATA,
-    # )
 
-    # sc += f
-
-    # token_metadata = {
-    #     "name": "SYMM/CTEZ 50:50",
-    #     "symbol": "SYMMLP",
-    #     "decimals": "18",
-    #     "thumbnailUri": "ipfs://QmRzY4YdHBFUeuGPhmPRAUWkVN9qhH3pW14et5V6kZqFZM",
-    # }
-
-    # f.create(sp.record(
-    #     matadata=sp.utils.bytes_of_string("<ipfs://....>"),
-    #     token_metadata=normalize_metadata(token_metadata),
-    # ))
+    v.joinPool(
+        sp.record(
+            poolId=sp.bytes(
+                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+            sender=sender,
+            recipient=recipient,
+            request=joinRequest,
+        )
+    )
