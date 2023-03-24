@@ -2,6 +2,8 @@ import smartpy as sp
 
 from contracts.pool_utils.external_fees.InvariantGrowthProtocolSwapFees import InvariantGrowthProtocolSwapFees
 
+from contracts.interfaces.IRateProvider import IRateProvider
+
 import contracts.utils.math.FixedPoint as FixedPoint
 
 from contracts.pool_weighted.WeightedMath import WeightedMath
@@ -139,22 +141,23 @@ class WeightedPoolProtocolFees:
 
         return protocolFeeAmount.value
 
-    def _getRateFactor(self, params):
-        return sp.nat(1)
+    def _getRateFactor(self, rateProvider, weight):
+        # with sp.if_(rateProvider):
+            powDown = self.data.fixedPoint['powDown']
+            return powDown((IRateProvider.getRate(rateProvider), weight))
+        # return sp.nat(1000000000000000000)
 
     def _getRateProduct(self, normalizedWeights):
         product = sp.local('product', self.data.fixedPoint['mulDown']((
-            self._getRateFactor(sp.record(
-                normalizedWeights=normalizedWeights, provider=self.data.rateProviders[0])),
-            self._getRateFactor(sp.record(
-                normalizedWeights=normalizedWeights, provider=self.data.rateProviders[1])),
+            self._getRateFactor(normalizedWeights[0], self.data.rateProviders[0]),
+            self._getRateFactor(normalizedWeights[1], self.data.rateProviders[1]),
         )))
+        product = sp.local('product', sp.nat(0))
         with sp.if_(sp.len(normalizedWeights) > 2):
             with sp.for_('i', sp.range(2, sp.len(normalizedWeights))) as i:
                 product.value = self.data.fixedPoint['mulDown']((
                     product.value,
-                    self._getRateFactor(sp.record(
-                        normalizedWeights=normalizedWeights, provider=self.data.rateProviders[i]))
+                    self._getRateFactor(normalizedWeights[i], self.data.rateProviders[i])
                 ))
 
         return product.value

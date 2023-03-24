@@ -294,7 +294,7 @@ class BaseWeightedPool(
         return (sptAmountOut, amountsIn)
 
     def _beforeExitPool(self, params):
-        weights = sp.compute(self.data.normalizedWeights)
+        weights = self.data.normalizedWeights
 
         preJoinExitSupply = self._beforeJoinExit(
             params.balances, weights)
