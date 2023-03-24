@@ -20,14 +20,21 @@ class InvariantGrowthProtocolSwapFees:
         protocolSwapFeePercentage,
         math,
     ):
-        with sp.if_((supplyGrowthRatio < invariantGrowthRatio) | (protocolSwapFeePercentage != sp.nat(0))):
-            percent = sp.as_nat(
-                FixedPoint.ONE - math['divDown']((supplyGrowthRatio, invariantGrowthRatio)))
-            percent = math['mulDown']((
-                percent, protocolSwapFeePercentage))
-            return percent
+        return sp.eif(
+          ((supplyGrowthRatio < invariantGrowthRatio) | (protocolSwapFeePercentage != sp.nat(0))),
+          math['mulDown']((
+              sp.as_nat(
+                FixedPoint.ONE - (math['divDown']((supplyGrowthRatio, invariantGrowthRatio)))), protocolSwapFeePercentage)),
+          sp.nat(0),
+        )
+        # with sp.if_((supplyGrowthRatio < invariantGrowthRatio) | (protocolSwapFeePercentage != sp.nat(0))):
+        #     percent = sp.as_nat(
+        #         FixedPoint.ONE - math['divDown']((supplyGrowthRatio, invariantGrowthRatio)))
+        #     percent = math['mulDown']((
+        #         percent, protocolSwapFeePercentage))
+        #     return percent
 
-        return sp.nat(0)
+        # return sp.nat(0)
 
     def calcDueProtocolFees(
         invariantGrowthRatio,
@@ -42,7 +49,6 @@ class InvariantGrowthProtocolSwapFees:
             protocolSwapFeePercentage,
             math,
         )
-
         return InvariantGrowthProtocolSwapFees.sptForPoolOwnershipPercentage(
             currentSupply, protocolOwnershipPercentage, math['divDown'])
 

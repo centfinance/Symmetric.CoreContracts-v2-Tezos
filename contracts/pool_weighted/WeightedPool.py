@@ -30,6 +30,15 @@ class Types:
     )
     # TOKEN = sp.TTuple(sp.TAddress, sp.TNat, sp.TBool)
     # FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
+    getRateFactor=sp.TLambda(
+      sp.TTuple(
+        sp.TNat,
+        sp.TOption(sp.TAddress),
+        sp.TLambda(
+            sp.TPair(sp.TNat, sp.TNat), sp.TNat)
+        ),
+        sp.TNat
+      )
 
     helper = sp.TLambda(
         sp.TTuple(
@@ -80,6 +89,7 @@ class Types:
         tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
         swapFeePercentage=sp.TNat,
         rateProviders=STORAGE.rateProviders,
+        feeCache=FEE_CACHE,
     )
 
 
@@ -192,6 +202,7 @@ class WeightedPool(
         self._initializeProtocolFees(sp.record(
             numTokens=numTokens,
             rateProviders=params.rateProviders,
+            feeCache=params.feeCache,
         ))
 
         super().initialize.f(
@@ -274,7 +285,7 @@ class WeightedPool(
         preBalances,
         normalizedWeights,
     ):
-        supplyBeforeFeeCollection = sp.compute(self.data.totalSupply)
+        supplyBeforeFeeCollection = self.data.totalSupply
 
         invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
             normalizedWeights=normalizedWeights,
@@ -286,7 +297,7 @@ class WeightedPool(
             normalizedWeights,
             supplyBeforeFeeCollection
         )
-
+        sp.trace((protocolFeesToBeMinted, athRateProduct))
         with sp.if_(athRateProduct > 0):
             self.data.entries['athRateProduct'] = sp.compute(athRateProduct)
 
@@ -312,6 +323,8 @@ class WeightedPool(
             preJoinExitSupply,
             postJoinExitSupply
         )
+        sp.trace((protocolFeesToBeMinted))
+
         self._payProtocolFees(sp.compute(protocolFeesToBeMinted))
 
     @sp.onchain_view()

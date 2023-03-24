@@ -15,6 +15,7 @@ class WeightedPoolProtocolFees:
             exemptFromYieldFees=True,
             rateProviders=sp.map(l={}, tkey=sp.TNat,
                                  tvalue=sp.TOption(sp.TAddress)),
+            
             feeCache=sp.record(
                 swapFee=sp.nat(0),
                 yieldFee=sp.nat(0),
@@ -27,7 +28,9 @@ class WeightedPoolProtocolFees:
 
         self.data.exemptFromYieldFees = self._getYieldFeeExemption(
             params.rateProviders)
-
+        
+        self.data.feeCache=params.feeCache
+        
         self.data.rateProviders = params.rateProviders
 
     def _getYieldFeeExemption(self, rateProviders):
@@ -138,25 +141,31 @@ class WeightedPoolProtocolFees:
                 protocolSwapFeePercentage,
                 fpm,
             )
-
+        sp.trace(protocolFeeAmount.value)
         return protocolFeeAmount.value
 
-    def _getRateFactor(self, weight, rateProvider):
-        with sp.if_(rateProvider.is_some()):
-            powDown = self.data.fixedPoint['powDown']
-            return powDown((IRateProvider.getRate(rateProvider.open_some()), weight))
-        return sp.nat(1000000000000000000)
+    def _getRateFactor(self, weight, provider):
+          powDown = self.data.fixedPoint['powDown']
+          return (powDown((IRateProvider.getRate(provider.open_some()), weight)))
+   
 
     def _getRateProduct(self, normalizedWeights):
+        rateFactor = lambda rp, i: sp.eif(
+            rp==sp.none, 
+            sp.nat(1000000000000000000),
+            self._getRateFactor(normalizedWeights[i], rp),
+        )
+        rps = sp.compute(self.data.rateProviders)
         product = sp.local('product', self.data.fixedPoint['mulDown']((
-            sp.compute(self._getRateFactor(normalizedWeights[0], self.data.rateProviders[0])),
-            sp.compute(self._getRateFactor(normalizedWeights[1], self.data.rateProviders[1])),
+            sp.compute(rateFactor(rps[0], 0)),
+            sp.compute(rateFactor(rps[1], 1)),
         )))
+
         with sp.if_(sp.len(normalizedWeights) > 2):
             with sp.for_('i', sp.range(2, sp.len(normalizedWeights))) as i:
                 product.value = self.data.fixedPoint['mulDown']((
                     product.value,
-                    sp.compute(self._getRateFactor(normalizedWeights[i], self.data.rateProviders[i]))
+                    sp.compute(rateFactor(rps[i], i))
                 ))
 
         return product.value
