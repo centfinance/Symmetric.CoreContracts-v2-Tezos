@@ -248,6 +248,7 @@ class WeightedPool(
                 normalizedWeights=self.data.normalizedWeights,
                 balances=upscaledAmounts,
             )))
+        
 
         # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
         # consistent in Pools with similar compositions but different number of tokens.
@@ -265,7 +266,7 @@ class WeightedPool(
         preBalances,
         normalizedWeights,
     ):
-        supplyBeforeFeeCollection = sp.compute(self.data.totalSupply)
+        supplyBeforeFeeCollection = self.data.totalSupply
 
         invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
             normalizedWeights=normalizedWeights,
@@ -287,6 +288,7 @@ class WeightedPool(
     ):
         supplyBeforeFeeCollection = self.data.totalSupply
 
+
         invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
             normalizedWeights=normalizedWeights,
             balances=preBalances,
@@ -297,7 +299,6 @@ class WeightedPool(
             normalizedWeights,
             supplyBeforeFeeCollection
         )
-        sp.trace((protocolFeesToBeMinted, athRateProduct))
         with sp.if_(athRateProduct > 0):
             self.data.entries['athRateProduct'] = sp.compute(athRateProduct)
 
@@ -323,8 +324,6 @@ class WeightedPool(
             preJoinExitSupply,
             postJoinExitSupply
         )
-        sp.trace((protocolFeesToBeMinted))
-
         self._payProtocolFees(sp.compute(protocolFeesToBeMinted))
 
     @sp.onchain_view()

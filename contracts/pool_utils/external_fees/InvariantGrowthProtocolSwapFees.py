@@ -31,13 +31,10 @@ class InvariantGrowthProtocolSwapFees:
             math,
         )
         return InvariantGrowthProtocolSwapFees.sptForPoolOwnershipPercentage(
-            currentSupply, protocolOwnershipPercentage, math['divDown'])
+            currentSupply, protocolOwnershipPercentage)
 
     def sptForPoolOwnershipPercentage(
             totalSupply,
             poolOwnershipPercentage,
-            divDown
     ):
-
-        return divDown(((totalSupply * poolOwnershipPercentage),
-                        sp.as_nat(FixedPoint.ONE - poolOwnershipPercentage)))
+        return (totalSupply * poolOwnershipPercentage) // sp.as_nat(FixedPoint.ONE - poolOwnershipPercentage)

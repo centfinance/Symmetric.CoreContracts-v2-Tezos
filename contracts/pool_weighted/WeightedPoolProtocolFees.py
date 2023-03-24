@@ -91,12 +91,10 @@ class WeightedPoolProtocolFees:
         (protocolYieldFeesPoolPercentage,  athRateProduct) = self._getYieldProtocolFeesPoolPercentage(
             normalizedWeights
         )
-
         return (
             InvariantGrowthProtocolSwapFees.sptForPoolOwnershipPercentage(
                 preJoinExitSupply,
                 (protocolSwapFeesPoolPercentage + protocolYieldFeesPoolPercentage),
-                self.data.fixedPoint['divDown'],
             ),
             athRateProduct
         )
@@ -131,7 +129,6 @@ class WeightedPoolProtocolFees:
         self.data.entries['postJoinExitInvariant'] = postJoinExitInvariant
 
         protocolFeeAmount = sp.local('protocolSwapFeeAmount', 0)
-
         with sp.if_(protocolSwapFeePercentage != 0):
             protocolFeeAmount.value = InvariantGrowthProtocolSwapFees.calcDueProtocolFees(
                 sp.compute(fpm['divDown']((
@@ -141,7 +138,6 @@ class WeightedPoolProtocolFees:
                 protocolSwapFeePercentage,
                 fpm,
             )
-        sp.trace(protocolFeeAmount.value)
         return protocolFeeAmount.value
 
     def _getRateFactor(self, weight, provider):

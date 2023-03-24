@@ -73,8 +73,8 @@ def test():
     })
 
     feeCache=sp.record(
-        swapFee=sp.nat(400000000000000000),
-        yieldFee=sp.nat(400000000000000000),
+        swapFee=sp.nat(40000000000000000),
+        yieldFee=sp.nat(40000000000000000),
         aumFee=sp.nat(0),
     )
 
@@ -181,31 +181,40 @@ def test():
         )
     )
 
-    # singleSwap = sp.record(
-    #     poolId=sp.bytes(
-    #         '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
-    #     kind='GIVEN_IN',
-    #     assetIn=tokens[0],
-    #     assetOut=tokens[1],
-    #     amount=sp.nat(100000000000000000),
-    # )
+    singleSwap = sp.record(
+        poolId=sp.bytes(
+            '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+        kind='GIVEN_IN',
+        assetIn=tokens[0],
+        assetOut=tokens[1],
+        amount=sp.nat(100000000000000000),
+    )
 
-    # funds = sp.record(
-    #     sender=sender,
-    #     fromInternalBalance=False,
-    #     recipient=recipient,
-    #     toInternalBalance=False,
-    # )
+    funds = sp.record(
+        sender=sender,
+        fromInternalBalance=False,
+        recipient=recipient,
+        toInternalBalance=False,
+    )
 
-    # swapParams = sp.record(
-    #     singleSwap=singleSwap,
-    #     funds=funds,
-    #     limit=sp.nat(0),
-    #     deadline=sp.timestamp(1)
-    # )
+    swapParams = sp.record(
+        singleSwap=singleSwap,
+        funds=funds,
+        limit=sp.nat(0),
+        deadline=sp.timestamp(1)
+    )
 
-    # v.swap(swapParams)
+    v.swap(swapParams)
 
-    # supply = p.getActualSupply()
-    # sc.show(supply)
+    supply = p.getActualSupply()
+    sc.show(supply)
 
+    v.joinPool(
+        sp.record(
+            poolId=sp.bytes(
+                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+            sender=sender,
+            recipient=recipient,
+            request=joinRequest,
+        )
+    )
