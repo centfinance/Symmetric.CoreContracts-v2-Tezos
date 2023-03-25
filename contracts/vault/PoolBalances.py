@@ -97,6 +97,7 @@ class PoolBalances(
         pool = self._getPoolAddress(poolId)
 
         params = sp.record(
+            poolId=poolId,
             recipient=recipient,
             balances=totalBalances,
             userData=request.userData,
@@ -156,6 +157,7 @@ class PoolBalances(
         pool = self._getPoolAddress(poolId)
 
         params = sp.record(
+            poolId=poolId,
             sender=sender,
             balances=totalBalances,
             userData=request.userData,

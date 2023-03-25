@@ -27,12 +27,14 @@ class Types:
 class BaseMinimalSwapInfoPool(BasePool):
     def __init__(
         self,
+        owner,
         vault,
         name,
         symbol,
     ):
         BasePool.__init__(
             self,
+            owner,
             vault,
             name,
             symbol,
@@ -44,6 +46,7 @@ class BaseMinimalSwapInfoPool(BasePool):
         params
     ):
         sp.set_type(params, Types.t_onSwap_params)
+        self.onlyUnpaused()
         # TODO: Check it's not paused
         scalingFactorTokenIn = sp.compute(self.data.getTokenValue((
             params.request.tokenIn,

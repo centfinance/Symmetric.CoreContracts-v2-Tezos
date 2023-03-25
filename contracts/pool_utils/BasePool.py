@@ -2,13 +2,15 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
-import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
-
 import contracts.utils.math.FixedPoint as FixedPoint
 
 import contracts.pool_utils.lib.PoolRegistrationLib as PoolRegistrationLib
 
 from contracts.pool_utils.SymmetricPoolToken import SymmetricPoolToken
+
+from contracts.utils.mixins.Administrable import Administrable
+
+from contracts.utils.mixins.Pausable import Pausable
 
 _MIN_TOKENS = 2
 _DEFAULT_MINIMUM_SPT = 1000000
@@ -39,12 +41,14 @@ class IBasePool:
     )
 
     t_on_join_pool_params = sp.TRecord(
+        poolId=sp.TBytes,
         balances=sp.TMap(sp.TNat, sp.TNat),
         recipient=sp.TAddress,
         userData=JOIN_USER_DATA,
     )
 
     t_on_exit_pool_params = sp.TRecord(
+        poolId=sp.TBytes,
         balances=sp.TMap(sp.TNat, sp.TNat),
         sender=sp.TAddress,
         userData=EXIT_USER_DATA,
@@ -62,11 +66,14 @@ class IBasePool:
 
 
 class BasePool(
+    Administrable,
+    Pausable,
     SymmetricPoolToken,
 ):
 
     def __init__(
         self,
+        owner,
         vault,
         name,
         symbol,
@@ -76,6 +83,8 @@ class BasePool(
             protocolFeesCollector=sp.address(
                 'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF')
         )
+        Administrable.__init__(self, owner, False)
+        Pausable.__init__(self, False, False)
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
     @sp.entry_point(lazify=False)
@@ -101,16 +110,24 @@ class BasePool(
         # TODO: Add protocolFeesCollector call to vault
         # self.data.protocolFeesCollector = vault.getProtocolFeesCollector()
 
+    @sp.private_lambda(with_storage='read-only')
+    def onlyVault(self, poolId):
+        sp.verify(sp.sender == self.data.vault)
+        sp.verify(poolId == self.data.poolId)
+
+
     @sp.entry_point(parameter_type=IBasePool.t_on_join_pool_params, lazify=False)
     def onJoinPool(
         self,
+        poolId,
         recipient,
         balances,
         userData
     ):
         # only vault and vailid pool id can call
-
+        self.onlyVault(poolId)
         # ensureNotPaused
+        self.onlyUnpaused()
         # self._beforeSwapJoinExit()
         scalingFactors = self.data.scalingFactors
 
@@ -149,10 +166,13 @@ class BasePool(
     @sp.entry_point(parameter_type=IBasePool.t_on_exit_pool_params, lazify=False)
     def onExitPool(
         self,
+        poolId,
         sender,
         balances,
         userData
     ):
+        self.onlyVault(poolId)
+        self.onlyUnpaused()
         with sp.if_(userData.recoveryModeExit):
             # TODO: Check that it's in recovery mode
             # _ensureInRecoveryMode();
@@ -193,6 +213,7 @@ class BasePool(
         params,
     ):
         sp.set_type(params, IBasePool.t_before_join_pool_params)
+        self.onlyUnpaused()
         scalingFactors = self.data.scalingFactors
         result = sp.local('result', (0, {}))
         with sp.if_(self.data.totalSupply == 0):
@@ -227,6 +248,7 @@ class BasePool(
         params,
     ):
         sp.set_type(params, IBasePool.t_before_exit_pool_params)
+        self.onlyUnpaused()
         result = sp.local('result', (0, {}))
         with sp.if_(params.userData.recoveryModeExit):
             # TODO: Check that it's in recovery mode

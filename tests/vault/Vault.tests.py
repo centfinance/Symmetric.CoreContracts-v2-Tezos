@@ -27,6 +27,7 @@ class MockRateProvider(sp.Contract):
 @sp.add_test(name="VaultIntegrationTest_1", profile=True)
 def test():
     sc = sp.test_scenario()
+    admin = sp.test_account('Admin')
 
     m = ExternalWeightedMath()
     sc += m
@@ -40,6 +41,7 @@ def test():
     sc += v
 
     p = WeightedPool(
+        owner=admin.address,
         vault=v.address,
         name="Symm Liqudidty Pool Token",
         symbol="SYMMLP",

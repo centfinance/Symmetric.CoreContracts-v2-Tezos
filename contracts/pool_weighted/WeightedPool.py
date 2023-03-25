@@ -121,6 +121,7 @@ class WeightedPool(
 
     def __init__(
         self,
+        owner,
         vault=sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
         name='Symmetric Weighted Pool',
         symbol='SYMMLP',
@@ -159,6 +160,7 @@ class WeightedPool(
         WeightedPoolProtocolFees.__init__(self)
         BaseWeightedPool.__init__(
             self,
+            owner,
             vault,
             name,
             symbol,
