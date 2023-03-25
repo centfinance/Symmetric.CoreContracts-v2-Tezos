@@ -145,8 +145,8 @@ def powDown(p):
     
     powDown = sp.local('powDown', sp.nat(0))
     
-    with sp.if_(y == HALF):
-        powDown.value = square_root(x)
+    # with sp.if_(y == HALF):
+    #     powDown.value = square_root(x)
     with sp.if_(y == ONE):
         powDown.value = x
     with sp.if_(y == TWO):
@@ -156,7 +156,7 @@ def powDown(p):
 
     with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
         raw = LogExpMath.power(x, y)
-        maxError = mulUp(raw, MAX_POW_RELATIVE_ERROR) + 1
+        maxError = mul(raw, MAX_POW_RELATIVE_ERROR) + 1
         with sp.if_(raw < maxError):
             powDown.value = 0
         with sp.else_():
@@ -194,8 +194,8 @@ def powUp(p):
     x, y = sp.match_pair(p)
     
     powUp = sp.local('powUp', 1)
-    with sp.if_(y == HALF):
-        powUp.value = square_root(x)
+    # with sp.if_(y == HALF):
+    #     powUp.value = square_root(x)
     with sp.if_(y == ONE):
         powUp.value = x
     with sp.if_(y == TWO):
@@ -206,7 +206,7 @@ def powUp(p):
     
     with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
         raw = LogExpMath.power(x, y)
-        maxError = (mulUp(raw, MAX_POW_RELATIVE_ERROR) + 1)
+        maxError = (mul(raw, MAX_POW_RELATIVE_ERROR) + 1)
         powUp.value = (raw + maxError)
     
     sp.result(powUp.value)

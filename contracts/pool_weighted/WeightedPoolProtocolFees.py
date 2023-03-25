@@ -122,7 +122,7 @@ class WeightedPoolProtocolFees:
         postJoinExitInvariant = sp.compute(WeightedMath._calculateInvariant(
             normalizedWeights,
             preBalances,
-            fpm['powDown']
+            fpm,
         ))
         protocolSwapFeePercentage = sp.compute(self.data.feeCache.swapFee)
 

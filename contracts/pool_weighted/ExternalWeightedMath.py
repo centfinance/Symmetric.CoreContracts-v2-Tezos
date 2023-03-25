@@ -179,7 +179,7 @@ class ExternalWeightedMath(sp.Contract):
         sp.result(WeightedMath._calculateInvariant(
             params.normalizedWeights,
             params.balances,
-            self.data.fixedPoint['powDown'],
+            self.data.fixedPoint,
         ))
 
     @sp.onchain_view()
