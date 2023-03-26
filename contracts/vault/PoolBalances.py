@@ -93,26 +93,29 @@ class PoolBalances(
 
         (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
             balances)
-
         pool = self._getPoolAddress(poolId)
 
+
+
+        # Call BasePool view to get amounts
+        t = sp.compute(sp.view('beforeJoinPool', pool,
+                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some("Invalid view"))
+        sptAmountOut, amountsIn, invariant = sp.match_tuple(t, 'sptAmountOut', 'amountsIn', 'invariant')
         params = sp.record(
             poolId=poolId,
             recipient=recipient,
+            amountsIn=amountsIn,
+            sptAmountOut=sptAmountOut,
+            invariant=invariant,
             balances=totalBalances,
-            userData=request.userData,
         )
-
-        # Call BasePool view to get amounts
-        pair = sp.compute(sp.view('beforeJoinPool', pool,
-                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view"))
         # Call BasePool entry point to perform join
-        onJoinPool = sp.contract(IBasePool.t_on_join_pool_params, pool, "onJoinPool").open_some(
+        onJoinPool = sp.contract(IBasePool.t_after_join_pool_params, pool, "afterJoinPool").open_some(
             "INTERFACE_MISMATCH")
 
         sp.transfer(params, sp.tez(0), onJoinPool)
 
-        amountsIn = sp.snd(pair)
+     
 
         sp.verify(sp.len(balances) == sp.len(amountsIn))
         #  The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
@@ -156,22 +159,26 @@ class PoolBalances(
 
         pool = self._getPoolAddress(poolId)
 
+
+        # Call BasePool view to get amounts
+        t = sp.compute(sp.view('beforeExitPool', pool,
+                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some("Invalid view"))
+        sptAmountIn, amountsOut, invariant = sp.match_tuple(t, 'sptAmountIn', 'amountsOut', 'invariant')
+
         params = sp.record(
             poolId=poolId,
             sender=sender,
+            amountsOut=amountsOut,
+            sptAmountIn=sptAmountIn,
+            invariant=invariant,
             balances=totalBalances,
-            userData=request.userData,
+            recoveryModeExit=request.userData.recoveryModeExit,
         )
-        # Call BasePool view to get amounts
-        pair = sp.compute(sp.view('beforeExitPool', pool,
-                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TPair(sp.TNat, sp.TMap(sp.TNat, sp.TNat))).open_some("Invalid view"))
-
         # Call BasePool entry point to perform join
-        onExitPool = sp.contract(IBasePool.t_on_exit_pool_params, pool, "onExitPool").open_some(
+        onExitPool = sp.contract(IBasePool.t_after_exit_pool_params, pool, "afterExitPool").open_some(
             "INTERFACE_MISMATCH")
         sp.transfer(params, sp.tez(0), onExitPool)
 
-        amountsOut = sp.snd(pair)
         sp.verify(sp.len(balances) == sp.len(amountsOut))
         #  The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
         #  their participation.

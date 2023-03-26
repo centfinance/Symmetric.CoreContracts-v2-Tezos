@@ -40,7 +40,7 @@ class BaseWeightedPool(
             sp.TMap(sp.TNat, TOKEN),
             sp.TMap(sp.TNat, sp.TNat),
             sp.TNat
-        )).open_some('Inavalid View'))
+        )).open_some('Invalid View'))
 
         (tokens, balances, lastChangeBlock) = sp.match_tuple(
             t, 'tokens', 'balances', 'lastChangeBlock')
@@ -129,43 +129,43 @@ class BaseWeightedPool(
 
         sptAmountOut = invariantAfterJoin * length
 
-        return (sptAmountOut, amountsIn)
+        return (sptAmountOut, amountsIn, invariantAfterJoin)
 
-    def _onInitializePool(self, params):
-        kind = params.userData.kind
-        # TODO: Use an enum
-        sp.verify(kind == 'INIT', Errors.UNINITIALIZED)
+    def _afterInitializePool(self, invariant):
+        # kind = params.userData.kind
+        # # TODO: Use an enum
+        # sp.verify(kind == 'INIT', Errors.UNINITIALIZED)
 
-        amountsIn = params.userData.amountsIn.open_some()
+        # amountsIn = params.userData.amountsIn.open_some()
 
-        length = sp.len(amountsIn)
-        sp.verify(length == sp.len(params.scalingFactors))
+        # length = sp.len(amountsIn)
+        # sp.verify(length == sp.len(params.scalingFactors))
 
-        upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])))
+        # upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
+        #     amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])))
 
-        invariantAfterJoin = sp.compute(IExternalWeightedMath.calculateInvariant(
-            self.data.weightedMathLib,
-            sp.record(
-                normalizedWeights=self.data.normalizedWeights,
-                balances=upscaledAmounts,
-            )))
+        # invariantAfterJoin = sp.compute(IExternalWeightedMath.calculateInvariant(
+        #     self.data.weightedMathLib,
+        #     sp.record(
+        #         normalizedWeights=self.data.normalizedWeights,
+        #         balances=upscaledAmounts,
+        #     )))
 
-        # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
-        # consistent in Pools with similar compositions but different number of tokens.
-        # sptAmountOut = Math.mul(invariantAfterJoin, amountsIn.length)
-        sptAmountOut = invariantAfterJoin * length
+        # # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
+        # # consistent in Pools with similar compositions but different number of tokens.
+        # # sptAmountOut = Math.mul(invariantAfterJoin, amountsIn.length)
+        # sptAmountOut = invariantAfterJoin * length
 
         # Initialization is still a join, so we need to do post-join work. Since we are not paying protocol fees,
         # and all we need to do is update the invariant, call `_updatePostJoinExit` here instead of `_afterJoinExit`.
-        self.data.entries['postJoinExitInvariant'] = invariantAfterJoin
+        self.data.entries['postJoinExitInvariant'] = invariant
 
-        return (sptAmountOut, amountsIn)
+        # return (sptAmountOut, amountsIn)
 
     def _beforeJoinPool(self, params):
         weights = sp.compute(self.data.normalizedWeights)
 
-        preJoinExitSupply = self._beforeJoinExit(
+        (preJoinExitSupply, invariant) = self._beforeJoinExit(
             params.balances, weights)
         (sptAmpountOut, amountsIn) = self._doJoin(
             sp.record(
@@ -177,32 +177,32 @@ class BaseWeightedPool(
             )
         )
 
-        return (sptAmpountOut, amountsIn)
+        return (sptAmpountOut, amountsIn, invariant)
 
-    def _onJoinPool(self, params):
+    def _afterJoinPool(self, params):
         weights = sp.compute(self.data.normalizedWeights)
-        (preJoinExitSupply,  preJoinExitInvariant) = self._beforeOnJoinExit(
-            params.balances, weights)
+        preJoinExitSupply = self._beforeOnJoinExit(
+            params.invariant, weights)
 
-        (sptAmountOut, amountsIn) = self._doJoin(
-            sp.record(
-                balances=params.balances,
-                normalizedWeights=weights,
-                scalingFactors=params.scalingFactors,
-                totalSupply=preJoinExitSupply,
-                userData=params.userData
-            )
-        )
+        # (sptAmountOut, amountsIn) = self._doJoin(
+        #     sp.record(
+        #         balances=params.balances,
+        #         normalizedWeights=weights,
+        #         scalingFactors=params.scalingFactors,
+        #         totalSupply=preJoinExitSupply,
+        #         userData=params.userData
+        #     )
+        # )
         self._afterJoinExit(
-            preJoinExitInvariant,
+            params.invariant,
             params.balances,
-            amountsIn,
+            params.amountsIn,
             weights,
             preJoinExitSupply,
-            (preJoinExitSupply + sptAmountOut),
+            (preJoinExitSupply + params.sptAmountOut),
         )
 
-        return (sptAmountOut, amountsIn)
+        # return (sptAmountOut, amountsIn)
 
     def _doJoin(self, params):
         doJoin = sp.local('doJoin', (0, {}))
@@ -297,7 +297,7 @@ class BaseWeightedPool(
     def _beforeExitPool(self, params):
         weights = self.data.normalizedWeights
 
-        preJoinExitSupply = self._beforeJoinExit(
+        (preJoinExitSupply, invariant) = self._beforeJoinExit(
             params.balances, weights)
 
         (sptAmpountIn, amountsOut) = self._doExit(
@@ -310,34 +310,32 @@ class BaseWeightedPool(
             )
         )
 
-        return (sptAmpountIn, amountsOut)
+        return (sptAmpountIn, amountsOut, invariant)
 
-    def _onExitPool(self, params):
+    def _afterExitPool(self, params):
         weights = sp.compute(self.data.normalizedWeights)
 
-        (preJoinExitSupply,  preJoinExitInvariant) = self._beforeOnJoinExit(
-            params.balances, weights)
+        preJoinExitSupply = self._beforeOnJoinExit(
+            params.invariant, weights)
 
-        (sptAmountIn, amountsOut) = self._doExit(
-            sp.record(
-                balances=params.balances,
-                normalizedWeights=weights,
-                scalingFactors=params.scalingFactors,
-                totalSupply=preJoinExitSupply,
-                userData=params.userData
-            )
-        )
-        # # TODO: Implement protocol fees
+        # (sptAmountIn, amountsOut) = self._doExit(
+        #     sp.record(
+        #         balances=params.balances,
+        #         normalizedWeights=weights,
+        #         scalingFactors=params.scalingFactors,
+        #         totalSupply=preJoinExitSupply,
+        #         userData=params.userData
+        #     )
+        # )
         self._afterJoinExit(
-            preJoinExitInvariant,
+            params.invariant,
             params.balances,
-            amountsOut,
+            params.amountsOut,
             weights,
             preJoinExitSupply,
-            sp.as_nat(preJoinExitSupply - sptAmountIn),
+            sp.as_nat(preJoinExitSupply - params.sptAmountIn),
         )
-        return (sptAmountIn, amountsOut)
-        # return (0, 0)
+        # return (sptAmountIn, amountsOut)
 
     def _doExit(self, params):
         doExit = sp.local('doExit', (0, {}))
@@ -438,4 +436,4 @@ class BaseWeightedPool(
         sptAmountIn = params.userData.sptAmountIn.open_some()
         amountsOut = BasePoolMath.computeProportionalAmountsOut(
             params.balances, params.totalSupply, sptAmountIn, self.data.fixedPoint)
-        return (sptAmountIn, amountsOut)
+        return (sptAmountIn, amountsOut, 0)

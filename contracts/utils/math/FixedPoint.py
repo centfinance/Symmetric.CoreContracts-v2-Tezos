@@ -141,6 +141,9 @@ def powDown(p):
     # and 80/20 Weighted Pools
     # def mulDown(x, y): return (x*y)//ONE
     def mul(x, y): return (x * y) // ONE
+    def mulUp(x, y): return sp.as_nat(
+        sp.fst(sp.ediv(((x * y) - 1), ONE).open_some()) + 1)
+    
     x, y = sp.match_pair(p)
     
     powDown = sp.local('powDown', sp.nat(0))
@@ -156,7 +159,8 @@ def powDown(p):
 
     with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
         raw = LogExpMath.power(x, y)
-        maxError = mul(raw, MAX_POW_RELATIVE_ERROR) + 1
+
+        maxError = mulUp(raw, MAX_POW_RELATIVE_ERROR) + 1
         with sp.if_(raw < maxError):
             powDown.value = 0
         with sp.else_():
