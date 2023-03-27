@@ -14,6 +14,8 @@ from contracts.pool_weighted.WeightedMath import WeightedMath
 
 from contracts.pool_weighted.ExternalWeightedMath import IExternalWeightedMath
 
+from contracts.pool_weighted.ExternalWeightedProtocolFees import IExternalWeightedProtocolFees
+
 
 class Types:
 
@@ -30,15 +32,15 @@ class Types:
     )
     # TOKEN = sp.TTuple(sp.TAddress, sp.TNat, sp.TBool)
     # FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
-    getRateFactor=sp.TLambda(
-      sp.TTuple(
-        sp.TNat,
-        sp.TOption(sp.TAddress),
-        sp.TLambda(
-            sp.TPair(sp.TNat, sp.TNat), sp.TNat)
+    getRateFactor = sp.TLambda(
+        sp.TTuple(
+            sp.TNat,
+            sp.TOption(sp.TAddress),
+            sp.TLambda(
+                sp.TPair(sp.TNat, sp.TNat), sp.TNat)
         ),
         sp.TNat
-      )
+    )
 
     helper = sp.TLambda(
         sp.TTuple(
@@ -80,7 +82,8 @@ class Types:
         fixedPoint=sp.TBigMap(sp.TString, sp.TLambda(
             sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
         entries=sp.TBigMap(sp.TString, sp.TNat),
-        weightedMathLib=sp.TAddress
+        weightedMathLib=sp.TAddress,
+        weightedProtocolFeesLib=sp.TAddress
     )
 
     INITIALIZE_PARAMS = sp.TRecord(
@@ -126,6 +129,8 @@ class WeightedPool(
         name='Symmetric Weighted Pool',
         symbol='SYMMLP',
         weightedMathLib=sp.address('KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
+        weightedProtocolFeesLib=sp.address(
+            'KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
     ):
         self.init(
             tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
@@ -153,6 +158,7 @@ class WeightedPool(
                 "scale": ScalingHelpers.scale_amounts,
             }),
             weightedMathLib=weightedMathLib,
+            weightedProtocolFeesLib=weightedProtocolFeesLib,
         )
         # self.init_type(Types.STORAGE)
         # TODO: ProtocolFeeCache
@@ -230,8 +236,15 @@ class WeightedPool(
     ):
         with sp.if_(self.data.exemptFromYieldFees == False):
 
-            self.data.entries['athRateProduct'] = self._getRateProduct(
-                self.data.normalizedWeights)
+            # self.data.entries['athRateProduct'] = self._getRateProduct(
+            #     self.data.normalizedWeights)
+            self.data.entries['athRateProduct'] = IExternalWeightedProtocolFees.getRateProduct(
+                self.data.weightedProtocolFeesLib,
+                sp.record(
+                    normalizedWeights=self.data.normalizedWeights,
+                    rateProviders=self.data.rateProviders,
+                )
+            )
 
         # kind = params.userData.kind
         # # TODO: Use an enum
@@ -251,7 +264,6 @@ class WeightedPool(
         #         normalizedWeights=self.data.normalizedWeights,
         #         balances=upscaledAmounts,
         #     )))
-        
 
         # # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
         # # consistent in Pools with similar compositions but different number of tokens.
@@ -275,11 +287,12 @@ class WeightedPool(
             normalizedWeights=normalizedWeights,
             balances=preBalances,
         ))
-        (protocolFeesToBeMinted, athRateProduct) = self._getPreJoinExitProtocolFees(
+        pair = self._getPreJoinExitProtocolFees(
             invariant,
             normalizedWeights,
             supplyBeforeFeeCollection
         )
+        protocolFeesToBeMinted, athRateProduct = sp.match_pair(pair)
 
         return ((supplyBeforeFeeCollection + protocolFeesToBeMinted), invariant)
 
@@ -291,17 +304,17 @@ class WeightedPool(
     ):
         supplyBeforeFeeCollection = self.data.totalSupply
 
-
         # invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
         #     normalizedWeights=normalizedWeights,
         #     balances=preBalances,
         # ))
 
-        (protocolFeesToBeMinted, athRateProduct) = self._getPreJoinExitProtocolFees(
+        pair = self._getPreJoinExitProtocolFees(
             invariant,
             normalizedWeights,
             supplyBeforeFeeCollection
         )
+        protocolFeesToBeMinted, athRateProduct = sp.match_pair(pair)
         with sp.if_(athRateProduct > 0):
             self.data.entries['athRateProduct'] = sp.compute(athRateProduct)
 

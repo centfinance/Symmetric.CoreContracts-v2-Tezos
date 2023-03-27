@@ -53,6 +53,7 @@ def test():
         name="Symm Liqudidty Pool Token",
         symbol="SYMMLP",
         weightedMathLib=m.address,
+        weightedProtocolFeesLib=pf.address,
     )
 
     sc += p
@@ -131,7 +132,7 @@ def test():
     v.joinPool(
         sp.record(
             poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000002'),
             sender=sender,
             recipient=recipient,
             request=request,
@@ -157,7 +158,7 @@ def test():
     v.joinPool(
         sp.record(
             poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000002'),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
@@ -183,7 +184,7 @@ def test():
     v.exitPool(
         sp.record(
             poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000002'),
             sender=sender,
             recipient=recipient,
             request=exitRequest,
@@ -192,7 +193,7 @@ def test():
 
     singleSwap = sp.record(
         poolId=sp.bytes(
-            '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+            '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000002'),
         kind='GIVEN_IN',
         assetIn=tokens[0],
         assetOut=tokens[1],
@@ -221,7 +222,7 @@ def test():
     v.joinPool(
         sp.record(
             poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000002'),
             sender=sender,
             recipient=recipient,
             request=joinRequest,

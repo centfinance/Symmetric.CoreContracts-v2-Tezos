@@ -13,33 +13,47 @@ ONE = sp.nat(10**18)
 
 class IExternalWeightedProtocolFees:
     PreJoinExitParamsType = sp.TRecord(
+        preJoinExitSupply=sp.TNat,
         preJoinExitInvariant=sp.TNat,
         swapFee=sp.TNat,
         postJoinExitInvariant=sp.TNat,
         normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
-        rateProviders=sp.TMap(sp.TNat, sp.TAddress),
+        rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
         athRateProduct=sp.TNat,
         yieldFee=sp.TNat,
+        exemptFromYieldFees=sp.TBool,
     )
 
     PostJoinExitParamsType = sp.TRecord(
         preJoinExitSupply=sp.TNat,
         postJoinExitSupply=sp.TNat,
+        preJoinExitInvariant=sp.TNat,
         preBalances=sp.TMap(sp.TNat, sp.TNat),
         balanceDeltas=sp.TMap(sp.TNat, sp.TNat),
         normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
         swapFee=sp.TNat,
     )
 
+    GetRateProductParamsType = sp.TRecord(
+        normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+        rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
+    )
+
     def getPreJoinExitProtocolFees(lib, params):
         sp.set_type(params, IExternalWeightedProtocolFees.PreJoinExitParamsType)
         return sp.compute(sp.view('getPreJoinExitProtocolFees', lib, params,
-                                  t=sp.TNat).open_some("Invalid view"))
+                                  t=sp.TPair(sp.TNat, sp.TNat)).open_some("Invalid view"))
 
     def getPostJoinExitProtocolFees(lib, params):
         sp.set_type(
             params, IExternalWeightedProtocolFees.PostJoinExitParamsType)
         return sp.compute(sp.view('getPostJoinExitProtocolFees', lib, params,
+                                  t=sp.TPair(sp.TNat, sp.TNat)).open_some("Invalid view"))
+
+    def getRateProduct(lib, params):
+        sp.set_type(
+            params, IExternalWeightedProtocolFees.GetRateProductParamsType)
+        return sp.compute(sp.view('getRateProduct', lib, params,
                                   t=sp.TNat).open_some("Invalid view"))
 
 
@@ -73,6 +87,7 @@ class ExternalWeightedProtocolFees(sp.Contract):
             params.rateProviders,
             params.athRateProduct,
             params.yieldFee,
+            params.exemptFromYieldFees,
             fpm
         )
 
@@ -93,9 +108,9 @@ class ExternalWeightedProtocolFees(sp.Contract):
             params, IExternalWeightedProtocolFees.PostJoinExitParamsType)
         fpm = sp.compute(self.data.fixedPoint)
         isJoin = (params.postJoinExitSupply >= params.preJoinExitSupply)
-
+        balances = sp.compute(sp.map({}, sp.TNat, sp.TNat))
         with sp.for_('i', sp.range(0, sp.len(params.preBalances))) as i:
-            params.preBalances[i] = sp.eif(
+            balances[i] = sp.eif(
                 isJoin,
                 (params.preBalances[i] + params.balanceDeltas[i]),
                 (sp.as_nat(params.preBalances[i] - params.balanceDeltas[i])),
@@ -103,25 +118,35 @@ class ExternalWeightedProtocolFees(sp.Contract):
 
         postJoinExitInvariant = sp.compute(WeightedMath._calculateInvariant(
             params.normalizedWeights,
-            params.preBalances,
+            balances,
             fpm,
         ))
-        protocolSwapFeePercentage = sp.compute(params.swapFee)
 
         # self.data.entries['postJoinExitInvariant'] = postJoinExitInvariant
 
         protocolFeeAmount = sp.local('protocolSwapFeeAmount', 0)
-        with sp.if_(protocolSwapFeePercentage != 0):
+        with sp.if_(params.swapFee != 0):
             protocolFeeAmount.value = InvariantGrowthProtocolSwapFees.calcDueProtocolFees(
                 sp.compute(fpm['divDown']((
                     postJoinExitInvariant, params.preJoinExitInvariant))),
                 params.preJoinExitSupply,
                 params.postJoinExitSupply,
-                protocolSwapFeePercentage,
+                params.swapFee,
                 fpm,
             )
 
-        sp.result(protocolFeeAmount.value)
+        sp.result((protocolFeeAmount.value, postJoinExitInvariant))
+
+    @sp.onchain_view()
+    def getRateProduct(self, params):
+        sp.set_type(
+            params, IExternalWeightedProtocolFees.GetRateProductParamsType)
+        fpm = sp.compute(self.data.fixedPoint)
+        sp.result(self._getRateProduct(
+            normalizedWeights=params.normalizedWeights,
+            rateProviders=params.rateProviders,
+            fpm=fpm,
+        ))
 
     def _getSwapProtocolFeesPoolPercentage(
             self,
@@ -145,11 +170,12 @@ class ExternalWeightedProtocolFees(sp.Contract):
             rateProviders,
             athRateProduct,
             yieldFee,
+            exemptFromYieldFees,
             fpm,
     ):
         percentages = sp.local('percentages', sp.nat(0))
         rateProduct = sp.local('rateProduct', sp.nat(0))
-        with sp.if_(self.data.exemptFromYieldFees == False):
+        with sp.if_(exemptFromYieldFees == False):
             rateProduct.value = self._getRateProduct(
                 normalizedWeights, rateProviders, fpm)
             with sp.if_(rateProduct.value > athRateProduct):
@@ -172,7 +198,7 @@ class ExternalWeightedProtocolFees(sp.Contract):
         def rateFactor(rp, i): return sp.eif(
             rp == sp.none,
             sp.nat(1000000000000000000),
-            self._getRateFactor(normalizedWeights[i], rp),
+            self._getRateFactor(normalizedWeights[i], rp, fpm),
         )
         rps = sp.compute(rateProviders)
         product = sp.local('product', fpm['mulDown']((

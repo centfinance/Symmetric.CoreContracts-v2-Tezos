@@ -8,6 +8,8 @@ import contracts.utils.math.FixedPoint as FixedPoint
 
 from contracts.pool_weighted.WeightedMath import WeightedMath
 
+from contracts.pool_weighted.ExternalWeightedProtocolFees import IExternalWeightedProtocolFees
+
 
 class WeightedPoolProtocolFees:
     def __init__(self):
@@ -15,7 +17,7 @@ class WeightedPoolProtocolFees:
             exemptFromYieldFees=True,
             rateProviders=sp.map(l={}, tkey=sp.TNat,
                                  tvalue=sp.TOption(sp.TAddress)),
-            
+
             feeCache=sp.record(
                 swapFee=sp.nat(0),
                 yieldFee=sp.nat(0),
@@ -28,9 +30,9 @@ class WeightedPoolProtocolFees:
 
         self.data.exemptFromYieldFees = self._getYieldFeeExemption(
             params.rateProviders)
-        
-        self.data.feeCache=params.feeCache
-        
+
+        self.data.feeCache = params.feeCache
+
         self.data.rateProviders = params.rateProviders
 
     def _getYieldFeeExemption(self, rateProviders):
@@ -42,62 +44,27 @@ class WeightedPoolProtocolFees:
 
         return exempt.value
 
-    def _getSwapProtocolFeesPoolPercentage(
-            self,
-            preJoinExitInvariant,
-            protocolSwapFeePercentage
-    ):
-        fpm = self.data.fixedPoint
-
-        #                          self.data.entries['postJoinExitInvariant'])))
-        return InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
-            sp.compute(fpm['divDown']((preJoinExitInvariant,
-                                       self.data.entries['postJoinExitInvariant']))),
-            FixedPoint.ONE,
-            protocolSwapFeePercentage,
-            fpm,
-        )
-
-    def _getYieldProtocolFeesPoolPercentage(self, normalizedWeights):
-        fpm = sp.compute(self.data.fixedPoint)
-        athRateProduct = sp.compute(self.data.entries['athRateProduct'])
-        percentages = sp.local('percentages', sp.nat(0))
-        rateProduct = sp.local('rateProduct', sp.nat(0))
-        with sp.if_(self.data.exemptFromYieldFees == False):
-            rateProduct.value = self._getRateProduct(normalizedWeights)
-            with sp.if_(rateProduct.value > athRateProduct):
-                percentages.value = InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
-                    fpm['divDown']((rateProduct.value, athRateProduct)),
-                    FixedPoint.ONE,
-                    self.data.feeCache.yieldFee,
-                    fpm,
-                )
-        return (
-            percentages.value,
-            rateProduct.value,
-        )
-
     def _getPreJoinExitProtocolFees(
         self,
         preJoinExitInvariant,
         normalizedWeights,
         preJoinExitSupply,
     ):
-        protocolSwapFeesPoolPercentage = sp.compute(self._getSwapProtocolFeesPoolPercentage(
-            preJoinExitInvariant,
-            sp.compute(self.data.feeCache.swapFee),
+        swapFee, yieldFee = sp.match_record(sp.compute(
+            self.data.feeCache), 'swapFee', 'yieldFee')
+        entries = sp.compute(self.data.entries)
+        pair = IExternalWeightedProtocolFees.getPreJoinExitProtocolFees(self.data.weightedProtocolFeesLib, sp.record(
+            preJoinExitSupply=preJoinExitSupply,
+            preJoinExitInvariant=preJoinExitInvariant,
+            swapFee=swapFee,
+            postJoinExitInvariant=entries['postJoinExitInvariant'],
+            normalizedWeights=normalizedWeights,
+            rateProviders=sp.compute(self.data.rateProviders),
+            athRateProduct=entries['athRateProduct'],
+            yieldFee=yieldFee,
+            exemptFromYieldFees=self.data.exemptFromYieldFees
         ))
-        (protocolYieldFeesPoolPercentage,  athRateProduct) = self._getYieldProtocolFeesPoolPercentage(
-            normalizedWeights
-        )
-
-        return (
-            InvariantGrowthProtocolSwapFees.sptForPoolOwnershipPercentage(
-                preJoinExitSupply,
-                (protocolSwapFeesPoolPercentage + protocolYieldFeesPoolPercentage),
-            ),
-            athRateProduct
-        )
+        return (sp.fst(pair), sp.snd(pair))
 
     def _getPostJoinExitProtocolFees(
         self,
@@ -108,46 +75,28 @@ class WeightedPoolProtocolFees:
         preJoinExitSupply,
         postJoinExitSupply
     ):
-
-        fpm = self.data.fixedPoint
-        isJoin = (postJoinExitSupply >= preJoinExitSupply)
-
-        with sp.for_('i', sp.range(0, sp.len(preBalances))) as i:
-            preBalances[i] = sp.eif(
-                isJoin,
-                (preBalances[i] + balanceDeltas[i]),
-                (sp.as_nat(preBalances[i] - balanceDeltas[i])),
-            )
-
-        postJoinExitInvariant = sp.compute(WeightedMath._calculateInvariant(
-            normalizedWeights,
-            preBalances,
-            fpm,
+        feeCache = sp.compute(self.data.feeCache)
+        pair = IExternalWeightedProtocolFees.getPostJoinExitProtocolFees(self.data.weightedProtocolFeesLib, sp.record(
+            preJoinExitSupply=preJoinExitSupply,
+            postJoinExitSupply=postJoinExitSupply,
+            preJoinExitInvariant=preJoinExitInvariant,
+            preBalances=preBalances,
+            balanceDeltas=balanceDeltas,
+            normalizedWeights=normalizedWeights,
+            swapFee=feeCache.swapFee,
         ))
-        protocolSwapFeePercentage = sp.compute(self.data.feeCache.swapFee)
 
-        self.data.entries['postJoinExitInvariant'] = postJoinExitInvariant
+        self.data.entries['postJoinExitInvariant'] = sp.snd(pair)
 
-        protocolFeeAmount = sp.local('protocolSwapFeeAmount', 0)
-        with sp.if_(protocolSwapFeePercentage != 0):
-            protocolFeeAmount.value = InvariantGrowthProtocolSwapFees.calcDueProtocolFees(
-                sp.compute(fpm['divDown']((
-                    postJoinExitInvariant, preJoinExitInvariant))),
-                preJoinExitSupply,
-                postJoinExitSupply,
-                protocolSwapFeePercentage,
-                fpm,
-            )
-        return protocolFeeAmount.value
+        return sp.fst(pair)
 
     def _getRateFactor(self, weight, provider):
-          powDown = self.data.fixedPoint['powDown']
-          return (powDown((IRateProvider.getRate(provider.open_some()), weight)))
-   
+        powDown = self.data.fixedPoint['powDown']
+        return (powDown((IRateProvider.getRate(provider.open_some()), weight)))
 
     def _getRateProduct(self, normalizedWeights):
-        rateFactor = lambda rp, i: sp.eif(
-            rp==sp.none, 
+        def rateFactor(rp, i): return sp.eif(
+            rp == sp.none,
             sp.nat(1000000000000000000),
             self._getRateFactor(normalizedWeights[i], rp),
         )
