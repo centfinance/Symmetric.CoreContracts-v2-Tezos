@@ -2,13 +2,15 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
-import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
-
 import contracts.utils.math.FixedPoint as FixedPoint
 
 import contracts.pool_utils.lib.PoolRegistrationLib as PoolRegistrationLib
 
 from contracts.pool_utils.SymmetricPoolToken import SymmetricPoolToken
+
+from contracts.utils.mixins.Administrable import Administrable
+
+from contracts.utils.mixins.Pausable import Pausable
 
 _MIN_TOKENS = 2
 _DEFAULT_MINIMUM_SPT = 1000000
@@ -38,16 +40,23 @@ class IBasePool:
         recoveryModeExit=sp.TBool,
     )
 
-    t_on_join_pool_params = sp.TRecord(
+    t_after_join_pool_params = sp.TRecord(
+        poolId=sp.TBytes,
         balances=sp.TMap(sp.TNat, sp.TNat),
         recipient=sp.TAddress,
-        userData=JOIN_USER_DATA,
+        amountsIn=sp.TMap(sp.TNat, sp.TNat),
+        sptAmountOut=sp.TNat,
+        invariant=sp.TNat,
     )
 
-    t_on_exit_pool_params = sp.TRecord(
+    t_after_exit_pool_params = sp.TRecord(
+        poolId=sp.TBytes,
         balances=sp.TMap(sp.TNat, sp.TNat),
         sender=sp.TAddress,
-        userData=EXIT_USER_DATA,
+        amountsOut=sp.TMap(sp.TNat, sp.TNat),
+        sptAmountIn=sp.TNat,
+        invariant=sp.TNat,
+        recoveryModeExit=sp.TBool,
     )
 
     t_before_join_pool_params = sp.TRecord(
@@ -62,11 +71,14 @@ class IBasePool:
 
 
 class BasePool(
+    Administrable,
+    Pausable,
     SymmetricPoolToken,
 ):
 
     def __init__(
         self,
+        owner,
         vault,
         name,
         symbol,
@@ -76,6 +88,8 @@ class BasePool(
             protocolFeesCollector=sp.address(
                 'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF')
         )
+        Administrable.__init__(self, owner, False)
+        Pausable.__init__(self, False, False)
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
     @sp.entry_point(lazify=False)
@@ -101,29 +115,39 @@ class BasePool(
         # TODO: Add protocolFeesCollector call to vault
         # self.data.protocolFeesCollector = vault.getProtocolFeesCollector()
 
-    @sp.entry_point(parameter_type=IBasePool.t_on_join_pool_params, lazify=False)
-    def onJoinPool(
+    @sp.private_lambda(with_storage='read-only')
+    def onlyVault(self, poolId):
+        sp.verify(sp.sender == self.data.vault)
+        sp.verify(poolId == self.data.poolId)
+
+
+    @sp.entry_point(parameter_type=IBasePool.t_after_join_pool_params, lazify=False)
+    def afterJoinPool(
         self,
+        poolId,
         recipient,
+        amountsIn,
+        sptAmountOut,
+        invariant,
         balances,
-        userData
     ):
         # only vault and vailid pool id can call
-
+        self.onlyVault(poolId)
         # ensureNotPaused
+        self.onlyUnpaused()
         # self._beforeSwapJoinExit()
-        scalingFactors = self.data.scalingFactors
 
         with sp.if_(self.data.totalSupply == 0):
-            (sptAmountOut, amountsIn) = self._onInitializePool(
-                sp.record(
-                    scalingFactors=scalingFactors,
-                    userData=userData,
-                )
-            )
+            # (sptAmountOut, amountsIn) = self._onInitializePool(
+            #     sp.record(
+            #         scalingFactors=scalingFactors,
+            #         userData=userData,
+            #     )
+            # )
             # // On initialization, we lock _getMinimumBpt() by minting it for the zero address. This BPT acts as a
             # // minimum as it will never be burned, which reduces potential issues with rounding, and also prevents the
             # // Pool from ever being fully drained.
+            self._afterInitializePool(invariant)
             sp.verify(sptAmountOut >= _DEFAULT_MINIMUM_SPT,
                       Errors.MINIMUM_SPT)
             # Mint to Tezos Null address
@@ -133,38 +157,57 @@ class BasePool(
                 recipient, sp.as_nat(sptAmountOut - _DEFAULT_MINIMUM_SPT))
 
         with sp.else_():
+            scalingFactors = self.data.scalingFactors
+
             upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
                 balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+            
+            upScaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
+                amountsIn, scalingFactors, self.data.fixedPoint['mulDown'])))
 
-            (sptAmountOut, amountsIn) = self._onJoinPool(
+            # (sptAmountOut, amountsIn) = self._onJoinPool(
+            #     sp.record(
+            #         balances=upScaledBalances,
+            #         scalingFactors=scalingFactors,
+            #         userData=userData,
+            #     )
+            # )
+            self._afterJoinPool(
                 sp.record(
+                    invariant=invariant,
                     balances=upScaledBalances,
-                    scalingFactors=scalingFactors,
-                    userData=userData,
+                    amountsIn=upScaledAmounts,
+                    sptAmountOut=sptAmountOut,
                 )
             )
 
             self._mintPoolTokens(recipient, sptAmountOut)
 
-    @sp.entry_point(parameter_type=IBasePool.t_on_exit_pool_params, lazify=False)
-    def onExitPool(
+    @sp.entry_point(parameter_type=IBasePool.t_after_exit_pool_params, lazify=False)
+    def afterExitPool(
         self,
+        poolId,
         sender,
+        amountsOut,
+        sptAmountIn,
+        invariant,
         balances,
-        userData
+        recoveryModeExit=False
     ):
-        with sp.if_(userData.recoveryModeExit):
+        self.onlyVault(poolId)
+        self.onlyUnpaused()
+        with sp.if_(recoveryModeExit):
             # TODO: Check that it's in recovery mode
             # _ensureInRecoveryMode();
             # Note that we don't upscale balances nor downscale amountsOut - we don't care about scaling factors during
             # a recovery mode exit.
-            (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
-                sp.record(
-                    balances=balances,
-                    totalSupply=self.data.totalSupply,
-                    userData=userData
-                )
-            )
+            # (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
+            #     sp.record(
+            #         balances=balances,
+            #         totalSupply=self.data.totalSupply,
+            #         userData=userData
+            #     )
+            # )
             self._burnPoolTokens(sender, sptAmountIn)
 
         with sp.else_():
@@ -172,12 +215,16 @@ class BasePool(
 
             upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
                 balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+            
+            upScaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
+                amountsOut, scalingFactors, self.data.fixedPoint['mulDown'])))
 
-            (sptAmountIn, amountsOut) = self._onExitPool(
+            self._afterExitPool(
                 sp.record(
+                    invariant=invariant,
                     balances=upScaledBalances,
-                    scalingFactors=scalingFactors,
-                    userData=userData
+                    amountsOut=upScaledAmounts,
+                    sptAmountIn=sptAmountIn,
                 )
             )
 
@@ -193,8 +240,9 @@ class BasePool(
         params,
     ):
         sp.set_type(params, IBasePool.t_before_join_pool_params)
+        self.onlyUnpaused()
         scalingFactors = self.data.scalingFactors
-        result = sp.local('result', (0, {}))
+        result = sp.local('result', (0, {}, 0))
         with sp.if_(self.data.totalSupply == 0):
             result.value = self._beforeInitializePool(
                 sp.record(
@@ -214,12 +262,12 @@ class BasePool(
                 )
             )
         # amountsIn are amounts entering the Pool, so we round up.
-
+        sptAmountOut, amountsIn, invariant = sp.match_tuple(result.value, 'sptAmountOut', 'amountsIn', 'invariant')
         downscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-            sp.snd(result.value), scalingFactors, self.data.fixedPoint['divUp'])))
+            amountsIn, scalingFactors, self.data.fixedPoint['divUp'])))
 
         # This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
-        sp.result((sp.fst(result.value), downscaledAmounts))
+        sp.result((sptAmountOut, downscaledAmounts, invariant))
 
     @sp.onchain_view()
     def beforeExitPool(
@@ -227,7 +275,8 @@ class BasePool(
         params,
     ):
         sp.set_type(params, IBasePool.t_before_exit_pool_params)
-        result = sp.local('result', (0, {}))
+        self.onlyUnpaused()
+        result = sp.local('result', (0, {}, 0))
         with sp.if_(params.userData.recoveryModeExit):
             # TODO: Check that it's in recovery mode
             # _ensureInRecoveryMode();
@@ -252,11 +301,12 @@ class BasePool(
                     userData=params.userData
                 )
             )
+        sptAmountIn, amountsOut, invariant = sp.match_tuple(result.value, 'sptAmountIn', 'amountsOut', 'invariant')
 
         downscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-            sp.snd(result.value), scalingFactors, self.data.fixedPoint['divDown'])))
+            amountsOut, scalingFactors, self.data.fixedPoint['divDown'])))
 
-        sp.result((sp.fst(result.value), downscaledAmounts))
+        sp.result((sptAmountIn, downscaledAmounts, invariant ))
 
     # @ sp.onchain_view()
     # def getPoolId(self):

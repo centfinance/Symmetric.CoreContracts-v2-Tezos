@@ -73,5 +73,4 @@ def test():
         metadata=sp.utils.bytes_of_string("<ipfs://....>"),
         token_metadata=normalize_metadata(token_metadata),
     )
-    sp.trace(normalize_metadata(token_metadata))
     c.create(create_params)

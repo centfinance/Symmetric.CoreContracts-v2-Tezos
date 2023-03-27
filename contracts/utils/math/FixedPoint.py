@@ -94,6 +94,42 @@ def square_root(x):
 
     return y.value
 
+def nth_root(x, n):
+    """Calculates the nth root of a given integer
+
+    Args:
+        x: integer whose nth root is to be determined
+        n: the degree of the root
+    Returns:
+        nth root of x
+    """
+
+    sp.verify(x >= 0, "Negative_Value")
+    sp.verify(n > 0, "Invalid_Root_Degree")
+
+    # Base cases
+    with sp.if_(x == 0):
+        sp.result(0)
+    with sp.if_(n == 1):
+        sp.result(x)
+
+    y = sp.local('y', x)
+
+    # Initialization of y
+    y.value = x // n
+
+    # Newton-Raphson method
+    while True:
+        y_next = sp.local('y_next', ((n - 1) * y.value + x // (y.value ** (n - 1))) // n)
+
+        with sp.if_(abs(y_next.value - y.value) <= 1):
+            break
+        y.value = y_next.value
+
+    sp.verify(y.value ** n <= x)
+
+    return y.value
+
 # /**
 #  * @dev Returns x^y, assuming both are fixed point numbers, rounding down. The  is guaranteed to not be above
 #  * the true value (that is, the error def expected - actual is always positive).
@@ -105,10 +141,15 @@ def powDown(p):
     # and 80/20 Weighted Pools
     # def mulDown(x, y): return (x*y)//ONE
     def mul(x, y): return (x * y) // ONE
+    def mulUp(x, y): return sp.as_nat(
+        sp.fst(sp.ediv(((x * y) - 1), ONE).open_some()) + 1)
+    
     x, y = sp.match_pair(p)
+    
     powDown = sp.local('powDown', sp.nat(0))
-    with sp.if_(y == HALF):
-        powDown.value = square_root(x)
+    
+    # with sp.if_(y == HALF):
+    #     powDown.value = square_root(x)
     with sp.if_(y == ONE):
         powDown.value = x
     with sp.if_(y == TWO):
@@ -116,14 +157,14 @@ def powDown(p):
     with sp.if_(y == FOUR):
         powDown.value = mul(mul(x, x), mul(x, x))
 
-    # with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
-    #     raw = powu(x, y)
-    #     # raw = sp.nat(5)
-    #     maxError = mulUp(raw, MAX_POW_RELATIVE_ERROR) + 1
-    #     with sp.if_(raw < maxError):
-    #         powDown.value = 0
-    #     with sp.else_():
-    #         powDown.value = sp.as_nat(raw - maxError)
+    with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
+        raw = LogExpMath.power(x, y)
+
+        maxError = mulUp(raw, MAX_POW_RELATIVE_ERROR) + 1
+        with sp.if_(raw < maxError):
+            powDown.value = 0
+        with sp.else_():
+            powDown.value = sp.as_nat(raw - maxError)
 
     sp.result(powDown.value)
 
@@ -155,9 +196,10 @@ def powUp(p):
     def mul(x, y): return sp.as_nat(
         sp.fst(sp.ediv(((x * y) - 1), ONE).open_some()) + 1)
     x, y = sp.match_pair(p)
+    
     powUp = sp.local('powUp', 1)
-    with sp.if_(y == HALF):
-        powUp.value = square_root(x)
+    # with sp.if_(y == HALF):
+    #     powUp.value = square_root(x)
     with sp.if_(y == ONE):
         powUp.value = x
     with sp.if_(y == TWO):
@@ -165,10 +207,12 @@ def powUp(p):
     with sp.if_(y == FOUR):
         square = mul(x, x)
         powUp.value = mul(square, square)
-    # with sp.else_():
-    #     raw = pow(x, y)
-    #     maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1)
-    #     result.value = add(raw, maxError)
+    
+    with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
+        raw = LogExpMath.power(x, y)
+        maxError = (mul(raw, MAX_POW_RELATIVE_ERROR) + 1)
+        powUp.value = (raw + maxError)
+    
     sp.result(powUp.value)
 
 # /**
@@ -189,31 +233,3 @@ def complement(x):
     return complement.value
 
 
-def powu(x,  y):
-    xAbs = sp.local('xAbs', x)
-
-    # // Calculate the first iteration of the loop in advance.
-    resultAbs = sp.local('resultAbs', ONE)
-    with sp.if_(y & 1 > 0):
-        resultAbs.value = xAbs.value
-
-    # // Equivalent to "for(y /= 2; y > 0; y /= 2)" but faster.
-    yAux = sp.local('yAux', y >> 1)
-    # with sp.for_(yAux >>= 1; yAux > 0; yAux >>= 1):
-    with sp.while_(yAux.value > 0):
-
-        xAbs.value = mulDown((xAbs.value, xAbs.value))
-        sp.trace(xAbs.value)
-        # // Equivalent to "y % 2 == 1" but faster.
-        with sp.if_(yAux.value & 1 > 0):
-            resultAbs.value = mulDown((resultAbs.value, xAbs.value))
-
-        yAux.value = yAux.value >> 1
-
-        # // Is the base negative and the exponent an odd number?
-    # resultInt = sp.to_int(resultAbs)
-    # isNegative = unwrap(x) < 0 && y & 1 == 1;
-    # with sp.if_(isNegative):
-    #     resultInt = -resultInt;
-
-    return resultAbs.value

@@ -87,10 +87,10 @@ class WeightedPoolProtocolFees:
             preJoinExitInvariant,
             sp.compute(self.data.feeCache.swapFee),
         ))
-
         (protocolYieldFeesPoolPercentage,  athRateProduct) = self._getYieldProtocolFeesPoolPercentage(
             normalizedWeights
         )
+
         return (
             InvariantGrowthProtocolSwapFees.sptForPoolOwnershipPercentage(
                 preJoinExitSupply,
@@ -122,7 +122,7 @@ class WeightedPoolProtocolFees:
         postJoinExitInvariant = sp.compute(WeightedMath._calculateInvariant(
             normalizedWeights,
             preBalances,
-            fpm['powDown']
+            fpm,
         ))
         protocolSwapFeePercentage = sp.compute(self.data.feeCache.swapFee)
 

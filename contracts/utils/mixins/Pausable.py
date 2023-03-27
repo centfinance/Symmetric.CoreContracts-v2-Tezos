@@ -1,6 +1,6 @@
 import smartpy as sp
 
-from contracts.utils.mixins.Settings import Settings
+import contracts.utils.mixins.Settings as Settings
 
 
 # Mixins required: Administrable
