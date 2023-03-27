@@ -31,6 +31,17 @@ class IExternalWeightedProtocolFees:
         swapFee=sp.TNat,
     )
 
+    def getPreJoinExitProtocolFees(lib, params):
+        sp.set_type(params, IExternalWeightedProtocolFees.PreJoinExitParamsType)
+        return sp.compute(sp.view('getPreJoinExitProtocolFees', lib, params,
+                                  t=sp.TNat).open_some("Invalid view"))
+
+    def getPostJoinExitProtocolFees(lib, params):
+        sp.set_type(
+            params, IExternalWeightedProtocolFees.PostJoinExitParamsType)
+        return sp.compute(sp.view('getPostJoinExitProtocolFees', lib, params,
+                                  t=sp.TNat).open_some("Invalid view"))
+
 
 class ExternalWeightedProtocolFees(sp.Contract):
     def __init__(self):

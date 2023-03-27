@@ -8,6 +8,8 @@ from contracts.pool_weighted.WeightedPoolFactory import WeightedPoolFactory
 
 from contracts.pool_weighted.ExternalWeightedMath import ExternalWeightedMath
 
+from contracts.pool_weighted.ExternalWeightedProtocolFees import ExternalWeightedProtocolFees
+
 
 def normalize_metadata(metadata):
     meta = {}
@@ -16,13 +18,15 @@ def normalize_metadata(metadata):
 
     return meta
 
+
 class MockRateProvider(sp.Contract):
     def __init__(self):
-      sp.Contract.__init__(self)
+        sp.Contract.__init__(self)
 
     @sp.onchain_view()
     def getRate(self):
-      sp.result(sp.nat(1100000000000000000))
+        sp.result(sp.nat(1100000000000000000))
+
 
 @sp.add_test(name="VaultIntegrationTest_1", profile=True)
 def test():
@@ -31,6 +35,9 @@ def test():
 
     m = ExternalWeightedMath()
     sc += m
+
+    pf = ExternalWeightedProtocolFees()
+    sc += pf
 
     CONTRACT_METADATA = {
         "": "ipfs://QmbEE3NYTuhE2Vk8sQap4kkKyFQ2P1X6GDRCufxDCpBkLa",
@@ -74,7 +81,7 @@ def test():
         1: sp.some(rp.address),
     })
 
-    feeCache=sp.record(
+    feeCache = sp.record(
         swapFee=sp.nat(40000000000000000),
         yieldFee=sp.nat(40000000000000000),
         aumFee=sp.nat(0),
