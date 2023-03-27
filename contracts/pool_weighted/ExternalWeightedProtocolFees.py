@@ -11,6 +11,27 @@ from contracts.interfaces.IRateProvider import IRateProvider
 ONE = sp.nat(10**18)
 
 
+class IExternalWeightedProtocolFees:
+    PreJoinExitParamsType = sp.TRecord(
+        preJoinExitInvariant=sp.TNat,
+        swapFee=sp.TNat,
+        postJoinExitInvariant=sp.TNat,
+        normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+        rateProviders=sp.TMap(sp.TNat, sp.TAddress),
+        athRateProduct=sp.TNat,
+        yieldFee=sp.TNat,
+    )
+
+    PostJoinExitParamsType = sp.TRecord(
+        preJoinExitSupply=sp.TNat,
+        postJoinExitSupply=sp.TNat,
+        preBalances=sp.TMap(sp.TNat, sp.TNat),
+        balanceDeltas=sp.TMap(sp.TNat, sp.TNat),
+        normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+        swapFee=sp.TNat,
+    )
+
+
 class ExternalWeightedProtocolFees(sp.Contract):
     def __init__(self):
         sp.Contract.__init__(self)
@@ -28,6 +49,7 @@ class ExternalWeightedProtocolFees(sp.Contract):
 
     @sp.onchain_view()
     def getPreJoinExitProtocolFees(self, params):
+        sp.set_type(params, IExternalWeightedProtocolFees.PreJoinExitParamsType)
         fpm = sp.compute(self.data.fixedPoint)
         protocolSwapFeesPoolPercentage = sp.compute(self._getSwapProtocolFeesPoolPercentage(
             params.preJoinExitInvariant,
@@ -56,6 +78,8 @@ class ExternalWeightedProtocolFees(sp.Contract):
         self,
         params
     ):
+        sp.set_type(
+            params, IExternalWeightedProtocolFees.PostJoinExitParamsType)
         fpm = sp.compute(self.data.fixedPoint)
         isJoin = (params.postJoinExitSupply >= params.preJoinExitSupply)
 
