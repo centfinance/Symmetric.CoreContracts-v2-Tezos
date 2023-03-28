@@ -124,7 +124,7 @@ class WeightedPool(
 
     def __init__(
         self,
-        owner,
+        owner=sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
         vault=sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
         name='Symmetric Weighted Pool',
         symbol='SYMMLP',
@@ -380,8 +380,13 @@ class WeightedPool(
 
         with sp.if_(self.data.exemptFromYieldFees == False):
             athRateProduct = self.data.entries['athRateProduct']
-            rateProduct = self._getRateProduct(
-                sp.compute(self.data.normalizedWeights))
+            rateProduct = IExternalWeightedProtocolFees.getRateProduct(
+                self.data.weightedProtocolFeesLib,
+                sp.record(
+                    normalizedWeights=self.data.normalizedWeights,
+                    rateProviders=self.data.rateProviders,
+                )
+            )
 
             with sp.if_(rateProduct > athRateProduct):
                 self.data.entries['athRateProduct'] = rateProduct

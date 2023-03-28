@@ -89,28 +89,3 @@ class WeightedPoolProtocolFees:
         self.data.entries['postJoinExitInvariant'] = sp.snd(pair)
 
         return sp.fst(pair)
-
-    def _getRateFactor(self, weight, provider):
-        powDown = self.data.fixedPoint['powDown']
-        return (powDown((IRateProvider.getRate(provider.open_some()), weight)))
-
-    def _getRateProduct(self, normalizedWeights):
-        def rateFactor(rp, i): return sp.eif(
-            rp == sp.none,
-            sp.nat(1000000000000000000),
-            self._getRateFactor(normalizedWeights[i], rp),
-        )
-        rps = sp.compute(self.data.rateProviders)
-        product = sp.local('product', self.data.fixedPoint['mulDown']((
-            sp.compute(rateFactor(rps[0], 0)),
-            sp.compute(rateFactor(rps[1], 1)),
-        )))
-
-        with sp.if_(sp.len(normalizedWeights) > 2):
-            with sp.for_('i', sp.range(2, sp.len(normalizedWeights))) as i:
-                product.value = self.data.fixedPoint['mulDown']((
-                    product.value,
-                    sp.compute(rateFactor(rps[i], i))
-                ))
-
-        return product.value
