@@ -8,11 +8,11 @@ import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
 from contracts.vault.PoolRegistry import PoolRegistry
 
-from contracts.vault.balances.MinimalSwapInfoPoolsBalance import MinimalSwapInfoPoolsBalance
+# from contracts.vault.balances.MinimalSwapInfoPoolsBalance import MinimalSwapInfoPoolsBalance
 
-from contracts.vault.balances.TwoTokenPoolsBalance import TwoTokenPoolsBalance
+# from contracts.vault.balances.TwoTokenPoolsBalance import TwoTokenPoolsBalance
 
-from contracts.vault.balances.GeneralPoolsBalance import GeneralPoolsBalance
+# from contracts.vault.balances.GeneralPoolsBalance import GeneralPoolsBalance
 
 
 class Types:
@@ -58,13 +58,14 @@ class PoolTokens(
             ),
         ),
         PoolRegistry.__init__(self)
-        MinimalSwapInfoPoolsBalance.__init__(self)
-        TwoTokenPoolsBalance.__init__(self)
-        GeneralPoolsBalance.__init__(self)
+        # MinimalSwapInfoPoolsBalance.__init__(self)
+        # TwoTokenPoolsBalance.__init__(self)
+        # GeneralPoolsBalance.__init__(self)
 
     @sp.entry_point(lazify=False)
     def registerTokens(self, params):
         sp.set_type(params, Types.REGISTER_TOKENS_PARAMS)
+        self.onlyUnpaused()
         # TODO: Refactor
         with sp.if_(self.data.poolsTokens.contains(params.poolId)):
             registeredTokens = self.data.poolsTokens[params.poolId].values(

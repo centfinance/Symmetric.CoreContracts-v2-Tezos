@@ -15,6 +15,7 @@ class PoolRegistry:
     @sp.entry_point(lazify=False)
     def registerPool(self, specialization):
         sp.set_type(specialization, sp.TNat)
+        self.onlyUnpaused()
 
         poolId = self._toPoolId(
             sp.sender, specialization, sp.compute(self.data.nextPoolNonce))

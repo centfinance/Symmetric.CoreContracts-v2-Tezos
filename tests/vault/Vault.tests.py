@@ -43,6 +43,7 @@ def test():
         "": "ipfs://QmbEE3NYTuhE2Vk8sQap4kkKyFQ2P1X6GDRCufxDCpBkLa",
     }
     v = Vault(
+        admin.address,
         CONTRACT_METADATA,
     )
     sc += v

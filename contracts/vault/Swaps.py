@@ -68,6 +68,7 @@ class Swaps(PoolBalances):
         limit,
         deadline,
     ):
+        self.onlyUnpaused()
         sp.verify(sp.now <= deadline, Errors.SWAP_DEADLINE)
 
         sp.verify(singleSwap.amount > 0,
@@ -119,6 +120,7 @@ class Swaps(PoolBalances):
         limits,
         deadline,
     ):
+        self.onlyUnpaused()
         sp.verify(sp.now <= deadline, Errors.SWAP_DEADLINE)
 
         sp.verify(sp.len(assets) == sp.len(limits),
