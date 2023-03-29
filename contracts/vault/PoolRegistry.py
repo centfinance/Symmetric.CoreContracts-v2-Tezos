@@ -4,7 +4,7 @@ import smartpy as sp
 class PoolRegistry:
     def __init__(self):
         self.update_initial_storage(
-            _isPoolRegistered=sp.big_map(
+            isPoolRegistered=sp.big_map(
                 l={},
                 tkey=sp.TBytes,
                 tvalue=sp.TUnit,
@@ -20,7 +20,7 @@ class PoolRegistry:
         poolId = self._toPoolId(
             sp.sender, specialization, sp.compute(self.data.nextPoolNonce))
 
-        self.data._isPoolRegistered[poolId] = sp.unit
+        self.data.isPoolRegistered[poolId] = sp.unit
 
         self.data.nextPoolNonce += 1
 

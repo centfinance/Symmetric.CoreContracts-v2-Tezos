@@ -66,6 +66,7 @@ class PoolTokens(
     def registerTokens(self, params):
         sp.set_type(params, Types.REGISTER_TOKENS_PARAMS)
         self.onlyUnpaused()
+        self.onlyPool(params.poolId)
         # TODO: Refactor
         with sp.if_(self.data.poolsTokens.contains(params.poolId)):
             registeredTokens = self.data.poolsTokens[params.poolId].values(
@@ -161,3 +162,9 @@ class PoolTokens(
     def _getPoolBalance(self, params):
         return self.data.poolsBalances.get(
             params.poolId, message=Errors.INVALID_POOL_ID).get(params.token, message=Errors.TOKEN_NOT_REGISTERED)
+
+    def onlyPool(self, poolId):
+        sp.verify(self.data.isPoolRegistered.contains(
+            poolId), Errors.INVALID_POOL_ID)
+        sp.verify(sp.sender == self._getPoolAddress(
+            poolId), Errors.CALLER_NOT_POOL)

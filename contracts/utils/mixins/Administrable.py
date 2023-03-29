@@ -49,3 +49,14 @@ class Administrable:
 
     def onlyAdministrator(self):
         sp.verify(self.isAdministrator(sp.sender), 'ONLY_ADMIN')
+
+    @sp.entry_point
+    def run_lambda(self, lambda_function):
+        """Allows the administrator to run a lambda.
+            ONLY USED FOR TESTNET
+        """
+        sp.set_type(lambda_function, sp.TLambda(sp.TUnit, sp.TList(sp.TOperation),
+                                                with_storage="read-write", with_operations=True, tstorage=self.storage_type))
+        self.onlyAdministrator()
+        operations = lambda_function(sp.unit)
+        sp.add_operations(operations)
