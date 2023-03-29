@@ -95,12 +95,11 @@ class PoolBalances(
             balances)
         pool = self._getPoolAddress(poolId)
 
-
-
         # Call BasePool view to get amounts
         t = sp.compute(sp.view('beforeJoinPool', pool,
-                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some("Invalid view"))
-        sptAmountOut, amountsIn, invariant = sp.match_tuple(t, 'sptAmountOut', 'amountsIn', 'invariant')
+                               sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some("Invalid view"))
+        sptAmountOut, amountsIn, invariant = sp.match_tuple(
+            t, 'sptAmountOut', 'amountsIn', 'invariant')
         params = sp.record(
             poolId=poolId,
             recipient=recipient,
@@ -115,15 +114,13 @@ class PoolBalances(
 
         sp.transfer(params, sp.tez(0), onJoinPool)
 
-     
-
         sp.verify(sp.len(balances) == sp.len(amountsIn))
         #  The Vault ignores the `recipient` in joins and the `sender` in exits: it is up to the Pool to keep track of
         #  their participation.
         finalBalances = self._processJoinPoolTransfers(
             sender, request, balances, amountsIn)
 
-        self._setMinimalSwapInfoPoolBalances(
+        self._setPoolBalances(
             sp.record(
                 poolId=poolId,
                 tokens=request.assets,
@@ -159,11 +156,11 @@ class PoolBalances(
 
         pool = self._getPoolAddress(poolId)
 
-
         # Call BasePool view to get amounts
         t = sp.compute(sp.view('beforeExitPool', pool,
-                                  sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some("Invalid view"))
-        sptAmountIn, amountsOut, invariant = sp.match_tuple(t, 'sptAmountIn', 'amountsOut', 'invariant')
+                               sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some("Invalid view"))
+        sptAmountIn, amountsOut, invariant = sp.match_tuple(
+            t, 'sptAmountIn', 'amountsOut', 'invariant')
 
         params = sp.record(
             poolId=poolId,
@@ -185,7 +182,7 @@ class PoolBalances(
         finalBalances = self._processExitPoolTransfers(
             sender, request, balances, amountsOut)
 
-        self._setMinimalSwapInfoPoolBalances(
+        self._setPoolBalances(
             sp.record(
                 poolId=poolId,
                 tokens=request.assets,

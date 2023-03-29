@@ -8,6 +8,8 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.utils.math.FixedPoint as FixedPoint
 
+import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
+
 # class Types:
 
 #     CREATE_PARAMS = sp.TRecord(
@@ -67,12 +69,15 @@ class WeightedPoolFactory(sp.Contract):
 
     def __init__(
         self,
+        admin,
         vault,
         weightedMathLib,
+        weightedProtocolFeesLib,
         protocolFeeProvider,
         metadata
     ):
         self.init(
+            admin=admin,
             metadata=sp.big_map(
                 normalize_metadata(self, metadata)),
             fixedPoint=sp.big_map({
@@ -85,16 +90,8 @@ class WeightedPoolFactory(sp.Contract):
                 "pow": FixedPoint.pow,
             }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
             weightedMathLib=weightedMathLib,
+            weightedProtocolFeesLib=weightedProtocolFeesLib,
         )
-
-        # self.init_type(
-        #     sp.TRecord(
-        #         vault=sp.TAddress,
-        #         protocolFeeProvider=sp.TAddress,
-        #         isPoolFromFactory=sp.TBigMap(sp.TAddress, sp.TUnit),
-        #         weightedMathLib=sp.TAddress,
-        #     )
-        # )
 
         BasePoolFactory.__init__(
             self,
@@ -111,6 +108,8 @@ class WeightedPoolFactory(sp.Contract):
         """
         # sp.set_type(params, Types.CREATE_PARAMS)
         STORAGE = sp.record(
+            admin=self.data.admin,
+            proposed_admin=sp.none,
             normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
             tokens=sp.map(l={}, tkey=sp.TNat, tvalue=TOKEN),
@@ -132,6 +131,8 @@ class WeightedPoolFactory(sp.Contract):
             protocolFeesCollector=self.data.protocolFeeProvider,
             rateProviders=sp.map(l={}, tkey=sp.TNat,
                                  tvalue=sp.TOption(sp.TAddress)),
+            recoveryMode=False,
+            settings=sp.record(paused=False),
             token_metadata=sp.big_map(
                 {0: sp.record(
                     token_id=0, token_info=params.token_metadata)},
@@ -149,7 +150,11 @@ class WeightedPoolFactory(sp.Contract):
                 'postJoinExitInvariant': sp.nat(0),
                 'swapFeePercentage': sp.nat(0),
             }),
+            scaling_helpers=sp.big_map({
+                "scale": ScalingHelpers.scale_amounts,
+            }),
             weightedMathLib=self.data.weightedMathLib,
+            weightedProtocolFeesLib=self.data.weightedProtocolFeesLib,
         )
         self._create(self, STORAGE)
 

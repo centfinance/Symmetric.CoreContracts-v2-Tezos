@@ -6,19 +6,27 @@ from contracts.utils.tokens.FA12 import FA12_common
 
 from contracts.pool_weighted.ExternalWeightedMath import ExternalWeightedMath
 
+from contracts.pool_weighted.ExternalWeightedProtocolFees import ExternalWeightedProtocolFees
+
+from contracts.vault.ProtocolFeesCollector import ProtocolFeesCollector
+
 
 class MockWeightedPoolFactory(WeightedPoolFactory):
     def __init__(
-            self,
-            vault,
-            weightedMathLib,
-            protocolFeeProvider,
-            metadata
+        self,
+        admin,
+        vault,
+        weightedMathLib,
+        weightedProtocolFeesLib,
+        protocolFeeProvider,
+        metadata,
     ):
         WeightedPoolFactory.__init__(
             self,
+            admin,
             vault,
             weightedMathLib,
+            weightedProtocolFeesLib,
             protocolFeeProvider,
             metadata,
         )
@@ -39,9 +47,21 @@ def normalize_metadata(metadata):
 @sp.add_test(name="WeightedPoolFactoryTest_1", profile=True)
 def test():
     sc = sp.test_scenario()
+    admin = sp.test_account('Admin')
+    vault = sp.test_account('Vault')
+
+    pfc = ProtocolFeesCollector(
+        vault.address,
+        admin.address,
+    )
+
+    sc += pfc
 
     m = ExternalWeightedMath()
     sc += m
+
+    wpf = ExternalWeightedProtocolFees()
+    sc += wpf
 
     # CONTRACT_STORAGE = sp.record(
     #     protocolFeeProvider=sp.address('KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN'),
@@ -52,9 +72,11 @@ def test():
         "": "ipfs://QmbEE3NYTuhE2Vk8sQap4kkKyFQ2P1X6GDRCufxDCpBkLa",
     }
     c = MockWeightedPoolFactory(
+        admin.address,
         sp.address('KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
         m.address,
-        sp.address('KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN'),
+        wpf.address,
+        pfc.address,
         CONTRACT_METADATA,
     )
 
