@@ -312,6 +312,6 @@ def test():
         swaps=swaps,
         assets=tokens,
         funds=funds,
-        limits=limits,
+        limits=swapLimits,
         deadline=sp.timestamp(1),
     ))

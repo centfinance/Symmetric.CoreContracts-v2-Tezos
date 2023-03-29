@@ -17,18 +17,18 @@ CONTRACT_METADATA = {
 
 CONTRACT_STORAGE = sp.record(
     admin=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
-    vault=sp.address('KT1NoUZuy55cRNwRGmJBTynMZgQUmU5gWSyv'),
-    weightedMathLib=sp.address('KT1AtEf9dYqnojQaJWoHFEeMdZC3AWcwq5Hs'),
-    weightedProtocolFeesLib=sp.address('KT1CwBKMkyivjqSs7MPmCn5k7UZnGDNPFfi5'),
-    protocolFeeProvider=sp.address('KT1FaEfHMLoEeub55qT4P4g8ELtPggCgZwea'),
+    vault=sp.address('KT1DSsMYr3n7C1ecYSgZimtFkDXdEQbxULFw'),
+    weightedMathLib=sp.address('KT1TSNcEvQhX5wQyThfvVXzRaCbno5bkkUPs'),
+    weightedProtocolFeesLib=sp.address('KT1VRdB2qWdGoj2ansGAsyDAFwVyerEAHGUg'),
+    protocolFeeProvider=sp.address('KT1Tj18uGzc2HL3nNpFQaEPe7awMM88M3R7V'),
     metadata=CONTRACT_METADATA,
 )
 
 sp.add_compilation_target('local', WeightedPoolFactory(
     sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
-    sp.address('KT1NoUZuy55cRNwRGmJBTynMZgQUmU5gWSyv'),
-    sp.address('KT1AtEf9dYqnojQaJWoHFEeMdZC3AWcwq5Hs'),
-    sp.address('KT1CwBKMkyivjqSs7MPmCn5k7UZnGDNPFfi5'),
-    sp.address('KT1FaEfHMLoEeub55qT4P4g8ELtPggCgZwea'),
+    sp.address('KT1DSsMYr3n7C1ecYSgZimtFkDXdEQbxULFw'),
+    sp.address('KT1TSNcEvQhX5wQyThfvVXzRaCbno5bkkUPs'),
+    sp.address('KT1VRdB2qWdGoj2ansGAsyDAFwVyerEAHGUg'),
+    sp.address('KT1Tj18uGzc2HL3nNpFQaEPe7awMM88M3R7V'),
     CONTRACT_METADATA,
 ))
