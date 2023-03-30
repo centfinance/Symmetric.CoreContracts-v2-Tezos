@@ -17,6 +17,18 @@ from contracts.pool_weighted.ExternalWeightedMath import IExternalWeightedMath
 from contracts.pool_weighted.ExternalWeightedProtocolFees import IExternalWeightedProtocolFees
 
 
+class IWeightedPool:
+    def initialize(pool, params):
+        initialize = sp.contract(Types.INITIALIZE_PARAMS, pool, "initialize").open_some(
+            "INTERFACE_MISMATCH")
+        sp.transfer(params, sp.tez(0), initialize)
+
+    def updateProtocolFeePercentageCache(pool):
+        update_protocol_fee_cache = sp.contract(sp.TUnit, pool, "updateProtocolFeePercentageCache").open_some(
+            "INTERFACE_MISMATCH")
+        sp.transfer(sp.unit, sp.tez(0), update_protocol_fee_cache)
+
+
 class Types:
 
     TOKEN = sp.TRecord(
