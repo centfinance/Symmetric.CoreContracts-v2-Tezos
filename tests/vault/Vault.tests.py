@@ -167,8 +167,8 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000001'),
+            poolId=sp.pair(sp.address(
+                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=request,
@@ -193,8 +193,8 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000001'),
+            poolId=sp.pair(sp.address(
+                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
@@ -219,8 +219,8 @@ def test():
 
     v.exitPool(
         sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000001'),
+            poolId=sp.pair(sp.address(
+                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=exitRequest,
@@ -228,8 +228,8 @@ def test():
     )
 
     singleSwap = sp.record(
-        poolId=sp.bytes(
-            '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000001'),
+        poolId=sp.pair(sp.address(
+            'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
         kind='GIVEN_IN',
         assetIn=tokens[0],
         assetOut=tokens[1],
@@ -257,8 +257,8 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000001'),
+            poolId=sp.pair(sp.address(
+                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
@@ -267,29 +267,29 @@ def test():
 
     swaps = {
         0: sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000001'),
+            poolId=sp.pair(sp.address(
+                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
             assetInIndex=1,
             assetOutIndex=0,
             amount=sp.nat(100000000000000000),
         ),
         1: sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000001'),
+            poolId=sp.pair(sp.address(
+                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
             assetInIndex=2,
             assetOutIndex=3,
             amount=sp.nat(125700000500000000),
         ),
         2: sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000001'),
+            poolId=sp.pair(sp.address(
+                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
             assetInIndex=4,
             assetOutIndex=5,
             amount=sp.nat(118300000500000000),
         ),
         3: sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c7491542e97deee96091e28a80b23359000001'),
+            poolId=sp.pair(sp.address(
+                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
             assetInIndex=7,
             assetOutIndex=6,
             amount=sp.nat(100000000000000000),
@@ -297,14 +297,14 @@ def test():
     }
 
     swapLimits = {
-        0: 0,
-        1: 0,
-        2: 0,
-        3: 0,
-        4: 0,
-        5: 0,
-        6: 0,
-        7: 0,
+        0: 10000000000000000000000,
+        1: 10000000000000000000000,
+        2: 10000000000000000000000,
+        3: 10000000000000000000000,
+        4: 10000000000000000000000,
+        5: 10000000000000000000000,
+        6: 10000000000000000000000,
+        7: 10000000000000000000000,
     }
 
     v.batchSwap(sp.record(

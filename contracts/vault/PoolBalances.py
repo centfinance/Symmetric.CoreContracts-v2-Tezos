@@ -21,26 +21,6 @@ class Types:
         FA2=sp.TBool,
     )
 
-    # t_onJoinPool_params = sp.TRecord(
-    #     poolId=sp.TBytes,
-    #     sender=sp.TAddress,
-    #     recipient=sp.TAddress,
-    #     balances=sp.TMap(sp.TNat, sp.TNat),
-    #     lastChangeBlock=sp.TNat,
-    #     protocolSwapFeePercentage=sp.TNat,
-    #     userData=t_joinUserData,
-    # )
-
-    # t_onExitPool_params = sp.TRecord(
-    #     poolId=sp.TBytes,
-    #     sender=sp.TAddress,
-    #     recipient=sp.TAddress,
-    #     balances=sp.TMap(sp.TNat, sp.TNat),
-    #     lastChangeBlock=sp.TNat,
-    #     protocolSwapFeePercentage=sp.TNat,
-    #     userData=t_exitUserData,
-    # )
-
     t_joinPool_request = sp.TRecord(
         userData=IBasePool.JOIN_USER_DATA,
         assets=sp.TMap(sp.TNat, TOKEN),

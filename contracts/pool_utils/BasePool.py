@@ -41,7 +41,7 @@ class IBasePool:
     )
 
     t_after_join_pool_params = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         balances=sp.TMap(sp.TNat, sp.TNat),
         recipient=sp.TAddress,
         amountsIn=sp.TMap(sp.TNat, sp.TNat),
@@ -50,7 +50,7 @@ class IBasePool:
     )
 
     t_after_exit_pool_params = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         balances=sp.TMap(sp.TNat, sp.TNat),
         sender=sp.TAddress,
         amountsOut=sp.TMap(sp.TNat, sp.TNat),
@@ -143,7 +143,6 @@ class BasePool(
 
         poolId = PoolRegistrationLib.registerPool(
             vault=params.vault,
-            specialization=params.specialization,
             tokens=params.tokens,
             assetManagers=params.assetManagers
         )

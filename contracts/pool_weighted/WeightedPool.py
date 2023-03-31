@@ -77,7 +77,7 @@ class Types:
         feeCache=FEE_CACHE,
         initialized=sp.TBool,
         metadata=sp.TBigMap(sp.TString, sp.TBytes),
-        poolId=sp.TOption(sp.TBytes),
+        poolId=sp.TOption(sp.TPair(sp.TAddress, sp.TNat)),
         protocolFeesCollector=sp.TOption(sp.TAddress),
         rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
         recoveryMode=sp.TBool,
@@ -215,10 +215,6 @@ class WeightedPool(
             self.data.scalingFactors[i] = self._computeScalingFactor(
                 params.tokenDecimals[i])
 
-        specialization = sp.local('specialization', sp.nat(1))
-        with sp.if_(numTokens == sp.nat(2)):
-            specialization.value = sp.nat(2)
-
         self._initializeProtocolFees(sp.record(
             numTokens=numTokens,
             rateProviders=params.rateProviders,
@@ -229,7 +225,6 @@ class WeightedPool(
             self,
             sp.record(
                 vault=self.data.vault,
-                specialization=specialization.value,
                 tokens=params.tokens,
                 assetManagers=sp.none,
                 swapFeePercentage=params.swapFeePercentage,

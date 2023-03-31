@@ -85,7 +85,7 @@ class PoolTokens(
 
     @sp.onchain_view()
     def getPoolTokens(self, poolId):
-        sp.set_type(poolId, sp.TBytes)
+        sp.set_type(poolId, sp.TPair(sp.TAddress, sp.TNat))
         (tokens, rawBalances) = self._getPoolTokens(poolId)
         (balances, lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
             rawBalances)
@@ -127,5 +127,5 @@ class PoolTokens(
     def onlyPool(self, poolId):
         sp.verify(self.data.isPoolRegistered.contains(
             poolId), Errors.INVALID_POOL_ID)
-        sp.verify(sp.sender == self._getPoolAddress(
+        sp.verify(sp.sender == sp.fst(
             poolId), Errors.CALLER_NOT_POOL)
