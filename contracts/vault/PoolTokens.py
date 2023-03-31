@@ -28,7 +28,7 @@ class Types:
         lastChangeBlock=sp.TNat,
     )
     REGISTER_TOKENS_PARAMS = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         tokens=sp.TMap(sp.TNat, TOKEN),
         assetManagers=sp.TOption(sp.TMap(sp.TNat, sp.TAddress))
     )
@@ -40,27 +40,21 @@ class Types:
 
 class PoolTokens(
     PoolRegistry,
-    # MinimalSwapInfoPoolsBalance,
-    # TwoTokenPoolsBalance,
-    # GeneralPoolsBalance
 ):
     def __init__(self):
         self.update_initial_storage(
             poolsTokens=sp.big_map(
                 l={},
-                tkey=sp.TBytes,
+                tkey=sp.TPair(sp.TAddress, sp.TNat),
                 tvalue=Types.TOKENS_TYPE
             ),
             poolsBalances=sp.big_map(
                 l={},
-                tkey=sp.TBytes,
+                tkey=sp.TPair(sp.TAddress, sp.TNat),
                 tvalue=Types.BALANCES_TYPE,
             ),
         ),
         PoolRegistry.__init__(self)
-        # MinimalSwapInfoPoolsBalance.__init__(self)
-        # TwoTokenPoolsBalance.__init__(self)
-        # GeneralPoolsBalance.__init__(self)
 
     @sp.entry_point(lazify=False)
     def registerTokens(self, params):
@@ -83,33 +77,9 @@ class PoolTokens(
             self.data.poolsBalances[params.poolId] = sp.map(
                 l={}, tkey=Types.TOKEN, tvalue=Types.BALANCE)
 
-        # specialization = self._getPoolSpecialization(params.poolId)
-
-        # with sp.if_(specialization == sp.nat(2)):
-        #     sp.verify(sp.len(params.tokens) == sp.nat(2),
-        #               Errors.TOKENS_LENGTH_MUST_BE_2)
-        #     self._registerTwoTokenPoolTokens(sp.record(
-        #         poolId=params.poolId,
-        #         tokenX=params.tokens[0],
-        #         tokenY=params.tokens[1]
-        #     ))
-        # with sp.if_(specialization == sp.nat(1)):
-        # self._registerMinimalSwapInfoPoolTokens(
-        #     sp.record(
-        #         poolId=params.poolId,
-        #         tokens=params.tokens
-        #     ))
-        # with sp.if_((specialization != sp.nat(2)) & (specialization != sp.nat(1))):
-        #     self._registerGeneralPoolTokens(sp.record(
-        #         poolId=params.poolId,
-        #         tokens=params.tokens
-        #     ))
-
         poolEvent = sp.record(
             poolId=params.poolId,
             tokens=params.tokens,
-            # specialization=specialization
-            specialization=sp.nat(1)
         )
         sp.emit(poolEvent, tag='TokensRegistered', with_type=True)
 
@@ -141,15 +111,6 @@ class PoolTokens(
             ))
 
         return (tokens, balances)
-        # specialization = self._getPoolSpecialization(poolId)
-
-        # with sp.if_(specialization == sp.nat(2)):
-        #     return self._getTwoTokenPoolTokens(poolId)
-        # with sp.if_(specialization == sp.nat(1)):
-        # return self._getMinimalSwapInfoPoolTokens(poolId)
-        # with sp.if_((specialization != sp.nat(2)) & (specialization != sp.nat(1))):
-        #     # PoolSpecialization.GENERAL
-        #     return self._getGeneralPoolTokens(poolId);
 
     def _setPoolBalances(
         self,

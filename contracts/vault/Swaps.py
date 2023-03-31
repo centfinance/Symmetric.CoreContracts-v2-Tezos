@@ -17,7 +17,7 @@ class ISwaps:
     )
 
     SINGLE_SWAP = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         kind=sp.TString,
         assetIn=TOKEN,
         assetOut=TOKEN,
@@ -39,7 +39,7 @@ class ISwaps:
     )
 
     BATCH_SWAP_STEP = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         assetInIndex=sp.TNat,
         assetOutIndex=sp.TNat,
         amount=sp.TNat,
@@ -203,23 +203,13 @@ class Swaps(PoolBalances):
         return assetDeltas
 
     def _swapWithPool(self, request):
-        pool = self._getPoolAddress(request.poolId)
-        specialization = self._getPoolSpecialization(request.poolId)
+        pool = sp.fst(request.poolId)
 
-        # amountCalculated = sp.local('amountCalculated', 0)
-        # with sp.if_(specialization == sp.nat(2)):
-        #     amountCalculated = self._processTwoTokenPoolSwapRequest(
-        #         request, pool)
-        # with sp.else_():
-        #     with sp.if_(specialization == sp.nat(1)):
         amountCalculated = self._processMinimalSwapInfoPoolSwapRequest(
             sp.record(
                 request=request,
                 pool=pool,
             ))
-        # with sp.else_():
-        #     amountCalculated = self._processGeneralPoolSwapRequest(
-        #         request, pool)
 
         amountsIn, amountsOut = sp.match_pair(sp.eif(
             request.kind == 'GIVEN_IN',

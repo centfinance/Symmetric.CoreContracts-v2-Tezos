@@ -49,7 +49,7 @@ class Types:
     )
 
     t_joinPool_params = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         sender=sp.TAddress,
         recipient=sp.TAddress,
         request=t_joinPool_request
@@ -63,7 +63,7 @@ class Types:
     )
 
     t_exitPool_params = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         sender=sp.TAddress,
         recipient=sp.TAddress,
         request=t_exitPool_request
@@ -93,7 +93,7 @@ class PoolBalances(
 
         (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
             balances)
-        pool = self._getPoolAddress(poolId)
+        pool = sp.fst(poolId)
 
         # Call BasePool view to get amounts
         t = sp.compute(sp.view('beforeJoinPool', pool,
@@ -154,7 +154,7 @@ class PoolBalances(
         (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
             balances)
 
-        pool = self._getPoolAddress(poolId)
+        pool = sp.fst(poolId)
 
         # Call BasePool view to get amounts
         t = sp.compute(sp.view('beforeExitPool', pool,

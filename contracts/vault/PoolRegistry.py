@@ -6,7 +6,7 @@ class PoolRegistry:
         self.update_initial_storage(
             isPoolRegistered=sp.big_map(
                 l={},
-                tkey=sp.TBytes,
+                tkey=sp.TPair(sp.TAddress, sp.TNat),
                 tvalue=sp.TUnit,
             ),
             nextPoolNonce=sp.nat(1)
@@ -15,7 +15,7 @@ class PoolRegistry:
     @sp.entry_point(lazify=False)
     def registerPool(self):
         self.onlyUnpaused()
-        poolId = (sp.compute(self.data.nextPoolNonce), sp.sender)
+        poolId = (sp.sender, sp.compute(self.data.nextPoolNonce))
 
         self.data.isPoolRegistered[poolId] = sp.unit
 

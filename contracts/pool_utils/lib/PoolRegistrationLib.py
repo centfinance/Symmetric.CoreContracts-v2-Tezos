@@ -11,7 +11,7 @@ class Types:
     TOKENS = sp.TMap(sp.TNat, TOKEN)
 
     REGISTER_TOKENS_PARAMS = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         tokens=TOKENS,
         assetManagers=sp.TOption(sp.TMap(sp.TNat, sp.TAddress)),
     )
@@ -26,16 +26,10 @@ class Types:
 
 
 def registerPool(vault, specialization, tokens, assetManagers):
-    def _toPoolId(pool, specialization, nonce):
-        return sp.pack(sp.record(
-            nonce=nonce,
-            specialization=specialization,
-            pool=pool,
-        ))
     nonce = sp.compute(sp.view('getNextPoolNonce', vault, sp.unit,
                                t=sp.TNat).open_some("Invalid view"))
 
-    poolId = _toPoolId(sp.self_address, specialization, nonce)
+    poolId = (sp.self_address, nonce)
 
     registerPool = sp.contract(sp.TNat, vault, "registerPool").open_some(
         "INTERFACE_MISMATCH")
