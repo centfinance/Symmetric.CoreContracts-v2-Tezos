@@ -13,12 +13,9 @@ class PoolRegistry:
         )
 
     @sp.entry_point(lazify=False)
-    def registerPool(self, specialization):
-        sp.set_type(specialization, sp.TNat)
+    def registerPool(self):
         self.onlyUnpaused()
-
-        poolId = self._toPoolId(
-            sp.sender, specialization, sp.compute(self.data.nextPoolNonce))
+        poolId = (sp.compute(self.data.nextPoolNonce), sp.sender)
 
         self.data.isPoolRegistered[poolId] = sp.unit
 
@@ -27,38 +24,9 @@ class PoolRegistry:
         poolEvent = sp.record(
             poolId=poolId,
             pool=sp.sender,
-            specialization=specialization
         )
         sp.emit(poolEvent, tag='PoolRegistered', with_type=True)
 
     @sp.onchain_view()
     def getNextPoolNonce(self):
         sp.result(self.data.nextPoolNonce)
-
-    def _toPoolId(self, pool, specialization, nonce):
-        pack = sp.record(
-            nonce=nonce,
-            pool=pool,
-            specialization=specialization
-        )
-        return sp.pack(pack)
-
-    def _getPoolSpecialization(self, poolId):
-        sp.set_type(poolId, sp.TBytes)
-
-        record = sp.unpack(poolId, sp.TRecord(
-            nonce=sp.TNat,
-            pool=sp.TAddress,
-            specialization=sp.TNat
-        )).open_some(message="Invalid poolId")
-        return record.specialization
-
-    def _getPoolAddress(self, poolId):
-        sp.set_type(poolId, sp.TBytes)
-
-        record = sp.unpack(poolId, sp.TRecord(
-            nonce=sp.TNat,
-            pool=sp.TAddress,
-            specialization=sp.TNat
-        )).open_some(message="Invalid poolId")
-        return record.pool

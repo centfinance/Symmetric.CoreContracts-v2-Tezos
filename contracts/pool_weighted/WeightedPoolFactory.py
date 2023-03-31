@@ -1,6 +1,6 @@
 import smartpy as sp
 
-from contracts.pool_weighted.WeightedPool import WeightedPool
+from contracts.pool_weighted.WeightedPool import WeightedPool, IWeightedPool
 
 from contracts.pool_utils.BasePoolFactory import BasePoolFactory
 
@@ -157,6 +157,10 @@ class WeightedPoolFactory(sp.Contract):
             weightedProtocolFeesLib=self.data.weightedProtocolFeesLib,
         )
         self._create(self, STORAGE)
+
+        # IWeightedPool.initialize(pool, sp.record(
+        #     tokens
+        # ))
 
 
 # CONTRACT_STORAGE = sp.record(
