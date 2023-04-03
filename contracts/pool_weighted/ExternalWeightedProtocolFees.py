@@ -18,7 +18,7 @@ class IExternalWeightedProtocolFees:
         swapFee=sp.TNat,
         postJoinExitInvariant=sp.TNat,
         normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
-        rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
+        rateProviders=sp.TOption(sp.TMap(sp.TNat, sp.TOption(sp.TAddress))),
         athRateProduct=sp.TNat,
         yieldFee=sp.TNat,
         exemptFromYieldFees=sp.TBool,
@@ -177,7 +177,7 @@ class ExternalWeightedProtocolFees(sp.Contract):
         rateProduct = sp.local('rateProduct', sp.nat(0))
         with sp.if_(exemptFromYieldFees == False):
             rateProduct.value = self._getRateProduct(
-                normalizedWeights, rateProviders, fpm)
+                normalizedWeights, rateProviders.open_some(), fpm)
             with sp.if_(rateProduct.value > athRateProduct):
                 percentages.value = InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
                     fpm['divDown']((rateProduct.value, athRateProduct)),

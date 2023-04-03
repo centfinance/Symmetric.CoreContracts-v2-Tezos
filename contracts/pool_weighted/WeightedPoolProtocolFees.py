@@ -15,18 +15,20 @@ class WeightedPoolProtocolFees:
     def __init__(self):
         self.update_initial_storage(
             exemptFromYieldFees=True,
-            rateProviders=sp.map(l={}, tkey=sp.TNat,
-                                 tvalue=sp.TOption(sp.TAddress)),
+            rateProviders=sp.set_type_expr(sp.none, sp.TOption(
+                sp.TMap(sp.TNat, sp.TOption(sp.TAddress)))),
             feeCache=(sp.nat(0), sp.nat(0)),
         )
 
     def _initializeProtocolFees(self, params):
-        sp.verify(params.numTokens == sp.len(params.rateProviders))
+        with sp.if_(params.rateProviders.is_some()):
+            rateProviders = params.rateProviders.open_some()
+            sp.verify(params.numTokens == sp.len(rateProviders))
 
-        self.data.exemptFromYieldFees = self._getYieldFeeExemption(
-            params.rateProviders)
+            self.data.exemptFromYieldFees = self._getYieldFeeExemption(
+                rateProviders)
 
-        self.data.rateProviders = params.rateProviders
+            self.data.rateProviders = params.rateProviders
 
     def _getYieldFeeExemption(self, rateProviders):
         exempt = sp.local('exempt', True)

@@ -69,7 +69,7 @@ class Types:
         metadata=sp.TBigMap(sp.TString, sp.TBytes),
         poolId=sp.TOption(sp.TPair(sp.TAddress, sp.TNat)),
         protocolFeesCollector=sp.TOption(sp.TAddress),
-        rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
+        rateProviders=sp.TOption(sp.TMap(sp.TNat, sp.TOption(sp.TAddress))),
         recoveryMode=sp.TBool,
         scaling_helpers=scaling_helpers,
         token_metadata=sp.TBigMap(sp.TNat, sp.TRecord(
@@ -235,7 +235,7 @@ class WeightedPool(
                 self.data.weightedProtocolFeesLib,
                 sp.record(
                     normalizedWeights=self.data.normalizedWeights,
-                    rateProviders=self.data.rateProviders,
+                    rateProviders=self.data.rateProviders.open_some(),
                 )
             )
 
@@ -377,7 +377,7 @@ class WeightedPool(
                 self.data.weightedProtocolFeesLib,
                 sp.record(
                     normalizedWeights=self.data.normalizedWeights,
-                    rateProviders=self.data.rateProviders,
+                    rateProviders=self.data.rateProviders.open_some(),
                 )
             )
 
