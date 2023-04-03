@@ -96,7 +96,7 @@ def test():
         7: sp.nat(18),
     })
 
-    rateProviders = sp.map({
+    rateProviders = sp.some(sp.map({
         0: sp.none,
         1: sp.some(rp.address),
         2: sp.none,
@@ -105,7 +105,7 @@ def test():
         5: sp.none,
         6: sp.none,
         7: sp.none,
-    })
+    }))
 
     p.initialize(
         sp.record(
