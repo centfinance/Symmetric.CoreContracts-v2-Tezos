@@ -16,18 +16,10 @@ from contracts.vault.PoolRegistry import PoolRegistry
 
 
 class Types:
-    # TOKEN = sp.TRecord(
-    #     address=sp.TAddress,
-    #     id=sp.TNat,
-    #     FA2=sp.TBool,
-    # )
+
     TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
     BALANCE = sp.TPair(sp.TNat, sp.TNat)
-    # BALANCE = sp.TRecord(
-    #     cash=sp.TNat,
-    #     managed=sp.TNat,
-    #     lastChangeBlock=sp.TNat,
-    # )
+
     REGISTER_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TPair(sp.TAddress, sp.TNat),
         tokens=sp.TMap(sp.TNat, TOKEN),

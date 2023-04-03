@@ -15,11 +15,6 @@ import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
 
 class Types:
-    # TOKEN = sp.TRecord(
-    #     address=sp.TAddress,
-    #     id=sp.TNat,
-    #     FA2=sp.TBool,
-    # )
     TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
     t_joinPool_request = sp.TRecord(
@@ -199,12 +194,6 @@ class PoolBalances(
             # with sp.if_(self._isXTZ(asset)):
             #     wrappedXtz = wrappedXtz.add(amountIn)
 
-            # updated_balance = sp.record(
-            #     cash=(balances[x].cash + amountIn),
-            #     managed=balances[x].managed,
-            #     lastChangeBlock=balances[x].lastChangeBlock,
-            # )
-
             joinBalances[x] = (
                 (sp.fst(balances[x]) + amountIn), sp.snd(balances[x]))
 
@@ -228,11 +217,6 @@ class PoolBalances(
 
             asset = change.assets[x]
             AssetTransfersHandler._sendAsset(asset, amountOut, recipient)
-            # updated_balance=sp.record(
-            #     cash = sp.as_nat(balances[x].cash - amountOut),
-            #     managed = balances[x].managed,
-            #     lastChangeBlock = balances[x].lastChangeBlock,
-            # )
 
             exitBalances[x] = (
                 (sp.as_nat(sp.fst(balances[x]) - amountOut)), sp.snd(balances[x]))

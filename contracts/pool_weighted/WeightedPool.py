@@ -31,12 +31,6 @@ class IWeightedPool:
 
 class Types:
 
-    # TOKEN = sp.TRecord(
-    #     address=sp.TAddress,
-    #     id=sp.TNat,
-    #     FA2=sp.TBool,
-    # )
-
     TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
     FEE_CACHE = sp.TPair(sp.TNat, sp.TNat)
 

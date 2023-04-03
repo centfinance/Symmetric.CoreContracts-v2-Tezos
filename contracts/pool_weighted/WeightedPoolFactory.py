@@ -24,19 +24,9 @@ import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 #         owner=sp.TAddress
 #     )
 
-# TOKEN = sp.TRecord(
-#     address=sp.TAddress,
-#     id=sp.TNat,
-#     FA2=sp.TBool,
-# )
+
 TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
-
-# FEE_CACHE = sp.TRecord(
-#     swapFee=sp.TNat,
-#     yieldFee=sp.TNat,
-#     aumFee=sp.TNat,
-# )
 FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
 
 

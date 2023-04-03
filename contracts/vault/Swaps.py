@@ -10,11 +10,6 @@ from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
 
 
 class ISwaps:
-    # TOKEN = sp.TRecord(
-    #     address=sp.TAddress,
-    #     id=sp.TNat,
-    #     FA2=sp.TBool,
-    # )
     TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
     SINGLE_SWAP = sp.TRecord(
