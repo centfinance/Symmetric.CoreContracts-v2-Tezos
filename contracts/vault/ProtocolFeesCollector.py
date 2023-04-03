@@ -8,11 +8,8 @@ from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
 
 MAX_PROTOCOL_SWAP_FEE_PERCENTAGE = 500000000000000000  # 50%
 MAX_PROTOCOL_FLASH_LOAN_FEE_PERCENTAGE = 10000000000000000  # 1%
-TOKEN = sp.TRecord(
-    address=sp.TAddress,
-    id=sp.TNat,
-    FA2=sp.TBool,
-)
+
+TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
 
 class ProtocolFeesCollector(
@@ -52,9 +49,8 @@ class ProtocolFeesCollector(
                 sp.self_address,
                 recipient,
                 amount,
-                token.address,
-                token.id,
-                token.FA2,
+                sp.fst(token),
+                sp.snd(token),
             )
 
     @sp.entry_point

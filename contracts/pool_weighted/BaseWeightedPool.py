@@ -10,11 +10,8 @@ from contracts.pool_utils.BaseMinimalSwapInfoPool import BaseMinimalSwapInfoPool
 
 from contracts.pool_utils.lib.BasePoolMath import BasePoolMath
 
-TOKEN = sp.TRecord(
-    address=sp.TAddress,
-    id=sp.TNat,
-    FA2=sp.TBool,
-)
+# ///
+TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
 
 class BaseWeightedPool(
@@ -36,17 +33,13 @@ class BaseWeightedPool(
         )
 
     def _getInvariant(self):
-        t = sp.compute(sp.view('getPoolTokens', self.data.vault, self.data.poolId.open_some(), t=sp.TTuple(
+        p = sp.compute(sp.view('getPoolTokens', self.data.vault, self.data.poolId.open_some(), t=sp.TPair(
             sp.TMap(sp.TNat, TOKEN),
             sp.TMap(sp.TNat, sp.TNat),
-            sp.TNat
         )).open_some('Invalid View'))
 
-        (tokens, balances, lastChangeBlock) = sp.match_tuple(
-            t, 'tokens', 'balances', 'lastChangeBlock')
-
         upscaledBalances = sp.compute(self.data.scaling_helpers['scale']((
-            balances, self.data.scalingFactors, self.data.fixedPoint['mulDown'])))
+            sp.snd(p), self.data.scalingFactors, self.data.fixedPoint['mulDown'])))
 
         invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
             normalizedWeights=self.data.normalizedWeights,
@@ -132,32 +125,7 @@ class BaseWeightedPool(
         return (sptAmountOut, amountsIn, invariantAfterJoin)
 
     def _afterInitializePool(self, invariant):
-        # kind = params.userData.kind
-        # # TODO: Use an enum
-        # sp.verify(kind == 'INIT', Errors.UNINITIALIZED)
 
-        # amountsIn = params.userData.amountsIn.open_some()
-
-        # length = sp.len(amountsIn)
-        # sp.verify(length == sp.len(params.scalingFactors))
-
-        # upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-        #     amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])))
-
-        # invariantAfterJoin = sp.compute(IExternalWeightedMath.calculateInvariant(
-        #     self.data.weightedMathLib,
-        #     sp.record(
-        #         normalizedWeights=self.data.normalizedWeights,
-        #         balances=upscaledAmounts,
-        #     )))
-
-        # # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
-        # # consistent in Pools with similar compositions but different number of tokens.
-        # # sptAmountOut = Math.mul(invariantAfterJoin, amountsIn.length)
-        # sptAmountOut = invariantAfterJoin * length
-
-        # Initialization is still a join, so we need to do post-join work. Since we are not paying protocol fees,
-        # and all we need to do is update the invariant, call `_updatePostJoinExit` here instead of `_afterJoinExit`.
         self.data.entries['postJoinExitInvariant'] = invariant
 
         # return (sptAmountOut, amountsIn)
@@ -184,15 +152,6 @@ class BaseWeightedPool(
         preJoinExitSupply = self._beforeOnJoinExit(
             params.invariant, weights)
 
-        # (sptAmountOut, amountsIn) = self._doJoin(
-        #     sp.record(
-        #         balances=params.balances,
-        #         normalizedWeights=weights,
-        #         scalingFactors=params.scalingFactors,
-        #         totalSupply=preJoinExitSupply,
-        #         userData=params.userData
-        #     )
-        # )
         self._afterJoinExit(
             params.invariant,
             params.balances,
@@ -201,8 +160,6 @@ class BaseWeightedPool(
             preJoinExitSupply,
             (preJoinExitSupply + params.sptAmountOut),
         )
-
-        # return (sptAmountOut, amountsIn)
 
     def _doJoin(self, params):
         doJoin = sp.local('doJoin', (0, {}))
@@ -318,15 +275,6 @@ class BaseWeightedPool(
         preJoinExitSupply = self._beforeOnJoinExit(
             params.invariant, weights)
 
-        # (sptAmountIn, amountsOut) = self._doExit(
-        #     sp.record(
-        #         balances=params.balances,
-        #         normalizedWeights=weights,
-        #         scalingFactors=params.scalingFactors,
-        #         totalSupply=preJoinExitSupply,
-        #         userData=params.userData
-        #     )
-        # )
         self._afterJoinExit(
             params.invariant,
             params.balances,
@@ -335,7 +283,6 @@ class BaseWeightedPool(
             preJoinExitSupply,
             sp.as_nat(preJoinExitSupply - params.sptAmountIn),
         )
-        # return (sptAmountIn, amountsOut)
 
     def _doExit(self, params):
         doExit = sp.local('doExit', (0, {}))
@@ -356,8 +303,8 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
-        # with sp.if_(params.userData.kind == 'SPT_IN_FOR_EXACT_TOKENS_OUT'):
-        #     doExit.value = self._exitSPTInForExactTokensOut(params)
+        with sp.if_(params.userData.kind == 'SPT_IN_FOR_EXACT_TOKENS_OUT'):
+            doExit.value = self._exitSPTInForExactTokensOut(params)
 
         # TODO: add fail if no kind matches
         return (sp.fst(doExit.value), sp.snd(doExit.value))

@@ -1,21 +1,15 @@
 import smartpy as sp
 
 
-def totalsAndLastChangeBlock(balances):
+def totals(balances):
     results = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
-    lastChangeBlock = sp.compute(sp.nat(0))
 
     with sp.for_('i', sp.range(0, sp.len(balances))) as i:
         balance = balances[i]
-        results[i] = balance.cash + balance.managed
-        lastChangeBlock = sp.max(lastChangeBlock, lastChangeBlock)
+        results[i] = sp.fst(balance) + sp.snd(balance)
 
-    return (results, lastChangeBlock)
+    return results
 
 
-def toBalance(cash, managed, lastChangeBlock):
-    return sp.record(
-        cash=cash,
-        managed=managed,
-        lastChangeBlock=lastChangeBlock,
-    )
+def toBalance(cash, managed):
+    return sp.pair(cash, managed)

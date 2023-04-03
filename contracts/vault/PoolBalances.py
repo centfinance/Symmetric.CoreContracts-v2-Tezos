@@ -15,31 +15,7 @@ import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
 
 class Types:
-    TOKEN = sp.TRecord(
-        address=sp.TAddress,
-        id=sp.TNat,
-        FA2=sp.TBool,
-    )
-
-    # t_onJoinPool_params = sp.TRecord(
-    #     poolId=sp.TBytes,
-    #     sender=sp.TAddress,
-    #     recipient=sp.TAddress,
-    #     balances=sp.TMap(sp.TNat, sp.TNat),
-    #     lastChangeBlock=sp.TNat,
-    #     protocolSwapFeePercentage=sp.TNat,
-    #     userData=t_joinUserData,
-    # )
-
-    # t_onExitPool_params = sp.TRecord(
-    #     poolId=sp.TBytes,
-    #     sender=sp.TAddress,
-    #     recipient=sp.TAddress,
-    #     balances=sp.TMap(sp.TNat, sp.TNat),
-    #     lastChangeBlock=sp.TNat,
-    #     protocolSwapFeePercentage=sp.TNat,
-    #     userData=t_exitUserData,
-    # )
+    TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
     t_joinPool_request = sp.TRecord(
         userData=IBasePool.JOIN_USER_DATA,
@@ -49,7 +25,7 @@ class Types:
     )
 
     t_joinPool_params = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         sender=sp.TAddress,
         recipient=sp.TAddress,
         request=t_joinPool_request
@@ -63,7 +39,7 @@ class Types:
     )
 
     t_exitPool_params = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         sender=sp.TAddress,
         recipient=sp.TAddress,
         request=t_exitPool_request
@@ -91,9 +67,8 @@ class PoolBalances(
                 limits=request.limits,
             ))
 
-        (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
-            balances)
-        pool = self._getPoolAddress(poolId)
+        totalBalances = BalanceAllocation.totals(balances)
+        pool = sp.fst(poolId)
 
         # Call BasePool view to get amounts
         t = sp.compute(sp.view('beforeJoinPool', pool,
@@ -151,10 +126,9 @@ class PoolBalances(
                 limits=request.limits,
             ))
 
-        (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
-            balances)
+        totalBalances = BalanceAllocation.totals(balances)
 
-        pool = self._getPoolAddress(poolId)
+        pool = sp.fst(poolId)
 
         # Call BasePool view to get amounts
         t = sp.compute(sp.view('beforeExitPool', pool,
@@ -207,30 +181,21 @@ class PoolBalances(
     ):
        #  wrappedXtz = sp.compute(0)
 
-        joinBalances = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TRecord(
-            cash=sp.TNat,
-            managed=sp.TNat,
-            lastChangeBlock=sp.TNat,
-        )))
+        joinBalances = sp.compute(
+            sp.map(l={}, tkey=sp.TNat, tvalue=sp.TPair(sp.TNat, sp.TNat)))
         with sp.for_('x', sp.range(0, sp.len(change.assets))) as x:
             amountIn = amountsIn[x]
             sp.verify(amountIn <= change.limits[x], Errors.JOIN_ABOVE_MAX)
 
             # Receive assets from the sender - possibly from Internal Balance.
             asset = change.assets[x]
-            AssetTransfersHandler._receiveAsset(asset, amountIn, sender,
-                                                change.useInternalBalance)
+            AssetTransfersHandler._receiveAsset(asset, amountIn, sender)
             # TODO: Handle Native Tez
             # with sp.if_(self._isXTZ(asset)):
             #     wrappedXtz = wrappedXtz.add(amountIn)
 
-            updated_balance = sp.record(
-                cash=(balances[x].cash + amountIn),
-                managed=balances[x].managed,
-                lastChangeBlock=balances[x].lastChangeBlock,
-            )
-
-            joinBalances[x] = updated_balance
+            joinBalances[x] = (
+                (sp.fst(balances[x]) + amountIn), sp.snd(balances[x]))
 
         # TODO: Handle Native Tez
         # self._handleRemainingXtz(wrappedXtz)
@@ -244,29 +209,21 @@ class PoolBalances(
         balances,
         amountsOut,
     ):
-        exitBalances = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TRecord(
-            cash=sp.TNat,
-            managed=sp.TNat,
-            lastChangeBlock=sp.TNat,
-        )))
+        exitBalances = sp.compute(
+            sp.map(l={}, tkey=sp.TNat, tvalue=sp.TPair(sp.TNat, sp.TNat)))
         with sp.for_('x', sp.range(0, sp.len(change.assets))) as x:
             amountOut = amountsOut[x]
             sp.verify(amountOut <= change.limits[x], Errors.EXIT_BELOW_MIN)
 
             asset = change.assets[x]
-            AssetTransfersHandler._sendAsset(asset, amountOut, recipient,
-                                             change.useInternalBalance)
-            updated_balance = sp.record(
-                cash=sp.as_nat(balances[x].cash - amountOut),
-                managed=balances[x].managed,
-                lastChangeBlock=balances[x].lastChangeBlock,
-            )
+            AssetTransfersHandler._sendAsset(asset, amountOut, recipient)
 
-            exitBalances[x] = updated_balance
+            exitBalances[x] = (
+                (sp.as_nat(sp.fst(balances[x]) - amountOut)), sp.snd(balances[x]))
 
         return exitBalances
 
-    @sp.private_lambda(with_storage='read-only', wrap_call=True)
+    @ sp.private_lambda(with_storage='read-only', wrap_call=True)
     def _validateTokensAndGetBalances(self, params):
         sp.verify(sp.len(params.expectedTokens) == sp.len(params.limits))
 
@@ -280,7 +237,7 @@ class PoolBalances(
 
         sp.result(balances)
 
-    @sp.private_lambda()
+    @ sp.private_lambda()
     def _castToInt(self, params):
         signedValues = sp.compute(sp.map({}))
         with sp.for_('i', sp.range(0, sp.len(params.amounts))) as i:

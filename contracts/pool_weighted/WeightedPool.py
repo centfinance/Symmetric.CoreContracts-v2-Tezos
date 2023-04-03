@@ -17,21 +17,23 @@ from contracts.pool_weighted.ExternalWeightedMath import IExternalWeightedMath
 from contracts.pool_weighted.ExternalWeightedProtocolFees import IExternalWeightedProtocolFees
 
 
+class IWeightedPool:
+    def initialize(pool, params):
+        initialize = sp.contract(Types.INITIALIZE_PARAMS, pool, "initialize").open_some(
+            "INTERFACE_MISMATCH")
+        sp.transfer(params, sp.tez(0), initialize)
+
+    def updateProtocolFeePercentageCache(pool):
+        update_protocol_fee_cache = sp.contract(sp.TUnit, pool, "updateProtocolFeePercentageCache").open_some(
+            "INTERFACE_MISMATCH")
+        sp.transfer(sp.unit, sp.tez(0), update_protocol_fee_cache)
+
+
 class Types:
 
-    TOKEN = sp.TRecord(
-        address=sp.TAddress,
-        id=sp.TNat,
-        FA2=sp.TBool,
-    )
+    TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
+    FEE_CACHE = sp.TPair(sp.TNat, sp.TNat)
 
-    FEE_CACHE = sp.TRecord(
-        swapFee=sp.TNat,
-        yieldFee=sp.TNat,
-        aumFee=sp.TNat,
-    )
-    # TOKEN = sp.TTuple(sp.TAddress, sp.TNat, sp.TBool)
-    # FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
     getRateFactor = sp.TLambda(
         sp.TTuple(
             sp.TNat,
@@ -65,7 +67,7 @@ class Types:
         feeCache=FEE_CACHE,
         initialized=sp.TBool,
         metadata=sp.TBigMap(sp.TString, sp.TBytes),
-        poolId=sp.TOption(sp.TBytes),
+        poolId=sp.TOption(sp.TPair(sp.TAddress, sp.TNat)),
         protocolFeesCollector=sp.TOption(sp.TAddress),
         rateProviders=sp.TMap(sp.TNat, sp.TOption(sp.TAddress)),
         recoveryMode=sp.TBool,
@@ -92,7 +94,6 @@ class Types:
         tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
         swapFeePercentage=sp.TNat,
         rateProviders=STORAGE.rateProviders,
-        feeCache=FEE_CACHE,
     )
 
 
@@ -161,8 +162,6 @@ class WeightedPool(
             weightedProtocolFeesLib=weightedProtocolFeesLib,
         )
         # self.init_type(Types.STORAGE)
-        # TODO: ProtocolFeeCache
-
         WeightedPoolProtocolFees.__init__(self)
         BaseWeightedPool.__init__(
             self,
@@ -203,21 +202,15 @@ class WeightedPool(
             self.data.scalingFactors[i] = self._computeScalingFactor(
                 params.tokenDecimals[i])
 
-        specialization = sp.local('specialization', sp.nat(1))
-        with sp.if_(numTokens == sp.nat(2)):
-            specialization.value = sp.nat(2)
-
         self._initializeProtocolFees(sp.record(
             numTokens=numTokens,
             rateProviders=params.rateProviders,
-            feeCache=params.feeCache,
         ))
 
         super().initialize.f(
             self,
             sp.record(
                 vault=self.data.vault,
-                specialization=specialization.value,
                 tokens=params.tokens,
                 assetManagers=sp.none,
                 swapFeePercentage=params.swapFeePercentage,

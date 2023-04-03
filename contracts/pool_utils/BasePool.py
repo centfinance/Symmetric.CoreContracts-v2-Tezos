@@ -41,7 +41,7 @@ class IBasePool:
     )
 
     t_after_join_pool_params = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         balances=sp.TMap(sp.TNat, sp.TNat),
         recipient=sp.TAddress,
         amountsIn=sp.TMap(sp.TNat, sp.TNat),
@@ -50,7 +50,7 @@ class IBasePool:
     )
 
     t_after_exit_pool_params = sp.TRecord(
-        poolId=sp.TBytes,
+        poolId=sp.TPair(sp.TAddress, sp.TNat),
         balances=sp.TMap(sp.TNat, sp.TNat),
         sender=sp.TAddress,
         amountsOut=sp.TMap(sp.TNat, sp.TNat),
@@ -68,6 +68,44 @@ class IBasePool:
         balances=sp.TMap(sp.TNat, sp.TNat),
         userData=EXIT_USER_DATA,
     )
+
+    def afterJoinPool(pool, params):
+        entry_point = sp.contract(
+            IBasePool.t_after_join_pool_params,
+            pool,
+            "afterJoinPool",
+        ).open_some("INTERFACE_MISMATCH")
+        sp.transfer(params, sp.tez(0), entry_point)
+
+    def afterExitPool(pool, params):
+        entry_point = sp.contract(
+            IBasePool.t_after_exit_pool_params,
+            pool,
+            "afterExitPool",
+        ).open_some("INTERFACE_MISMATCH")
+        sp.transfer(params, sp.tez(0), entry_point)
+
+    def beforeJoinPool(pool, params):
+        view_result = sp.compute(
+            sp.view(
+                "beforeJoinPool",
+                pool,
+                params,
+                sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat),
+            ).open_some("Invalid view")
+        )
+        return view_result
+
+    def beforeExitPool(pool, params):
+        view_result = sp.compute(
+            sp.view(
+                "beforeExitPool",
+                pool,
+                params,
+                sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat),
+            ).open_some("Invalid view")
+        )
+        return view_result
 
 
 class BasePool(
@@ -105,7 +143,6 @@ class BasePool(
 
         poolId = PoolRegistrationLib.registerPool(
             vault=params.vault,
-            specialization=params.specialization,
             tokens=params.tokens,
             assetManagers=params.assetManagers
         )
@@ -119,7 +156,6 @@ class BasePool(
     def onlyVault(self, poolId):
         sp.verify(sp.sender == self.data.vault)
         sp.verify(poolId == self.data.poolId)
-
 
     @sp.entry_point(parameter_type=IBasePool.t_after_join_pool_params, lazify=False)
     def afterJoinPool(
@@ -161,7 +197,7 @@ class BasePool(
 
             upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
                 balances, scalingFactors, self.data.fixedPoint['mulDown'])))
-            
+
             upScaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
                 amountsIn, scalingFactors, self.data.fixedPoint['mulDown'])))
 
@@ -215,7 +251,7 @@ class BasePool(
 
             upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
                 balances, scalingFactors, self.data.fixedPoint['mulDown'])))
-            
+
             upScaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
                 amountsOut, scalingFactors, self.data.fixedPoint['mulDown'])))
 
@@ -262,7 +298,8 @@ class BasePool(
                 )
             )
         # amountsIn are amounts entering the Pool, so we round up.
-        sptAmountOut, amountsIn, invariant = sp.match_tuple(result.value, 'sptAmountOut', 'amountsIn', 'invariant')
+        sptAmountOut, amountsIn, invariant = sp.match_tuple(
+            result.value, 'sptAmountOut', 'amountsIn', 'invariant')
         downscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
             amountsIn, scalingFactors, self.data.fixedPoint['divUp'])))
 
@@ -301,12 +338,13 @@ class BasePool(
                     userData=params.userData
                 )
             )
-        sptAmountIn, amountsOut, invariant = sp.match_tuple(result.value, 'sptAmountIn', 'amountsOut', 'invariant')
+        sptAmountIn, amountsOut, invariant = sp.match_tuple(
+            result.value, 'sptAmountIn', 'amountsOut', 'invariant')
 
         downscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
             amountsOut, scalingFactors, self.data.fixedPoint['divDown'])))
 
-        sp.result((sptAmountIn, downscaledAmounts, invariant ))
+        sp.result((sptAmountIn, downscaledAmounts, invariant))
 
     # @ sp.onchain_view()
     # def getPoolId(self):

@@ -1,6 +1,6 @@
 import smartpy as sp
 
-from contracts.pool_weighted.WeightedPool import WeightedPool
+from contracts.pool_weighted.WeightedPool import WeightedPool, IWeightedPool
 
 from contracts.pool_utils.BasePoolFactory import BasePoolFactory
 
@@ -24,17 +24,10 @@ import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 #         owner=sp.TAddress
 #     )
 
-TOKEN = sp.TRecord(
-    address=sp.TAddress,
-    id=sp.TNat,
-    FA2=sp.TBool,
-)
 
-FEE_CACHE = sp.TRecord(
-    swapFee=sp.TNat,
-    yieldFee=sp.TNat,
-    aumFee=sp.TNat,
-)
+TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
+
+FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
 
 
 def getTokenValue(t):
@@ -74,12 +67,14 @@ class WeightedPoolFactory(sp.Contract):
         weightedMathLib,
         weightedProtocolFeesLib,
         protocolFeeProvider,
+        feeCache,
         metadata
     ):
         self.init(
             admin=admin,
             metadata=sp.big_map(
                 normalize_metadata(self, metadata)),
+            feeCache=feeCache,
             fixedPoint=sp.big_map({
                 "mulDown": FixedPoint.mulDown,
                 "mulUp": FixedPoint.mulUp,
@@ -118,11 +113,7 @@ class WeightedPoolFactory(sp.Contract):
                     sp.TAddress, sp.TNat), balance=sp.TNat),
             ),
             exemptFromYieldFees=False,
-            feeCache=sp.record(
-                swapFee=sp.nat(0),
-                yieldFee=sp.nat(0),
-                aumFee=sp.nat(0),
-            ),
+            feeCache=self.data.feeCache,
             initialized=sp.bool(False),
             metadata=sp.big_map({
                 "": params.metadata
@@ -157,6 +148,10 @@ class WeightedPoolFactory(sp.Contract):
             weightedProtocolFeesLib=self.data.weightedProtocolFeesLib,
         )
         self._create(self, STORAGE)
+
+        # IWeightedPool.initialize(pool, sp.record(
+        #     tokens
+        # ))
 
 
 # CONTRACT_STORAGE = sp.record(

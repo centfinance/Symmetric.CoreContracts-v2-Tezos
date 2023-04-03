@@ -17,12 +17,7 @@ class WeightedPoolProtocolFees:
             exemptFromYieldFees=True,
             rateProviders=sp.map(l={}, tkey=sp.TNat,
                                  tvalue=sp.TOption(sp.TAddress)),
-
-            feeCache=sp.record(
-                swapFee=sp.nat(0),
-                yieldFee=sp.nat(0),
-                aumFee=sp.nat(0),
-            )
+            feeCache=(sp.nat(0), sp.nat(0)),
         )
 
     def _initializeProtocolFees(self, params):
@@ -30,8 +25,6 @@ class WeightedPoolProtocolFees:
 
         self.data.exemptFromYieldFees = self._getYieldFeeExemption(
             params.rateProviders)
-
-        self.data.feeCache = params.feeCache
 
         self.data.rateProviders = params.rateProviders
 
@@ -50,8 +43,8 @@ class WeightedPoolProtocolFees:
         normalizedWeights,
         preJoinExitSupply,
     ):
-        swapFee, yieldFee = sp.match_record(sp.compute(
-            self.data.feeCache), 'swapFee', 'yieldFee')
+        swapFee, yieldFee = sp.match_pair(self.data.feeCache)
+
         entries = sp.compute(self.data.entries)
         pair = IExternalWeightedProtocolFees.getPreJoinExitProtocolFees(self.data.weightedProtocolFeesLib, sp.record(
             preJoinExitSupply=preJoinExitSupply,
@@ -75,7 +68,6 @@ class WeightedPoolProtocolFees:
         preJoinExitSupply,
         postJoinExitSupply
     ):
-        feeCache = sp.compute(self.data.feeCache)
         pair = IExternalWeightedProtocolFees.getPostJoinExitProtocolFees(self.data.weightedProtocolFeesLib, sp.record(
             preJoinExitSupply=preJoinExitSupply,
             postJoinExitSupply=postJoinExitSupply,
@@ -83,7 +75,7 @@ class WeightedPoolProtocolFees:
             preBalances=preBalances,
             balanceDeltas=balanceDeltas,
             normalizedWeights=normalizedWeights,
-            swapFee=feeCache.swapFee,
+            swapFee=sp.fst(self.data.feeCache),
         ))
 
         self.data.entries['postJoinExitInvariant'] = sp.snd(pair)
