@@ -31,19 +31,15 @@ class IWeightedPool:
 
 class Types:
 
-    TOKEN = sp.TRecord(
-        address=sp.TAddress,
-        id=sp.TNat,
-        FA2=sp.TBool,
-    )
+    # TOKEN = sp.TRecord(
+    #     address=sp.TAddress,
+    #     id=sp.TNat,
+    #     FA2=sp.TBool,
+    # )
 
-    FEE_CACHE = sp.TRecord(
-        swapFee=sp.TNat,
-        yieldFee=sp.TNat,
-        aumFee=sp.TNat,
-    )
-    # TOKEN = sp.TTuple(sp.TAddress, sp.TNat, sp.TBool)
-    # FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
+    TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
+    FEE_CACHE = sp.TPair(sp.TNat, sp.TNat)
+
     getRateFactor = sp.TLambda(
         sp.TTuple(
             sp.TNat,
@@ -104,7 +100,6 @@ class Types:
         tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
         swapFeePercentage=sp.TNat,
         rateProviders=STORAGE.rateProviders,
-        feeCache=FEE_CACHE,
     )
 
 
@@ -173,8 +168,6 @@ class WeightedPool(
             weightedProtocolFeesLib=weightedProtocolFeesLib,
         )
         # self.init_type(Types.STORAGE)
-        # TODO: ProtocolFeeCache
-
         WeightedPoolProtocolFees.__init__(self)
         BaseWeightedPool.__init__(
             self,
@@ -218,7 +211,6 @@ class WeightedPool(
         self._initializeProtocolFees(sp.record(
             numTokens=numTokens,
             rateProviders=params.rateProviders,
-            feeCache=params.feeCache,
         ))
 
         super().initialize.f(

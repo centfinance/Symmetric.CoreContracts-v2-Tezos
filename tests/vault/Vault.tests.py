@@ -64,14 +64,14 @@ def test():
     sc += rp
 
     tokens = sp.map({
-        0: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(0), FA2=False),
-        1: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(1), FA2=False),
-        2: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(2), FA2=False),
-        3: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(3), FA2=True),
-        4: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(4), FA2=False),
-        5: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(5), FA2=False),
-        6: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(6), FA2=True),
-        7: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(7), FA2=False),
+        0: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.none),
+        1: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(1))),
+        2: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(2))),
+        3: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(3))),
+        4: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(4))),
+        5: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(5))),
+        6: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(0))),
+        7: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(6))),
     })
 
     weights = sp.map({
@@ -107,12 +107,6 @@ def test():
         7: sp.none,
     })
 
-    feeCache = sp.record(
-        swapFee=sp.nat(40000000000000000),
-        yieldFee=sp.nat(40000000000000000),
-        aumFee=sp.nat(0),
-    )
-
     p.initialize(
         sp.record(
             tokens=tokens,
@@ -120,7 +114,6 @@ def test():
             tokenDecimals=decimals,
             swapFeePercentage=sp.nat(1500000000000000),
             rateProviders=rateProviders,
-            feeCache=feeCache,
         )
     )
 

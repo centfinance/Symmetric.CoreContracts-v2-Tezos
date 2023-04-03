@@ -10,11 +10,8 @@ from contracts.pool_utils.BaseMinimalSwapInfoPool import BaseMinimalSwapInfoPool
 
 from contracts.pool_utils.lib.BasePoolMath import BasePoolMath
 
-TOKEN = sp.TRecord(
-    address=sp.TAddress,
-    id=sp.TNat,
-    FA2=sp.TBool,
-)
+# ///
+TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
 
 class BaseWeightedPool(

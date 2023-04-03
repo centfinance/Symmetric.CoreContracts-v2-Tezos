@@ -10,11 +10,12 @@ from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
 
 
 class ISwaps:
-    TOKEN = sp.TRecord(
-        address=sp.TAddress,
-        id=sp.TNat,
-        FA2=sp.TBool,
-    )
+    # TOKEN = sp.TRecord(
+    #     address=sp.TAddress,
+    #     id=sp.TNat,
+    #     FA2=sp.TBool,
+    # )
+    TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
     SINGLE_SWAP = sp.TRecord(
         poolId=sp.TPair(sp.TAddress, sp.TNat),
@@ -99,14 +100,12 @@ class Swaps(PoolBalances):
             singleSwap.assetIn,
             amountIn,
             funds.sender,
-            funds.fromInternalBalance
         )
 
         AssetTransfersHandler._sendAsset(
             singleSwap.assetOut,
             amountOut,
             funds.recipient,
-            funds.toInternalBalance
         )
         # TODO: Handle remaining Tez
 
@@ -142,20 +141,20 @@ class Swaps(PoolBalances):
             with sp.if_(delta > 0):
                 toReceive = sp.as_nat(delta)
                 AssetTransfersHandler._receiveAsset(
-                    asset, toReceive, funds.sender, funds.fromInternalBalance)
+                    asset, toReceive, funds.sender)
                 # TODO: Handle remaining Tez
                 # if (_isETH(asset)) {
                 #     wrappedEth = wrappedEth.add(toReceive);
             with sp.if_(delta < 0):
                 toSend = abs(delta)
-                AssetTransfersHandler._sendAsset(asset, toSend, funds.recipient,
-                                                 funds.toInternalBalance)
+                AssetTransfersHandler._sendAsset(
+                    asset, toSend, funds.recipient)
 
     def _swapWithPools(self, params):
         assetDeltas = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TInt))
 
         previousTokenCalculated = sp.local(
-            'previousTokenCalculated', sp.record(address=sp.address('tz1burnburnburnburnburnburnburjAYjjX'), id=sp.nat(0), FA2=False))
+            'previousTokenCalculated', (sp.address('tz1burnburnburnburnburnburnburjAYjjX'), sp.none))
         previousAmountCalculated = sp.local(
             'previousAmountCalculated', sp.nat(0))
 
@@ -175,6 +174,7 @@ class Swaps(PoolBalances):
                 sp.verify(i > 0, Errors.UNKNOWN_AMOUNT_IN_FIRST_SWAP)
                 usingPreviousToken = (previousTokenCalculated.value == sp.compute(
                     sp.eif(params.kind == 'GIVEN_IN', tokenIn, tokenOut)))
+
                 sp.verify(usingPreviousToken,
                           Errors.MALCONSTRUCTED_MULTIHOP_SWAP)
                 amount.value = previousAmountCalculated.value
@@ -219,10 +219,10 @@ class Swaps(PoolBalances):
 
         sp.emit(sp.record(
             poolId=request.poolId,
-            tokenIn=(request.tokenIn.address,
-                     request.tokenIn.id),
-            tokenOut=(request.tokenOut.address,
-                      request.tokenOut.id),
+            tokenIn=(sp.fst(request.tokenIn),
+                     sp.snd(request.tokenIn)),
+            tokenOut=(sp.fst(request.tokenOut),
+                      sp.snd(request.tokenOut)),
             amountIn=amountsIn,
             amountOut=amountsOut
         ), tag='Swap', with_type=True)

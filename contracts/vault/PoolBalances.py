@@ -15,11 +15,12 @@ import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
 
 class Types:
-    TOKEN = sp.TRecord(
-        address=sp.TAddress,
-        id=sp.TNat,
-        FA2=sp.TBool,
-    )
+    # TOKEN = sp.TRecord(
+    #     address=sp.TAddress,
+    #     id=sp.TNat,
+    #     FA2=sp.TBool,
+    # )
+    TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
     t_joinPool_request = sp.TRecord(
         userData=IBasePool.JOIN_USER_DATA,
@@ -198,8 +199,7 @@ class PoolBalances(
 
             # Receive assets from the sender - possibly from Internal Balance.
             asset = change.assets[x]
-            AssetTransfersHandler._receiveAsset(asset, amountIn, sender,
-                                                change.useInternalBalance)
+            AssetTransfersHandler._receiveAsset(asset, amountIn, sender)
             # TODO: Handle Native Tez
             # with sp.if_(self._isXTZ(asset)):
             #     wrappedXtz = wrappedXtz.add(amountIn)
@@ -234,8 +234,7 @@ class PoolBalances(
             sp.verify(amountOut <= change.limits[x], Errors.EXIT_BELOW_MIN)
 
             asset = change.assets[x]
-            AssetTransfersHandler._sendAsset(asset, amountOut, recipient,
-                                             change.useInternalBalance)
+            AssetTransfersHandler._sendAsset(asset, amountOut, recipient)
             updated_balance = sp.record(
                 cash=sp.as_nat(balances[x].cash - amountOut),
                 managed=balances[x].managed,

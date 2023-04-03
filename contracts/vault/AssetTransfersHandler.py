@@ -62,7 +62,7 @@ class AssetTransfersHandler:
 
         sp.transfer(TransferParam, sp.mutez(0), transferHandle)
 
-    def TransferToken(sender, receiver, amount, tokenAddress, id, faTwoFlag):
+    def TransferToken(sender, receiver, amount, tokenAddress, id):
         """Generic function to transfer any type of tokens
 
         Args:
@@ -76,34 +76,32 @@ class AssetTransfersHandler:
 
         sp.verify(amount > 0, "Zero_Transfer")
 
-        with sp.if_(faTwoFlag):
+        with sp.if_(id != sp.none):
 
             AssetTransfersHandler.TransferFATwoTokens(
-                sender, receiver, amount, tokenAddress, id)
+                sender, receiver, amount, tokenAddress, id.open_some())
 
         with sp.else_():
 
             AssetTransfersHandler.TransferFATokens(
                 sender, receiver, amount, tokenAddress)
 
-    def _receiveAsset(asset, amount, sender, fromInternalBalance):
+    def _receiveAsset(asset, amount, sender):
         AssetTransfersHandler.TransferToken(
             sender,
             sp.self_address,
             amount,
-            asset.address,
-            asset.id,
-            asset.FA2
+            sp.fst(asset),
+            sp.snd(asset),
         )
 
-    def _sendAsset(asset, amount, recipient, toInternalBalance):
+    def _sendAsset(asset, amount, recipient):
         AssetTransfersHandler.TransferToken(
             sp.self_address,
             recipient,
             amount,
-            asset.address,
-            asset.id,
-            asset.FA2
+            sp.fst(asset),
+            sp.snd(asset),
         )
 
     def _handleRemainingTez(amountUsed):
