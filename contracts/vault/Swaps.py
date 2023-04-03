@@ -248,13 +248,10 @@ class Swaps(PoolBalances):
         return amountCalculated
 
     def _callMinimalSwapInfoPoolOnSwapHook(self, params):
-        tokenInTotal = (params.tokenInBalance.cash +
-                        params.tokenInBalance.managed)
-        tokenOutTotal = (params.tokenOutBalance.cash +
-                         params.tokenOutBalance.managed)
-
-        lastChangeBlock = sp.max(
-            params.tokenInBalance.lastChangeBlock, params.tokenOutBalance.lastChangeBlock)
+        tokenInTotal = (sp.fst(params.tokenInBalance) +
+                        sp.snd(params.tokenInBalance))
+        tokenOutTotal = (sp.fst(params.tokenOutBalance) +
+                         sp.snd(params.tokenOutBalance))
 
         swapParams = sp.record(
             balanceTokenIn=tokenInTotal,
@@ -270,22 +267,16 @@ class Swaps(PoolBalances):
         amountCalculated = sp.compute(sp.view('onSwap', params.pool,
                                               swapParams, t=sp.TNat).open_some("Invalid view"))
 
-        amountsIn, amountsOut = sp.match_pair(sp.compute(sp.eif(
+        amountIn, amountOut = sp.match_pair(sp.compute(sp.eif(
             params.request.kind == 'GIVEN_IN',
             (params.request.amount, amountCalculated),
             (amountCalculated, params.request.amount),
         )))
 
-        newTokenInBalance = BalanceAllocation.toBalance(
-            (params.tokenInBalance.cash + amountsIn),
-            params.tokenInBalance.managed,
-            lastChangeBlock,
-        )
+        newTokenInBalance = (
+            (sp.fst(params.tokenInBalance) + amountIn), sp.snd(params.tokenInBalance))
 
-        newTokenOutBalance = BalanceAllocation.toBalance(
-            sp.as_nat(params.tokenOutBalance.cash - amountsOut),
-            params.tokenOutBalance.managed,
-            lastChangeBlock,
-        )
+        newTokenOutBalance = (sp.as_nat(
+            sp.fst(params.tokenOutBalance) - amountOut), sp.snd(params.tokenOutBalance))
 
         return (newTokenInBalance, newTokenOutBalance, amountCalculated)

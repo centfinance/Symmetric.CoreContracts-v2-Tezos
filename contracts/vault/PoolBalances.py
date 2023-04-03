@@ -72,8 +72,7 @@ class PoolBalances(
                 limits=request.limits,
             ))
 
-        (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
-            balances)
+        totalBalances = BalanceAllocation.totals(balances)
         pool = sp.fst(poolId)
 
         # Call BasePool view to get amounts
@@ -132,8 +131,7 @@ class PoolBalances(
                 limits=request.limits,
             ))
 
-        (totalBalances,  lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
-            balances)
+        totalBalances = BalanceAllocation.totals(balances)
 
         pool = sp.fst(poolId)
 
@@ -188,11 +186,8 @@ class PoolBalances(
     ):
        #  wrappedXtz = sp.compute(0)
 
-        joinBalances = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TRecord(
-            cash=sp.TNat,
-            managed=sp.TNat,
-            lastChangeBlock=sp.TNat,
-        )))
+        joinBalances = sp.compute(
+            sp.map(l={}, tkey=sp.TNat, tvalue=sp.TPair(sp.TNat, sp.TNat)))
         with sp.for_('x', sp.range(0, sp.len(change.assets))) as x:
             amountIn = amountsIn[x]
             sp.verify(amountIn <= change.limits[x], Errors.JOIN_ABOVE_MAX)
@@ -204,13 +199,14 @@ class PoolBalances(
             # with sp.if_(self._isXTZ(asset)):
             #     wrappedXtz = wrappedXtz.add(amountIn)
 
-            updated_balance = sp.record(
-                cash=(balances[x].cash + amountIn),
-                managed=balances[x].managed,
-                lastChangeBlock=balances[x].lastChangeBlock,
-            )
+            # updated_balance = sp.record(
+            #     cash=(balances[x].cash + amountIn),
+            #     managed=balances[x].managed,
+            #     lastChangeBlock=balances[x].lastChangeBlock,
+            # )
 
-            joinBalances[x] = updated_balance
+            joinBalances[x] = (
+                (sp.fst(balances[x]) + amountIn), sp.snd(balances[x]))
 
         # TODO: Handle Native Tez
         # self._handleRemainingXtz(wrappedXtz)
@@ -224,28 +220,26 @@ class PoolBalances(
         balances,
         amountsOut,
     ):
-        exitBalances = sp.compute(sp.map(l={}, tkey=sp.TNat, tvalue=sp.TRecord(
-            cash=sp.TNat,
-            managed=sp.TNat,
-            lastChangeBlock=sp.TNat,
-        )))
+        exitBalances = sp.compute(
+            sp.map(l={}, tkey=sp.TNat, tvalue=sp.TPair(sp.TNat, sp.TNat)))
         with sp.for_('x', sp.range(0, sp.len(change.assets))) as x:
             amountOut = amountsOut[x]
             sp.verify(amountOut <= change.limits[x], Errors.EXIT_BELOW_MIN)
 
             asset = change.assets[x]
             AssetTransfersHandler._sendAsset(asset, amountOut, recipient)
-            updated_balance = sp.record(
-                cash=sp.as_nat(balances[x].cash - amountOut),
-                managed=balances[x].managed,
-                lastChangeBlock=balances[x].lastChangeBlock,
-            )
+            # updated_balance=sp.record(
+            #     cash = sp.as_nat(balances[x].cash - amountOut),
+            #     managed = balances[x].managed,
+            #     lastChangeBlock = balances[x].lastChangeBlock,
+            # )
 
-            exitBalances[x] = updated_balance
+            exitBalances[x] = (
+                (sp.as_nat(sp.fst(balances[x]) - amountOut)), sp.snd(balances[x]))
 
         return exitBalances
 
-    @sp.private_lambda(with_storage='read-only', wrap_call=True)
+    @ sp.private_lambda(with_storage='read-only', wrap_call=True)
     def _validateTokensAndGetBalances(self, params):
         sp.verify(sp.len(params.expectedTokens) == sp.len(params.limits))
 
@@ -259,7 +253,7 @@ class PoolBalances(
 
         sp.result(balances)
 
-    @sp.private_lambda()
+    @ sp.private_lambda()
     def _castToInt(self, params):
         signedValues = sp.compute(sp.map({}))
         with sp.for_('i', sp.range(0, sp.len(params.amounts))) as i:

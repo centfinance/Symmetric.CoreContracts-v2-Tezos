@@ -22,12 +22,12 @@ class Types:
     #     FA2=sp.TBool,
     # )
     TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
-
-    BALANCE = sp.TRecord(
-        cash=sp.TNat,
-        managed=sp.TNat,
-        lastChangeBlock=sp.TNat,
-    )
+    BALANCE = sp.TPair(sp.TNat, sp.TNat)
+    # BALANCE = sp.TRecord(
+    #     cash=sp.TNat,
+    #     managed=sp.TNat,
+    #     lastChangeBlock=sp.TNat,
+    # )
     REGISTER_TOKENS_PARAMS = sp.TRecord(
         poolId=sp.TPair(sp.TAddress, sp.TNat),
         tokens=sp.TMap(sp.TNat, TOKEN),
@@ -88,12 +88,10 @@ class PoolTokens(
     def getPoolTokens(self, poolId):
         sp.set_type(poolId, sp.TPair(sp.TAddress, sp.TNat))
         (tokens, rawBalances) = self._getPoolTokens(poolId)
-        (balances, lastChangeBlock) = BalanceAllocation.totalsAndLastChangeBlock(
-            rawBalances)
+        balances = BalanceAllocation.totals(rawBalances)
         sp.result((
             tokens,
             balances,
-            lastChangeBlock,
         ))
 
     def _getPoolTokens(self, poolId):
@@ -105,10 +103,9 @@ class PoolTokens(
         with sp.for_('i', sp.range(0, sp.len(poolTokens))) as i:
             token = poolTokens[i]
             tokens[i] = token
-            balances[i] = self.data.poolsBalances.get(poolId, {}).get(token, sp.record(
-                cash=sp.nat(0),
-                managed=sp.nat(0),
-                lastChangeBlock=sp.level,
+            balances[i] = self.data.poolsBalances.get(poolId, {}).get(token, sp.pair(
+                sp.nat(0),
+                sp.nat(0),
             ))
 
         return (tokens, balances)

@@ -33,17 +33,13 @@ class BaseWeightedPool(
         )
 
     def _getInvariant(self):
-        t = sp.compute(sp.view('getPoolTokens', self.data.vault, self.data.poolId.open_some(), t=sp.TTuple(
+        p = sp.compute(sp.view('getPoolTokens', self.data.vault, self.data.poolId.open_some(), t=sp.TPair(
             sp.TMap(sp.TNat, TOKEN),
             sp.TMap(sp.TNat, sp.TNat),
-            sp.TNat
         )).open_some('Invalid View'))
 
-        (tokens, balances, lastChangeBlock) = sp.match_tuple(
-            t, 'tokens', 'balances', 'lastChangeBlock')
-
         upscaledBalances = sp.compute(self.data.scaling_helpers['scale']((
-            balances, self.data.scalingFactors, self.data.fixedPoint['mulDown'])))
+            sp.snd(p), self.data.scalingFactors, self.data.fixedPoint['mulDown'])))
 
         invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
             normalizedWeights=self.data.normalizedWeights,
