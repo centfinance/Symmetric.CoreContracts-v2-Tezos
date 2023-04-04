@@ -136,7 +136,7 @@ class BasePool(
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
     @sp.entry_point(lazify=False)
-    def initialize(self,):
+    def initialize(self):
         sp.verify(self.data.initialized == False)
         # tokensAmount = sp.len(self.data.tokens)
         # sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)

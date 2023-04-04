@@ -133,11 +133,13 @@ class WeightedPoolFactory(sp.Contract):
             scalingFactors[i] = self._computeScalingFactor(
                 params.tokenDecimals[i])
 
-        rateProviders = params.rateProviders.open_some()
-        sp.verify(params.numTokens == sp.len(rateProviders))
+        exemptFromYieldFees = sp.local('exemptFromYieldFees', True)
+        with sp.if_(params.rateProviders.is_some()):
+            rateProviders = params.rateProviders.open_some()
+            sp.verify(numTokens == sp.len(rateProviders))
 
-        exemptFromYieldFees = self._getYieldFeeExemption(
-            rateProviders)
+            exemptFromYieldFees.value = self._getYieldFeeExemption(
+                rateProviders)
 
         sp.verify(params.swapFeePercentage >= MIN_SWAP_FEE_PERCENTAGE,
                   Errors.MIN_SWAP_FEE_PERCENTAGE)
@@ -154,7 +156,7 @@ class WeightedPoolFactory(sp.Contract):
                 tvalue=sp.TRecord(approvals=sp.TMap(
                     sp.TAddress, sp.TNat), balance=sp.TNat),
             ),
-            exemptFromYieldFees=exemptFromYieldFees,
+            exemptFromYieldFees=exemptFromYieldFees.value,
             feeCache=self.data.feeCache,
             initialized=sp.bool(False),
             metadata=sp.big_map({

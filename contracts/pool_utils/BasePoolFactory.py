@@ -25,5 +25,6 @@ class BasePoolFactory:
             self.data.isPoolFromFactory[pool] = sp.unit
 
             sp.emit(pool, with_type=True, tag='PoolCreated')
+            return pool
 
         self._create = _create
