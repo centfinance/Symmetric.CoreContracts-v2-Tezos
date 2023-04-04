@@ -24,5 +24,8 @@
   "dependencies": {
     "@taquito/signer": "^15.1.0",
     "@taquito/taquito": "^15.1.0"
-  }
+  },
+  "workspaces": [
+    "packages/indexer"
+  ]
 }
