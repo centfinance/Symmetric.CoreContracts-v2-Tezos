@@ -171,53 +171,53 @@ class WeightedPool(
             symbol,
         )
 
-    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=False)
-    def initialize(self, params):
+    # @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=False)
+    # def initialize(self, params):
 
-        sp.verify(self.data.initialized == False)
+    #     sp.verify(self.data.initialized == False)
 
-        numTokens = sp.len(params.tokens)
-        sp.verify((numTokens == sp.len(params.normalizedWeights))
-                  & (numTokens == sp.len(params.tokenDecimals)))
+    #     numTokens = sp.len(params.tokens)
+    #     sp.verify((numTokens == sp.len(params.normalizedWeights))
+    #               & (numTokens == sp.len(params.tokenDecimals)))
 
-        self.data.tokens = params.tokens
-        self.data.entries['totalTokens'] = numTokens
+    #     self.data.tokens = params.tokens
+    #     self.data.entries['totalTokens'] = numTokens
 
-        # // Ensure each normalized weight is above the minimum
-        normalizedSum = sp.local('normalizedSum', 0)
-        with sp.for_('i', sp.range(0, numTokens)) as i:
-            normalizedWeight = params.normalizedWeights[i]
+    #     # // Ensure each normalized weight is above the minimum
+    #     normalizedSum = sp.local('normalizedSum', 0)
+    #     with sp.for_('i', sp.range(0, numTokens)) as i:
+    #         normalizedWeight = params.normalizedWeights[i]
 
-            sp.verify(normalizedWeight >=
-                      WeightedMath._MIN_WEIGHT, Errors.MIN_WEIGHT)
-            normalizedSum.value = normalizedSum.value + normalizedWeight
+    #         sp.verify(normalizedWeight >=
+    #                   WeightedMath._MIN_WEIGHT, Errors.MIN_WEIGHT)
+    #         normalizedSum.value = normalizedSum.value + normalizedWeight
 
-        # // Ensure that the normalized weights sum to ONE
-        sp.verify(normalizedSum.value == FixedPoint.ONE,
-                  Errors.NORMALIZED_WEIGHT_INVARIANT)
+    #     # // Ensure that the normalized weights sum to ONE
+    #     sp.verify(normalizedSum.value == FixedPoint.ONE,
+    #               Errors.NORMALIZED_WEIGHT_INVARIANT)
 
-        self.data.normalizedWeights = params.normalizedWeights
+    #     self.data.normalizedWeights = params.normalizedWeights
 
-        with sp.for_('i', sp.range(0, numTokens)) as i:
-            self.data.scalingFactors[i] = self._computeScalingFactor(
-                params.tokenDecimals[i])
+    #     with sp.for_('i', sp.range(0, numTokens)) as i:
+    #         self.data.scalingFactors[i] = self._computeScalingFactor(
+    #             params.tokenDecimals[i])
 
-        self._initializeProtocolFees(sp.record(
-            numTokens=numTokens,
-            rateProviders=params.rateProviders,
-        ))
+    #     self._initializeProtocolFees(sp.record(
+    #         numTokens=numTokens,
+    #         rateProviders=params.rateProviders,
+    #     ))
 
-        super().initialize.f(
-            self,
-            sp.record(
-                vault=self.data.vault,
-                tokens=params.tokens,
-                assetManagers=sp.none,
-                swapFeePercentage=params.swapFeePercentage,
-            )
-        )
+    #     super().initialize.f(
+    #         self,
+    #         sp.record(
+    #             vault=self.data.vault,
+    #             tokens=params.tokens,
+    #             assetManagers=sp.none,
+    #             swapFeePercentage=params.swapFeePercentage,
+    #         )
+    #     )
 
-        self.data.initialized = True
+    #     self.data.initialized = True
 
     @sp.entry_point
     def updateProtocolFeePercentageCache(self):

@@ -69,6 +69,11 @@ class IBasePool:
         userData=EXIT_USER_DATA,
     )
 
+    def initialize(pool):
+        initialize = sp.contract(sp.TUnit, pool, "initialize").open_some(
+            "INTERFACE_MISMATCH")
+        sp.transfer(sp.unit, sp.tez(0), initialize)
+
     def afterJoinPool(pool, params):
         entry_point = sp.contract(
             IBasePool.t_after_join_pool_params,
@@ -131,26 +136,25 @@ class BasePool(
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
     @sp.entry_point(lazify=False)
-    def initialize(
-        self,
-        params,
-    ):
-        tokensAmount = sp.len(params.tokens)
-        sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)
-        sp.verify(tokensAmount <= self.MAX_TOKENS, Errors.MAX_TOKENS)
+    def initialize(self,):
+        sp.verify(self.data.initialized == False)
+        # tokensAmount = sp.len(self.data.tokens)
+        # sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)
+        # sp.verify(tokensAmount <= self.MAX_TOKENS, Errors.MAX_TOKENS)
 
-        self._setSwapFeePercentage(params.swapFeePercentage)
+        # self._setSwapFeePercentage(params.swapFeePercentage)
 
         poolId = PoolRegistrationLib.registerPool(
-            vault=params.vault,
-            tokens=params.tokens,
-            assetManagers=params.assetManagers
+            vault=self.data.vault,
+            tokens=self.data.tokens,
+            assetManagers=sp.none,
         )
 
         self.data.poolId = sp.some(poolId)
 
         # TODO: Add protocolFeesCollector call to vault
         # self.data.protocolFeesCollector = vault.getProtocolFeesCollector()
+        self.data.initialized = True
 
     @sp.private_lambda(with_storage='read-only')
     def onlyVault(self, poolId):
@@ -171,18 +175,9 @@ class BasePool(
         self.onlyVault(poolId)
         # ensureNotPaused
         self.onlyUnpaused()
-        # self._beforeSwapJoinExit()
 
         with sp.if_(self.data.totalSupply == 0):
-            # (sptAmountOut, amountsIn) = self._onInitializePool(
-            #     sp.record(
-            #         scalingFactors=scalingFactors,
-            #         userData=userData,
-            #     )
-            # )
-            # // On initialization, we lock _getMinimumBpt() by minting it for the zero address. This BPT acts as a
-            # // minimum as it will never be burned, which reduces potential issues with rounding, and also prevents the
-            # // Pool from ever being fully drained.
+
             self._afterInitializePool(invariant)
             sp.verify(sptAmountOut >= _DEFAULT_MINIMUM_SPT,
                       Errors.MINIMUM_SPT)
@@ -201,13 +196,6 @@ class BasePool(
             upScaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
                 amountsIn, scalingFactors, self.data.fixedPoint['mulDown'])))
 
-            # (sptAmountOut, amountsIn) = self._onJoinPool(
-            #     sp.record(
-            #         balances=upScaledBalances,
-            #         scalingFactors=scalingFactors,
-            #         userData=userData,
-            #     )
-            # )
             self._afterJoinPool(
                 sp.record(
                     invariant=invariant,
@@ -235,15 +223,7 @@ class BasePool(
         with sp.if_(recoveryModeExit):
             # TODO: Check that it's in recovery mode
             # _ensureInRecoveryMode();
-            # Note that we don't upscale balances nor downscale amountsOut - we don't care about scaling factors during
-            # a recovery mode exit.
-            # (sptAmountIn, amountsOut) = self._doRecoveryModeExit(
-            #     sp.record(
-            #         balances=balances,
-            #         totalSupply=self.data.totalSupply,
-            #         userData=userData
-            #     )
-            # )
+
             self._burnPoolTokens(sender, sptAmountIn)
 
         with sp.else_():
@@ -391,7 +371,7 @@ class BasePool(
 
         self.data.entries['swapFeePercentage'] = swapFeePercentage
 
-        # sp.emit(swapFeePercentage, 'SwapFeePercentageChanged')
+        sp.emit(swapFeePercentage, 'SwapFeePercentageChanged')
 
     def _computeScalingFactor(self, decimals):
         sp.set_type(decimals, sp.TNat)
