@@ -2,6 +2,8 @@ import smartpy as sp
 
 from contracts.pool_weighted.WeightedPool import WeightedPool
 
+from contracts.utils.mixins.Administrable import Administrable
+
 from contracts.pool_utils.BasePool import IBasePool
 
 from contracts.pool_utils.BasePoolFactory import BasePoolFactory
@@ -64,7 +66,10 @@ def normalize_metadata(self, metadata):
     return meta
 
 
-class WeightedPoolFactory(sp.Contract):
+class WeightedPoolFactory(
+    sp.Contract,
+    Administrable,
+):
 
     def __init__(
         self,
@@ -77,7 +82,6 @@ class WeightedPoolFactory(sp.Contract):
         metadata
     ):
         self.init(
-            admin=admin,
             metadata=sp.big_map(
                 normalize_metadata(self, metadata)),
             feeCache=feeCache,
@@ -93,7 +97,11 @@ class WeightedPoolFactory(sp.Contract):
             weightedMathLib=weightedMathLib,
             weightedProtocolFeesLib=weightedProtocolFeesLib,
         )
-
+        Administrable.__init__(
+            self,
+            admin,
+            False,
+        )
         BasePoolFactory.__init__(
             self,
             vault,
@@ -107,7 +115,7 @@ class WeightedPoolFactory(sp.Contract):
         """
             Deploys a new WeightedPool
         """
-        # sp.set_type(params, Types.CREATE_PARAMS)
+        self.onlyAdministrator()
         numTokens = sp.len(params.tokens)
         sp.verify(numTokens >= MIN_TOKENS, Errors.MIN_TOKENS)
         sp.verify(numTokens <= MAX_TOKENS, Errors.MAX_TOKENS)

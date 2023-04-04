@@ -163,4 +163,4 @@ def test():
         metadata=sp.utils.bytes_of_string("<ipfs://....>"),
         token_metadata=normalize_metadata(token_metadata),
     )
-    c.create(create_params)
+    c.create(create_params).run(sender=admin.address)
