@@ -132,11 +132,20 @@ class WeightedPool(
         weightedMathLib=sp.address('KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
         weightedProtocolFeesLib=sp.address(
             'KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
+        tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
+        normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
+        scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
+        swapFeePercentage=sp.nat(1500000000000000),
+        rateProviders=sp.none,
+        exemptFromYieldFees=True,
+        feeCache=(sp.nat(0), sp.nat(0)),
+        protocolFeesCollector=sp.address(
+            'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
     ):
         self.init(
-            tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
-            scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
-            normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
+            tokens=tokens,
+            scalingFactors=scalingFactors,
+            normalizedWeights=normalizedWeights,
             initialized=sp.bool(False),
             recoveryMode=sp.bool(False),
             getTokenValue=getTokenValue,
@@ -150,10 +159,10 @@ class WeightedPool(
                 "pow": FixedPoint.pow,
             }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
             entries=sp.big_map({
-                'totalTokens': sp.nat(0),
+                'totalTokens': sp.len(tokens),
                 'athRateProduct': sp.nat(0),
                 'postJoinExitInvariant': sp.nat(0),
-                'swapFeePercentage': sp.nat(0),
+                'swapFeePercentage': swapFeePercentage,
             }),
             scaling_helpers=sp.big_map({
                 "scale": ScalingHelpers.scale_amounts,
@@ -162,13 +171,19 @@ class WeightedPool(
             weightedProtocolFeesLib=weightedProtocolFeesLib,
         )
         # self.init_type(Types.STORAGE)
-        WeightedPoolProtocolFees.__init__(self)
+        WeightedPoolProtocolFees.__init__(
+            self,
+            exemptFromYieldFees,
+            rateProviders,
+            feeCache,
+        )
         BaseWeightedPool.__init__(
             self,
             owner,
             vault,
             name,
             symbol,
+            protocolFeesCollector,
         )
 
     # @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=False)

@@ -12,32 +12,37 @@ from contracts.pool_weighted.ExternalWeightedProtocolFees import IExternalWeight
 
 
 class WeightedPoolProtocolFees:
-    def __init__(self):
+    def __init__(
+        self,
+        exemptFromYieldFees=True,
+        rateProviders=sp.none,
+        feeCache=(sp.nat(0), sp.nat(0)),
+    ):
         self.update_initial_storage(
-            exemptFromYieldFees=True,
-            rateProviders=sp.set_type_expr(sp.none, sp.TOption(
+            exemptFromYieldFees=exemptFromYieldFees,
+            rateProviders=sp.set_type_expr(rateProviders, sp.TOption(
                 sp.TMap(sp.TNat, sp.TOption(sp.TAddress)))),
-            feeCache=(sp.nat(0), sp.nat(0)),
+            feeCache=feeCache,
         )
 
-    def _initializeProtocolFees(self, params):
-        with sp.if_(params.rateProviders.is_some()):
-            rateProviders = params.rateProviders.open_some()
-            sp.verify(params.numTokens == sp.len(rateProviders))
+    # def _initializeProtocolFees(self, params):
+    #     with sp.if_(params.rateProviders.is_some()):
+    #         rateProviders = params.rateProviders.open_some()
+    #         sp.verify(params.numTokens == sp.len(rateProviders))
 
-            self.data.exemptFromYieldFees = self._getYieldFeeExemption(
-                rateProviders)
+    #         self.data.exemptFromYieldFees = self._getYieldFeeExemption(
+    #             rateProviders)
 
-            self.data.rateProviders = params.rateProviders
+    #         self.data.rateProviders = params.rateProviders
 
-    def _getYieldFeeExemption(self, rateProviders):
-        exempt = sp.local('exempt', True)
+    # def _getYieldFeeExemption(self, rateProviders):
+    #     exempt = sp.local('exempt', True)
 
-        with sp.for_('i', sp.range(0, sp.len(rateProviders)))as i:
-            with sp.if_(rateProviders[i] != sp.none):
-                exempt.value = False
+    #     with sp.for_('i', sp.range(0, sp.len(rateProviders)))as i:
+    #         with sp.if_(rateProviders[i] != sp.none):
+    #             exempt.value = False
 
-        return exempt.value
+    #     return exempt.value
 
     def _getPreJoinExitProtocolFees(
         self,

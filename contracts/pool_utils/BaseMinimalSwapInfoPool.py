@@ -27,6 +27,7 @@ class BaseMinimalSwapInfoPool(BasePool):
         vault,
         name,
         symbol,
+        protocolFeesCollector,
     ):
         BasePool.__init__(
             self,
@@ -34,6 +35,7 @@ class BaseMinimalSwapInfoPool(BasePool):
             vault,
             name,
             symbol,
+            protocolFeesCollector,
         )
 
     @sp.onchain_view()

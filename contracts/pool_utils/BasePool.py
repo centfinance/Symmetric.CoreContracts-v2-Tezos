@@ -125,11 +125,12 @@ class BasePool(
         vault,
         name,
         symbol,
+        protocolFeesCollector=sp.address(
+            'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF')
     ):
         self.update_initial_storage(
             poolId=sp.none,
-            protocolFeesCollector=sp.address(
-                'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF')
+            protocolFeesCollector=protocolFeesCollector
         )
         Administrable.__init__(self, owner, False)
         Pausable.__init__(self, False, False)
