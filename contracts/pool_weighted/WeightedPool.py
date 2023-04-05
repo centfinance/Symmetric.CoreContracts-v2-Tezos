@@ -132,11 +132,20 @@ class WeightedPool(
         weightedMathLib=sp.address('KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
         weightedProtocolFeesLib=sp.address(
             'KT1SJtRC6xTfrrhx2ys1bkR3BSCrLNHrmHpy'),
+        tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
+        normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
+        scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
+        swapFeePercentage=sp.nat(1500000000000000),
+        rateProviders=sp.none,
+        exemptFromYieldFees=True,
+        feeCache=(sp.nat(0), sp.nat(0)),
+        protocolFeesCollector=sp.address(
+            'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
     ):
         self.init(
-            tokens=sp.map(l={}, tkey=sp.TNat, tvalue=Types.TOKEN),
-            scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
-            normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
+            tokens=tokens,
+            scalingFactors=scalingFactors,
+            normalizedWeights=normalizedWeights,
             initialized=sp.bool(False),
             recoveryMode=sp.bool(False),
             getTokenValue=getTokenValue,
@@ -150,10 +159,10 @@ class WeightedPool(
                 "pow": FixedPoint.pow,
             }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
             entries=sp.big_map({
-                'totalTokens': sp.nat(0),
+                'totalTokens': sp.len(tokens),
                 'athRateProduct': sp.nat(0),
                 'postJoinExitInvariant': sp.nat(0),
-                'swapFeePercentage': sp.nat(0),
+                'swapFeePercentage': swapFeePercentage,
             }),
             scaling_helpers=sp.big_map({
                 "scale": ScalingHelpers.scale_amounts,
@@ -162,62 +171,20 @@ class WeightedPool(
             weightedProtocolFeesLib=weightedProtocolFeesLib,
         )
         # self.init_type(Types.STORAGE)
-        WeightedPoolProtocolFees.__init__(self)
+        WeightedPoolProtocolFees.__init__(
+            self,
+            exemptFromYieldFees,
+            rateProviders,
+            feeCache,
+        )
         BaseWeightedPool.__init__(
             self,
             owner,
             vault,
             name,
             symbol,
+            protocolFeesCollector,
         )
-
-    @sp.entry_point(parameter_type=Types.INITIALIZE_PARAMS, lazify=False)
-    def initialize(self, params):
-
-        sp.verify(self.data.initialized == False)
-
-        numTokens = sp.len(params.tokens)
-        sp.verify((numTokens == sp.len(params.normalizedWeights))
-                  & (numTokens == sp.len(params.tokenDecimals)))
-
-        self.data.tokens = params.tokens
-        self.data.entries['totalTokens'] = numTokens
-
-        # // Ensure each normalized weight is above the minimum
-        normalizedSum = sp.local('normalizedSum', 0)
-        with sp.for_('i', sp.range(0, numTokens)) as i:
-            normalizedWeight = params.normalizedWeights[i]
-
-            sp.verify(normalizedWeight >=
-                      WeightedMath._MIN_WEIGHT, Errors.MIN_WEIGHT)
-            normalizedSum.value = normalizedSum.value + normalizedWeight
-
-        # // Ensure that the normalized weights sum to ONE
-        sp.verify(normalizedSum.value == FixedPoint.ONE,
-                  Errors.NORMALIZED_WEIGHT_INVARIANT)
-
-        self.data.normalizedWeights = params.normalizedWeights
-
-        with sp.for_('i', sp.range(0, numTokens)) as i:
-            self.data.scalingFactors[i] = self._computeScalingFactor(
-                params.tokenDecimals[i])
-
-        self._initializeProtocolFees(sp.record(
-            numTokens=numTokens,
-            rateProviders=params.rateProviders,
-        ))
-
-        super().initialize.f(
-            self,
-            sp.record(
-                vault=self.data.vault,
-                tokens=params.tokens,
-                assetManagers=sp.none,
-                swapFeePercentage=params.swapFeePercentage,
-            )
-        )
-
-        self.data.initialized = True
 
     @sp.entry_point
     def updateProtocolFeePercentageCache(self):
@@ -229,8 +196,6 @@ class WeightedPool(
     ):
         with sp.if_(self.data.exemptFromYieldFees == False):
 
-            # self.data.entries['athRateProduct'] = self._getRateProduct(
-            #     self.data.normalizedWeights)
             self.data.entries['athRateProduct'] = IExternalWeightedProtocolFees.getRateProduct(
                 self.data.weightedProtocolFeesLib,
                 sp.record(
@@ -239,35 +204,7 @@ class WeightedPool(
                 )
             )
 
-        # kind = params.userData.kind
-        # # TODO: Use an enum
-        # sp.verify(kind == 'INIT', Errors.UNINITIALIZED)
-
-        # amountsIn = params.userData.amountsIn.open_some()
-
-        # length = sp.len(amountsIn)
-        # sp.verify(length == sp.len(params.scalingFactors))
-
-        # upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-        #     amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])))
-
-        # invariantAfterJoin = sp.compute(IExternalWeightedMath.calculateInvariant(
-        #     self.data.weightedMathLib,
-        #     sp.record(
-        #         normalizedWeights=self.data.normalizedWeights,
-        #         balances=upscaledAmounts,
-        #     )))
-
-        # # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
-        # # consistent in Pools with similar compositions but different number of tokens.
-        # # sptAmountOut = Math.mul(invariantAfterJoin, amountsIn.length)
-        # sptAmountOut = invariantAfterJoin * length
-
-        # Initialization is still a join, so we need to do post-join work. Since we are not paying protocol fees,
-        # and all we need to do is update the invariant, call `_updatePostJoinExit` here instead of `_afterJoinExit`.
         self.data.entries['postJoinExitInvariant'] = invariant
-
-        # return (sptAmountOut, amountsIn)
 
     def _beforeJoinExit(
         self,
@@ -291,16 +228,10 @@ class WeightedPool(
 
     def _beforeOnJoinExit(
         self,
-        # preBalances,
         invariant,
         normalizedWeights,
     ):
         supplyBeforeFeeCollection = self.data.totalSupply
-
-        # invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
-        #     normalizedWeights=normalizedWeights,
-        #     balances=preBalances,
-        # ))
 
         pair = self._getPreJoinExitProtocolFees(
             invariant,

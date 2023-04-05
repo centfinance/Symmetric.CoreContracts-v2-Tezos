@@ -23,6 +23,7 @@ class BaseWeightedPool(
         vault,
         name,
         symbol,
+        protocolFeesCollector,
     ):
         BaseMinimalSwapInfoPool.__init__(
             self,
@@ -30,6 +31,7 @@ class BaseWeightedPool(
             vault,
             name,
             symbol,
+            protocolFeesCollector,
         )
 
     def _getInvariant(self):

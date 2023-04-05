@@ -48,21 +48,6 @@ def test():
     )
     sc += v
 
-    p = WeightedPool(
-        owner=admin.address,
-        vault=v.address,
-        name="Symm Liqudidty Pool Token",
-        symbol="SYMMLP",
-        weightedMathLib=m.address,
-        weightedProtocolFeesLib=pf.address,
-    )
-
-    sc += p
-
-    rp = MockRateProvider()
-
-    sc += rp
-
     tokens = sp.map({
         0: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.none),
         1: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(1))),
@@ -85,16 +70,20 @@ def test():
         7: sp.nat(125000000000000000),
     })
 
-    decimals = sp.map({
-        0: sp.nat(18),
-        1: sp.nat(18),
-        2: sp.nat(18),
-        3: sp.nat(18),
-        4: sp.nat(18),
-        5: sp.nat(18),
-        6: sp.nat(18),
-        7: sp.nat(18),
+    scalingFactors = sp.map({
+        0: sp.nat(1000000000000000000),
+        1: sp.nat(1000000000000000000),
+        2: sp.nat(1000000000000000000),
+        3: sp.nat(1000000000000000000),
+        4: sp.nat(1000000000000000000),
+        5: sp.nat(1000000000000000000),
+        6: sp.nat(1000000000000000000),
+        7: sp.nat(1000000000000000000),
     })
+
+    rp = MockRateProvider()
+
+    sc += rp
 
     rateProviders = sp.some(sp.map({
         0: sp.none,
@@ -107,15 +96,27 @@ def test():
         7: sp.none,
     }))
 
-    p.initialize(
-        sp.record(
-            tokens=tokens,
-            normalizedWeights=weights,
-            tokenDecimals=decimals,
-            swapFeePercentage=sp.nat(1500000000000000),
-            rateProviders=rateProviders,
-        )
+    p = WeightedPool(
+        owner=admin.address,
+        vault=v.address,
+        name="Symm Liqudidty Pool Token",
+        symbol="SYMMLP",
+        weightedMathLib=m.address,
+        weightedProtocolFeesLib=pf.address,
+        tokens=tokens,
+        normalizedWeights=weights,
+        scalingFactors=scalingFactors,
+        swapFeePercentage=sp.nat(1500000000000000),
+        rateProviders=rateProviders,
+        exemptFromYieldFees=False,
+        feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
+        protocolFeesCollector=sp.address(
+            'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
     )
+
+    sc += p
+
+    p.initialize()
 
     sender = sp.test_account('sender').address
     recipient = sender
@@ -160,8 +161,7 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(sp.address(
-                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=request,
@@ -186,8 +186,7 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(sp.address(
-                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
@@ -212,8 +211,7 @@ def test():
 
     v.exitPool(
         sp.record(
-            poolId=sp.pair(sp.address(
-                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=exitRequest,
@@ -221,8 +219,7 @@ def test():
     )
 
     singleSwap = sp.record(
-        poolId=sp.pair(sp.address(
-            'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
+        poolId=sp.pair(p.address, sp.nat(1)),
         kind='GIVEN_IN',
         assetIn=tokens[0],
         assetOut=tokens[1],
@@ -250,8 +247,7 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(sp.address(
-                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
@@ -260,29 +256,25 @@ def test():
 
     swaps = {
         0: sp.record(
-            poolId=sp.pair(sp.address(
-                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(1)),
             assetInIndex=1,
             assetOutIndex=0,
             amount=sp.nat(100000000000000000),
         ),
         1: sp.record(
-            poolId=sp.pair(sp.address(
-                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(1)),
             assetInIndex=2,
             assetOutIndex=3,
             amount=sp.nat(125700000500000000),
         ),
         2: sp.record(
-            poolId=sp.pair(sp.address(
-                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(1)),
             assetInIndex=4,
             assetOutIndex=5,
             amount=sp.nat(118300000500000000),
         ),
         3: sp.record(
-            poolId=sp.pair(sp.address(
-                'KT1Tezooo3zzSmartPyzzSTATiCzzzseJjWC'), sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(1)),
             assetInIndex=7,
             assetOutIndex=6,
             amount=sp.nat(100000000000000000),
