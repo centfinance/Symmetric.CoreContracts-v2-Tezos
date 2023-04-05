@@ -30,5 +30,6 @@ sp.add_compilation_target('local', WeightedPoolFactory(
     sp.address('KT1TSNcEvQhX5wQyThfvVXzRaCbno5bkkUPs'),
     sp.address('KT1VRdB2qWdGoj2ansGAsyDAFwVyerEAHGUg'),
     sp.address('KT1Tj18uGzc2HL3nNpFQaEPe7awMM88M3R7V'),
+    (sp.nat(400000000000000000), sp.nat(400000000000000000)),
     CONTRACT_METADATA,
 ))
