@@ -25,25 +25,6 @@ class WeightedPoolProtocolFees:
             feeCache=feeCache,
         )
 
-    # def _initializeProtocolFees(self, params):
-    #     with sp.if_(params.rateProviders.is_some()):
-    #         rateProviders = params.rateProviders.open_some()
-    #         sp.verify(params.numTokens == sp.len(rateProviders))
-
-    #         self.data.exemptFromYieldFees = self._getYieldFeeExemption(
-    #             rateProviders)
-
-    #         self.data.rateProviders = params.rateProviders
-
-    # def _getYieldFeeExemption(self, rateProviders):
-    #     exempt = sp.local('exempt', True)
-
-    #     with sp.for_('i', sp.range(0, sp.len(rateProviders)))as i:
-    #         with sp.if_(rateProviders[i] != sp.none):
-    #             exempt.value = False
-
-    #     return exempt.value
-
     def _getPreJoinExitProtocolFees(
         self,
         preJoinExitInvariant,
