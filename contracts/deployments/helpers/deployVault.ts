@@ -5,14 +5,14 @@ import { VaultCompileCode } from '../../../types/Vault.compile.code';
 import { Storage } from '../../../types/Vault.compile.types';
 import { tas } from '../../../types/type-aliases';
 
-const config = require('../../../../.taq/config.local.testing.json')
+const config = require('../../../.taq/config.local.development.json');
 
-const tezos = new TezosToolkit('<rpc_url>');
+const tezos = new TezosToolkit('http://localhost:20000');
 
-async function deployVault(adminAddress: string) {
+export async function deployVault(adminAddress: string) {
     try {
         // Replace with the private key of the account you want to deploy the contract with
-        const signer = await InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey);
+        const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
         tezos.setProvider({ signer });
 
         // Replace with the Michelson code of the Vault contract
@@ -38,7 +38,8 @@ async function deployVault(adminAddress: string) {
 
         const vaultContract = await originationOp.contract();
         console.log('Vault contract deployed at address:', vaultContract.address);
-    } catch (error) {
+        return vaultContract
+      } catch (error) {
         console.error('Error deploying Vault contract:', error);
     }
 }

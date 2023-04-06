@@ -4,13 +4,13 @@ import { ProtocolFeesCollectorCompileCode } from '../../../types/ProtocolFeesCol
 import { Storage } from '../../../types/ProtocolFeesCollector.compile.types';
 import { tas } from '../../../types/type-aliases';
 
-const config = require('../../../../.taq/config.local.testing.json')
+const config = require('../../../.taq/config.local.development.json');
 
-const tezos = new TezosToolkit(config.environments.development.rpcUrl);
+const tezos = new TezosToolkit('http://localhost:20000');
 
-async function deployProtocolFeesCollector(adminAddress: string, vaultAddress: string, flashLoanFeePercentage: number, swapFeePercentage: string) {
+export async function deployProtocolFeesCollector(adminAddress: string, vaultAddress: string, flashLoanFeePercentage: string, swapFeePercentage: string) {
     try {
-        const signer = await InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey);
+        const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
         tezos.setProvider({ signer });
 
         const protocolFeesCollectorCode = ProtocolFeesCollectorCompileCode.code;
@@ -32,14 +32,15 @@ async function deployProtocolFeesCollector(adminAddress: string, vaultAddress: s
 
         const protocolFeesCollectorContract = await originationOp.contract();
         console.log('ProtocolFeesCollector contract deployed at address:', protocolFeesCollectorContract.address);
-    } catch (error) {
+        return protocolFeesCollectorContract;
+      } catch (error) {
         console.error('Error deploying ProtocolFeesCollector contract:', error);
     }
 }
 
 const adminAddress = '<your_admin_address>';
 const vaultAddress = '<your_vault_address>';
-const flashLoanFeePercentage = 0.1;
+const flashLoanFeePercentage = '1000000000000000';
 const swapFeePercentage = '400000000000000000';
 
 deployProtocolFeesCollector(adminAddress, vaultAddress, flashLoanFeePercentage, swapFeePercentage);

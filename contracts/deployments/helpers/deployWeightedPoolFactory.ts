@@ -5,9 +5,11 @@ import { WeightedPoolFactoryCompileCode } from '../../../types/WeightedPoolFacto
 import { Storage } from '../../../types/WeightedPoolFactory.compile.types';
 import { tas } from '../../../types/type-aliases';
 
-const tezos = new TezosToolkit('<rpc_url>');
+const config = require('../../../.taq/config.local.development.json');
 
-async function deployWeightedPoolFactory(
+const tezos = new TezosToolkit('http://localhost:20000');
+
+export async function deployWeightedPoolFactory(
     adminAddress: string,
     protocolFeeProviderAddress: string,
     vaultAddress: string,
@@ -16,7 +18,7 @@ async function deployWeightedPoolFactory(
 ) {
     try {
         // Replace with the private key of the account you want to deploy the contract with
-        const signer = await InMemorySigner.fromSecretKey('<your_private_key>');
+        const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
         tezos.setProvider({ signer });
 
         // Replace with the Michelson code of the WeightedPoolFactory contract
