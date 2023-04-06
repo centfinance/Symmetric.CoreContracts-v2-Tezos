@@ -6,11 +6,7 @@ from contracts.pool_utils.BasePool import BasePool
 
 
 class Types:
-    TOKEN = sp.TRecord(
-        address=sp.TAddress,
-        id=sp.TNat,
-        FA2=sp.TBool,
-    )
+    TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
     t_onSwap_params = sp.TRecord(
         balanceTokenIn=sp.TNat,
@@ -27,15 +23,19 @@ class Types:
 class BaseMinimalSwapInfoPool(BasePool):
     def __init__(
         self,
+        owner,
         vault,
         name,
         symbol,
+        protocolFeesCollector,
     ):
         BasePool.__init__(
             self,
+            owner,
             vault,
             name,
             symbol,
+            protocolFeesCollector,
         )
 
     @sp.onchain_view()
@@ -44,6 +44,7 @@ class BaseMinimalSwapInfoPool(BasePool):
         params
     ):
         sp.set_type(params, Types.t_onSwap_params)
+        self.onlyUnpaused()
         # TODO: Check it's not paused
         scalingFactorTokenIn = sp.compute(self.data.getTokenValue((
             params.request.tokenIn,

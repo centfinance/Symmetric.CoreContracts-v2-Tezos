@@ -8,6 +8,8 @@ from contracts.pool_weighted.WeightedPoolFactory import WeightedPoolFactory
 
 from contracts.pool_weighted.ExternalWeightedMath import ExternalWeightedMath
 
+from contracts.pool_weighted.ExternalWeightedProtocolFees import ExternalWeightedProtocolFees
+
 
 def normalize_metadata(metadata):
     meta = {}
@@ -16,78 +18,105 @@ def normalize_metadata(metadata):
 
     return meta
 
+
 class MockRateProvider(sp.Contract):
     def __init__(self):
-      sp.Contract.__init__(self)
+        sp.Contract.__init__(self)
 
     @sp.onchain_view()
     def getRate(self):
-      sp.result(sp.nat(1100000000000000000))
+        sp.result(sp.nat(1100000000000000000))
+
 
 @sp.add_test(name="VaultIntegrationTest_1", profile=True)
 def test():
     sc = sp.test_scenario()
+    admin = sp.test_account('Admin')
 
     m = ExternalWeightedMath()
     sc += m
+
+    pf = ExternalWeightedProtocolFees()
+    sc += pf
 
     CONTRACT_METADATA = {
         "": "ipfs://QmbEE3NYTuhE2Vk8sQap4kkKyFQ2P1X6GDRCufxDCpBkLa",
     }
     v = Vault(
+        admin.address,
         CONTRACT_METADATA,
     )
     sc += v
 
-    p = WeightedPool(
-        vault=v.address,
-        name="Symm Liqudidty Pool Token",
-        symbol="SYMMLP",
-        weightedMathLib=m.address,
-    )
+    tokens = sp.map({
+        0: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.none),
+        1: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(1))),
+        2: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(2))),
+        3: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(3))),
+        4: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(4))),
+        5: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(5))),
+        6: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(0))),
+        7: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(6))),
+    })
 
-    sc += p
+    weights = sp.map({
+        0: sp.nat(125000000000000000),
+        1: sp.nat(125000000000000000),
+        2: sp.nat(125000000000000000),
+        3: sp.nat(125000000000000000),
+        4: sp.nat(125000000000000000),
+        5: sp.nat(125000000000000000),
+        6: sp.nat(125000000000000000),
+        7: sp.nat(125000000000000000),
+    })
+
+    scalingFactors = sp.map({
+        0: sp.nat(1000000000000000000),
+        1: sp.nat(1000000000000000000),
+        2: sp.nat(1000000000000000000),
+        3: sp.nat(1000000000000000000),
+        4: sp.nat(1000000000000000000),
+        5: sp.nat(1000000000000000000),
+        6: sp.nat(1000000000000000000),
+        7: sp.nat(1000000000000000000),
+    })
 
     rp = MockRateProvider()
 
     sc += rp
 
-    tokens = sp.map({
-        0: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(0), FA2=False),
-        1: sp.record(address=sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), id=sp.nat(1), FA2=False),
-    })
-
-    weights = sp.map({
-        0: sp.nat(500000000000000000),
-        1: sp.nat(500000000000000000),
-    })
-
-    decimals = sp.map({
-        0: sp.nat(18),
-        1: sp.nat(18),
-    })
-
-    rateProviders = sp.map({
+    rateProviders = sp.some(sp.map({
         0: sp.none,
         1: sp.some(rp.address),
-    })
+        2: sp.none,
+        3: sp.none,
+        4: sp.none,
+        5: sp.none,
+        6: sp.none,
+        7: sp.none,
+    }))
 
-    feeCache=sp.record(
-        swapFee=sp.nat(40000000000000000),
-        yieldFee=sp.nat(40000000000000000),
-        aumFee=sp.nat(0),
+    p = WeightedPool(
+        owner=admin.address,
+        vault=v.address,
+        name="Symm Liqudidty Pool Token",
+        symbol="SYMMLP",
+        weightedMathLib=m.address,
+        weightedProtocolFeesLib=pf.address,
+        tokens=tokens,
+        normalizedWeights=weights,
+        scalingFactors=scalingFactors,
+        swapFeePercentage=sp.nat(1500000000000000),
+        rateProviders=rateProviders,
+        exemptFromYieldFees=False,
+        feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
+        protocolFeesCollector=sp.address(
+            'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
     )
 
-    p.initialize(
-        sp.record(
-            tokens=tokens,
-            normalizedWeights=weights,
-            tokenDecimals=decimals,
-            swapFeePercentage=sp.nat(1500000000000000),
-            rateProviders=rateProviders,
-            feeCache=feeCache,
-        )
-    )
+    sc += p
+
+    p.initialize()
 
     sender = sp.test_account('sender').address
     recipient = sender
@@ -95,9 +124,14 @@ def test():
     amountsIn = {
         0: sp.nat(1000000000000000000),
         1: sp.nat(1000000000000000000),
+        2: sp.nat(1000000000000000000),
+        3: sp.nat(1000000000000000000),
+        4: sp.nat(1000000000000000000),
+        5: sp.nat(1000000000000000000),
+        6: sp.nat(1000000000000000000),
+        7: sp.nat(1000000000000000000),
     }
-    1000000999999
-    1000000000000000000
+
     userData = sp.record(
         kind='INIT',
         amountsIn=sp.some(amountsIn),
@@ -110,6 +144,12 @@ def test():
     limits = {
         0: 100000000000000000000,
         1: 100000000000000000000,
+        2: 100000000000000000000,
+        3: 100000000000000000000,
+        4: 100000000000000000000,
+        5: 100000000000000000000,
+        6: 100000000000000000000,
+        7: 100000000000000000000,
     }
 
     request = sp.record(
@@ -121,8 +161,7 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+            poolId=sp.pair(p.address, sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=request,
@@ -147,8 +186,7 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+            poolId=sp.pair(p.address, sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
@@ -173,8 +211,7 @@ def test():
 
     v.exitPool(
         sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+            poolId=sp.pair(p.address, sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=exitRequest,
@@ -182,8 +219,7 @@ def test():
     )
 
     singleSwap = sp.record(
-        poolId=sp.bytes(
-            '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+        poolId=sp.pair(p.address, sp.nat(1)),
         kind='GIVEN_IN',
         assetIn=tokens[0],
         assetOut=tokens[1],
@@ -211,10 +247,56 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.bytes(
-                '0x050707000107070a0000001601d1371b91c60c441cf7678f644fb63e2a78b0e951000002'),
+            poolId=sp.pair(p.address, sp.nat(1)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
         )
     )
+
+    swaps = {
+        0: sp.record(
+            poolId=sp.pair(p.address, sp.nat(1)),
+            assetInIndex=1,
+            assetOutIndex=0,
+            amount=sp.nat(100000000000000000),
+        ),
+        1: sp.record(
+            poolId=sp.pair(p.address, sp.nat(1)),
+            assetInIndex=2,
+            assetOutIndex=3,
+            amount=sp.nat(125700000500000000),
+        ),
+        2: sp.record(
+            poolId=sp.pair(p.address, sp.nat(1)),
+            assetInIndex=4,
+            assetOutIndex=5,
+            amount=sp.nat(118300000500000000),
+        ),
+        3: sp.record(
+            poolId=sp.pair(p.address, sp.nat(1)),
+            assetInIndex=7,
+            assetOutIndex=6,
+            amount=sp.nat(100000000000000000),
+        ),
+    }
+
+    swapLimits = {
+        0: 10000000000000000000000,
+        1: 10000000000000000000000,
+        2: 10000000000000000000000,
+        3: 10000000000000000000000,
+        4: 10000000000000000000000,
+        5: 10000000000000000000000,
+        6: 10000000000000000000000,
+        7: 10000000000000000000000,
+    }
+
+    v.batchSwap(sp.record(
+        kind='GIVEN_IN',
+        swaps=swaps,
+        assets=tokens,
+        funds=funds,
+        limits=swapLimits,
+        deadline=sp.timestamp(1),
+    ))

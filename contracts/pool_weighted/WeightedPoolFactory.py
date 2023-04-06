@@ -2,11 +2,17 @@ import smartpy as sp
 
 from contracts.pool_weighted.WeightedPool import WeightedPool
 
+from contracts.utils.mixins.Administrable import Administrable
+
+from contracts.pool_utils.BasePool import IBasePool
+
 from contracts.pool_utils.BasePoolFactory import BasePoolFactory
 
 import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.utils.math.FixedPoint as FixedPoint
+
+import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
 # class Types:
 
@@ -21,18 +27,15 @@ import contracts.utils.math.FixedPoint as FixedPoint
 #         swapFeePercentage=sp.TNat,
 #         owner=sp.TAddress
 #     )
+MIN_TOKENS = 2
+MAX_TOKENS = 8
+MIN_SWAP_FEE_PERCENTAGE = 1000000000000
+MAX_SWAP_FEE_PERCENTAGE = 100000000000000000
+MIN_WEIGHT = 10000000000000000  # 0.01e18
 
-TOKEN = sp.TRecord(
-    address=sp.TAddress,
-    id=sp.TNat,
-    FA2=sp.TBool,
-)
+TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
-FEE_CACHE = sp.TRecord(
-    swapFee=sp.TNat,
-    yieldFee=sp.TNat,
-    aumFee=sp.TNat,
-)
+FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
 
 
 def getTokenValue(t):
@@ -63,18 +66,25 @@ def normalize_metadata(self, metadata):
     return meta
 
 
-class WeightedPoolFactory(sp.Contract):
+class WeightedPoolFactory(
+    sp.Contract,
+    Administrable,
+):
 
     def __init__(
         self,
+        admin,
         vault,
         weightedMathLib,
+        weightedProtocolFeesLib,
         protocolFeeProvider,
+        feeCache,
         metadata
     ):
         self.init(
             metadata=sp.big_map(
                 normalize_metadata(self, metadata)),
+            feeCache=feeCache,
             fixedPoint=sp.big_map({
                 "mulDown": FixedPoint.mulDown,
                 "mulUp": FixedPoint.mulUp,
@@ -85,17 +95,13 @@ class WeightedPoolFactory(sp.Contract):
                 "pow": FixedPoint.pow,
             }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
             weightedMathLib=weightedMathLib,
+            weightedProtocolFeesLib=weightedProtocolFeesLib,
         )
-
-        # self.init_type(
-        #     sp.TRecord(
-        #         vault=sp.TAddress,
-        #         protocolFeeProvider=sp.TAddress,
-        #         isPoolFromFactory=sp.TBigMap(sp.TAddress, sp.TUnit),
-        #         weightedMathLib=sp.TAddress,
-        #     )
-        # )
-
+        Administrable.__init__(
+            self,
+            admin,
+            False,
+        )
         BasePoolFactory.__init__(
             self,
             vault,
@@ -109,29 +115,66 @@ class WeightedPoolFactory(sp.Contract):
         """
             Deploys a new WeightedPool
         """
-        # sp.set_type(params, Types.CREATE_PARAMS)
+        self.onlyAdministrator()
+        numTokens = sp.len(params.tokens)
+        sp.verify(numTokens >= MIN_TOKENS, Errors.MIN_TOKENS)
+        sp.verify(numTokens <= MAX_TOKENS, Errors.MAX_TOKENS)
+        sp.verify((numTokens == sp.len(params.normalizedWeights))
+                  & (numTokens == sp.len(params.tokenDecimals)))
+
+        # // Ensure each normalized weight is above the minimum
+        normalizedSum = sp.local('normalizedSum', 0)
+        with sp.for_('i', sp.range(0, numTokens)) as i:
+            normalizedWeight = params.normalizedWeights[i]
+
+            sp.verify(normalizedWeight >=
+                      MIN_WEIGHT, Errors.MIN_WEIGHT)
+            normalizedSum.value = normalizedSum.value + normalizedWeight
+
+        # // Ensure that the normalized weights sum to ONE
+        sp.verify(normalizedSum.value == FixedPoint.ONE,
+                  Errors.NORMALIZED_WEIGHT_INVARIANT)
+
+        # self.data.normalizedWeights = params.normalizedWeights
+        scalingFactors = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
+        with sp.for_('i', sp.range(0, numTokens)) as i:
+            scalingFactors[i] = self._computeScalingFactor(
+                params.tokenDecimals[i])
+
+        exemptFromYieldFees = sp.local('exemptFromYieldFees', True)
+        with sp.if_(params.rateProviders.is_some()):
+            rateProviders = params.rateProviders.open_some()
+            sp.verify(numTokens == sp.len(rateProviders))
+
+            exemptFromYieldFees.value = self._getYieldFeeExemption(
+                rateProviders)
+
+        sp.verify(params.swapFeePercentage >= MIN_SWAP_FEE_PERCENTAGE,
+                  Errors.MIN_SWAP_FEE_PERCENTAGE)
+        sp.verify(params.swapFeePercentage <= MAX_SWAP_FEE_PERCENTAGE,
+                  Errors.MAX_SWAP_FEE_PERCENTAGE)
+
         STORAGE = sp.record(
-            normalizedWeights=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
-            scalingFactors=sp.map(l={}, tkey=sp.TNat, tvalue=sp.TNat),
-            tokens=sp.map(l={}, tkey=sp.TNat, tvalue=TOKEN),
+            admin=self.data.admin,
+            proposed_admin=sp.none,
+            normalizedWeights=params.normalizedWeights,
+            scalingFactors=scalingFactors,
+            tokens=params.tokens,
             balances=sp.big_map(
                 tvalue=sp.TRecord(approvals=sp.TMap(
                     sp.TAddress, sp.TNat), balance=sp.TNat),
             ),
-            exemptFromYieldFees=False,
-            feeCache=sp.record(
-                swapFee=sp.nat(0),
-                yieldFee=sp.nat(0),
-                aumFee=sp.nat(0),
-            ),
+            exemptFromYieldFees=exemptFromYieldFees.value,
+            feeCache=self.data.feeCache,
             initialized=sp.bool(False),
             metadata=sp.big_map({
                 "": params.metadata
             }),
             poolId=sp.none,
             protocolFeesCollector=self.data.protocolFeeProvider,
-            rateProviders=sp.map(l={}, tkey=sp.TNat,
-                                 tvalue=sp.TOption(sp.TAddress)),
+            rateProviders=params.rateProviders,
+            recoveryMode=False,
+            settings=sp.record(paused=False),
             token_metadata=sp.big_map(
                 {0: sp.record(
                     token_id=0, token_info=params.token_metadata)},
@@ -144,18 +187,31 @@ class WeightedPoolFactory(sp.Contract):
             getTokenValue=sp.compute(getTokenValue),
             fixedPoint=sp.compute(self.data.fixedPoint),
             entries=sp.big_map({
-                'totalTokens': sp.nat(0),
+                'totalTokens': numTokens,
                 'athRateProduct': sp.nat(0),
                 'postJoinExitInvariant': sp.nat(0),
-                'swapFeePercentage': sp.nat(0),
+                'swapFeePercentage': params.swapFeePercentage,
+            }),
+            scaling_helpers=sp.big_map({
+                "scale": ScalingHelpers.scale_amounts,
             }),
             weightedMathLib=self.data.weightedMathLib,
+            weightedProtocolFeesLib=self.data.weightedProtocolFeesLib,
         )
-        self._create(self, STORAGE)
+        pool = self._create(self, STORAGE)
 
+        IBasePool.initialize(pool)
 
-# CONTRACT_STORAGE = sp.record(
-#     vault=sp.address('KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5'),
-#     protocolFeeProvider=sp.address('KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN'),
-# )
-# sp.add_compilation_target('Test', WeightedPoolFactory(params=CONTRACT_STORAGE))
+    def _computeScalingFactor(self, decimals):
+        sp.set_type(decimals, sp.TNat)
+        decimalsDifference = sp.as_nat(18 - decimals)
+        return FixedPoint.ONE * (self.data.fixedPoint['pow']((sp.nat(10), decimalsDifference)))
+
+    def _getYieldFeeExemption(self, rateProviders):
+        exempt = sp.local('exempt', True)
+
+        with sp.for_('i', sp.range(0, sp.len(rateProviders)))as i:
+            with sp.if_(rateProviders[i] != sp.none):
+                exempt.value = False
+
+        return exempt.value

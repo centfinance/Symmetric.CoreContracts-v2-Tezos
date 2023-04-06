@@ -13,12 +13,12 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     Tezos.setProvider({ signer: theSigner });
   })
   .then( async () => {
-    const contract = await Tezos.contract.at<ContractType>('KT1HPfQwTKxm71gJFfSHgLtpcV1jVLjsxYtf');
+    const contract = await Tezos.contract.at<ContractType>('KT1Ewux3ZjVaGnowHo9sVu7wzGhDbq3he65o');
     const createRequest = await contract.methodsObject.default({
       metadata: tas.bytes(
-        char2Bytes('SYMM/CTEZ-50:50')),
+        char2Bytes('SYMMLP')),
       token_metadata: tas.map({
-        "name": tas.bytes(char2Bytes('SYMM/CTEZ-50:50')),
+        "name": tas.bytes(char2Bytes('8 Token Pool')),
         "symbol": tas.bytes(char2Bytes('SYMMLP')),
         "decimals": tas.bytes(char2Bytes('18')),
         "thumbnailUri":tas.bytes(char2Bytes('https://assets.coingecko.com/coins/images/18525/small/SYMM-Coin-2.png?1632276841')),

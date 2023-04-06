@@ -16,4 +16,7 @@ CONTRACT_METADATA = {
     "": "https://raw.githubusercontent.com/centfinance/Symmetric.CoreContracts-v2-Tezos/main/metadata/testnet/Vault.json",
 }
 
-sp.add_compilation_target('local', Vault(CONTRACT_METADATA))
+sp.add_compilation_target('local', Vault(
+    sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
+    CONTRACT_METADATA
+))

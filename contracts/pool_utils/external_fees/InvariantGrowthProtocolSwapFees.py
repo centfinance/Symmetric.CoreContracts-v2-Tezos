@@ -3,7 +3,7 @@ import smartpy as sp
 import contracts.utils.math.FixedPoint as FixedPoint
 
 
-class InvariantGrowthProtocolSwapFees:    
+class InvariantGrowthProtocolSwapFees:
     def getProtocolOwnershipPercentage(
         invariantGrowthRatio,
         supplyGrowthRatio,
@@ -11,11 +11,12 @@ class InvariantGrowthProtocolSwapFees:
         math,
     ):
         return sp.eif(
-          ((supplyGrowthRatio >= invariantGrowthRatio) | (protocolSwapFeePercentage == sp.nat(0))),
-          sp.nat(0),
-          math['mulDown']((sp.as_nat(FixedPoint.ONE - math['divDown']((supplyGrowthRatio, invariantGrowthRatio))), protocolSwapFeePercentage)),
+            ((supplyGrowthRatio >= invariantGrowthRatio)
+             | (protocolSwapFeePercentage == sp.nat(0))),
+            sp.nat(0),
+            math['mulDown']((sp.as_nat(FixedPoint.ONE - math['divDown']
+                                       ((supplyGrowthRatio, invariantGrowthRatio))), protocolSwapFeePercentage)),
         )
-
 
     def calcDueProtocolFees(
         invariantGrowthRatio,

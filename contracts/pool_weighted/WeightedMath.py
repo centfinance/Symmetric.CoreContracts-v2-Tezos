@@ -23,7 +23,7 @@ class WeightedMath:
     def complement(x):
         return sp.as_nat(FixedPoint.ONE - x)
 
-    def _calculateInvariant(normalizedWeights, balances, powDown):
+    def _calculateInvariant(normalizedWeights, balances, math):
         """Calculates the invariant of normalized weights and balances
 
         Args:
@@ -40,19 +40,19 @@ class WeightedMath:
 
         # Create an initial invariant
         # TODO: Fix LogExpMath
-        # invariant = sp.local('invariant', FixedPoint.ONE)
-        invariant = sp.local('invariant', 1)
+        invariant = sp.local('invariant', FixedPoint.ONE)
+        # invariant = sp.local('invariant', 1)
 
         # Iterate through each index in the normalized weights
         with sp.for_('i', sp.range(0, sp.len(normalizedWeights))) as i:
             # Calculate the power of down from the balance and normalized weight
-            power = powDown((balances[i], normalizedWeights[i]))
+            power = math['powDown']((balances[i], normalizedWeights[i]))
             # Multiply the previous invariant to give a new invariant
             # TODO: Fix LogExpMath
-            # invariant.value = FixedPoint.mulDown(
-            #     invariant.value, powDown)
+            invariant.value = math['mulDown']((
+                invariant.value, power))
 
-            invariant.value *= power
+            # invariant.value *= power
 
         # Verify that the new invariant is larger 0
         sp.verify(invariant.value > 0)
@@ -193,8 +193,8 @@ class WeightedMath:
         swapFeePercentage,
         math,
     ):
-        # ir = sp.local('ir', FixedPoint.ONE)
-        ir = sp.local('ir', 1)
+        ir = sp.local('ir', FixedPoint.ONE)
+        # ir = sp.local('ir', 1)
 
         with sp.for_('i', sp.range(0, sp.len(balances))) as i:
             amountInWithoutFee = sp.local('amountInWithoutFee', 0)
@@ -215,10 +215,10 @@ class WeightedMath:
             balanceRatio = math['divDown']((
                 (balances[i] + amountInWithoutFee.value), balances[i]))
 
-            # ir.value = mulDown(ir.value, FixedPoint.powDown(
-            # balanceRatio, normalizedWeights[i]))
-            ir.value *= math['powDown']((
-                balanceRatio, normalizedWeights[i]))
+            ir.value = math['mulDown']((ir.value, math['powDown']((
+            balanceRatio, normalizedWeights[i]))))
+            # ir.value *= math['powDown']((
+            #     balanceRatio, normalizedWeights[i]))
 
         return ir.value
 
@@ -254,7 +254,7 @@ class WeightedMath:
             swapFeePercentage,
             math,
         )
-        # return 1000000000000000000
+
         return math['mulUp']((
             totalSupply, complement(invariantRatio)))
 
@@ -316,8 +316,8 @@ class WeightedMath:
         math,
     ):
 
-        # ir = sp.local('ir', FixedPoint.ONE)
-        ir = sp.local('ir', 1)
+        ir = sp.local('ir', FixedPoint.ONE)
+        # ir = sp.local('ir', 1)
 
         with sp.for_('i', sp.range(0, sp.len(balances))) as i:
             amountOutWithFee = sp.local('amountInWithoutFee', 0)
@@ -337,9 +337,9 @@ class WeightedMath:
             balanceRatio = math['divDown']((
                 sp.as_nat(balances[i] - amountOutWithFee.value), balances[i]))
 
-            # ir.value = mulDown(ir.value, FixedPoint.powDown(
-            # balanceRatio, normalizedWeights[i]))
-            ir.value *= math['powDown']((
-                balanceRatio, normalizedWeights[i]))
+            ir.value = math['mulDown']((ir.value, math['powDown']((
+            balanceRatio, normalizedWeights[i]))))
+            # ir.value *= math['powDown']((
+            #     balanceRatio, normalizedWeights[i]))
 
         return ir.value
