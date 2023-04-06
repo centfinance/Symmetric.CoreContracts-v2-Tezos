@@ -1,220 +1,256 @@
 import smartpy as sp
 
-MIN_AMP = 1;
-MAX_AMP = 5000;
-AMP_PRECISION = 1000;
+MIN_AMP = 1
+MAX_AMP = 5000
+AMP_PRECISION = 1000
 
-MAX_STABLE_TOKENS = 5;
+MAX_STABLE_TOKENS = 5
 
 
-class StableMath(sp.Contract):
-    @sp.entry_point
-    def _calculateInvariant(self, amplificationParameter, balances, roundUp):
-        sum = sp.tez(0)
-        numTokens = len(balances)
-        for balance in balances:
-            sum += balance
-        if sum == sp.tez(0):
-            sp.result(sp.tez(0))
-        prevInvariant = sp.tez(0)
-        invariant = sum
+class StableMath:
+    def calculateInvariant(t):
+        amplificationParameter, balances, roundUp = sp.match_tuple(
+            t, 'amplificationParameter', 'balances', 'roundUp')
+        totalBalance = sp.local('totalBalance', sp.nat(0))
+        numTokens = sp.len(balances)
+        with sp.for_('x', sp.range(0, sp.len(balances))) as x:
+            totalBalance.value += balances[x]
+        # with sp.if_(totalBalance.value == sp.nat(0)):
+        #     sp.result(sp.nat(0))
+        prevInvariant = sp.local('priceInvariant', sp.nat(0))
+        invariant = sp.local('invariant', totalBalance.value)
         ampTimesTotal = amplificationParameter * numTokens
 
-        for _ in range(255):
-            P_D = numTokens * balances[0]
-            for j in range(1, len(balances)):
-                P_D = (P_D * balances[j] * numTokens) // invariant if roundUp else (P_D * balances[j] * numTokens) // invariant + 1
-            prevInvariant = invariant
-            invariant = (
-                (numTokens * invariant * invariant + (ampTimesTotal * sum * P_D) // AMP_PRECISION) if roundUp
-                else (numTokens * invariant * invariant + ((ampTimesTotal * sum * P_D) + AMP_PRECISION - 1) // AMP_PRECISION)
-            ) // (
-                (numTokens + 1) * invariant + (ampTimesTotal - AMP_PRECISION) * P_D // AMP_PRECISION if not roundUp
-                else ((numTokens + 1) * invariant + ((ampTimesTotal - AMP_PRECISION) * P_D + AMP_PRECISION - 1) // AMP_PRECISION)
+        loop_flag = sp.local('loop_flag', True)
+        i = sp.local('i', 0)
+        result_value = sp.local('result_value', sp.nat(0))
+
+        with sp.while_(loop_flag.value):
+            P_D = sp.local('P_D', numTokens * balances[0])
+            with sp.for_('j', sp.range(1, sp.len(balances))) as j:
+                P_D.value = sp.eif(roundUp, (P_D.value * balances[j] * numTokens) // invariant.value,
+                                   (P_D.value * balances[j] * numTokens) // invariant.value + 1)
+            prevInvariant.value = invariant.value
+            invariant.value = sp.eif(
+                roundUp,
+                (numTokens * invariant.value * invariant.value +
+                 (ampTimesTotal * totalBalance.value * P_D.value) // AMP_PRECISION),
+                (numTokens * invariant.value * invariant.value + sp.as_nat((ampTimesTotal *
+                                                                            totalBalance.value * P_D.value) + AMP_PRECISION - 1) // AMP_PRECISION)
+            ) // sp.eif(
+                roundUp == False,
+                (numTokens + 1) * invariant.value +
+                sp.as_nat(ampTimesTotal - AMP_PRECISION) *
+                P_D.value // AMP_PRECISION,
+                ((numTokens + 1) * invariant.value + sp.as_nat(sp.as_nat(ampTimesTotal -
+                                                                         AMP_PRECISION) * P_D.value + AMP_PRECISION - 1) // AMP_PRECISION)
             )
 
-            if invariant > prevInvariant:
-                if invariant - prevInvariant <= sp.tez(1):
-                    sp.result(invariant)
-            elif prevInvariant - invariant <= sp.tez(1):
-                sp.result(invariant)
+            with sp.if_(invariant.value > prevInvariant.value):
+                with sp.if_(sp.as_nat(invariant.value - prevInvariant.value) <= sp.nat(1)):
+                    result_value.value = invariant.value
+                    loop_flag.value = False
+            with sp.else_():
+                with sp.if_(sp.as_nat(prevInvariant.value - invariant.value) <= sp.nat(1)):
+                    result_value.value = invariant.value
+                    loop_flag.value = False
 
-        sp.failwith("STABLE_GET_BALANCE_DIDNT_CONVERGE")
+            i.value += 1
+            with sp.if_(i.value >= 255):
+                loop_flag.value = False
 
-    @sp.entry_point
-    def calcBptInGivenExactTokensOut(
-        self, 
-        amplificationParameter, 
-        balances, 
-        amountsOut, 
-        bptTotalSupply, 
-        swapFee
-    ):
-        currentInvariants = self._calculateInvariant(amplificationParameter, balances, True)
-        sumBalances = sp.tez(0)
-        for balance in balances:
-            sumBalances += balance
+        with sp.if_(result_value.value == sp.nat(0)):
+            sp.failwith("STABLE_GET_BALANCE_DIDNT_CONVERGE")
+        sp.result(result_value.value)
 
-        tokenBalanceRatiosWithoutFee = [None] * len(balances)
-        weightedBalanceRatio = sp.tez(0)
+    # def calcOutGivenIn(params):
+    #     amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountIn, invariant = sp.match_tuple(
+    #         params, "amplificationParameter", "balances", "tokenIndexIn", "tokenIndexOut", "tokenAmountIn", "invariant")
 
-        for i in range(len(balances)):
-            currentWeight = balances[i] // sumBalances if balances[i] % sumBalances == 0 else (balances[i] // sumBalances) + 1
-            tokenBalanceRatiosWithoutFee[i] = balances[i] - amountsOut[i] // balances[i] if amountsOut[i] % balances[i] == 0 else (amountsOut[i] // balances[i]) + 1
-            weightedBalanceRatio += tokenBalanceRatiosWithoutFee[i] * currentWeight
+    #     balances[tokenIndexIn] = balances[tokenIndexIn] + tokenAmountIn
 
-        newBalances = []
-        for i in range(len(balances)):
-            tokenBalancePercentageExcess = 0
-            if weightedBalanceRatio <= tokenBalanceRatiosWithoutFee[i]:
-                tokenBalancePercentageExcess = 0
-            else:
-                tokenBalancePercentageExcess = weightedBalanceRatio - tokenBalanceRatiosWithoutFee[i] // (1 - tokenBalanceRatiosWithoutFee[i]) if tokenBalanceRatiosWithoutFee[i] % (1 - tokenBalanceRatiosWithoutFee[i]) == 0 else (tokenBalanceRatiosWithoutFee[i] // (1 - tokenBalanceRatiosWithoutFee[i])) + 1
+    #     finalBalanceOut = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
+    #         amplificationParameter, balances, invariant, tokenIndexOut)
 
-            swapFeeExcess = swapFee * tokenBalancePercentageExcess
-            amountOutBeforeFee = amountsOut[i] // (1 - swapFeeExcess) if amountsOut[i] % (1 - swapFeeExcess) == 0 else (amountsOut[i] // (1 - swapFeeExcess)) + 1
-            newBalances.append(balances[i] - amountOutBeforeFee)
+    #     balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn
 
-        newInvariant = self._calculateInvariant(amplificationParameter, newBalances, True)
-        sp.result(bptTotalSupply * (newInvariant // (1 - currentInvariants) if newInvariant % (1 - currentInvariants) == 0 else (newInvariant // (1 - currentInvariants)) + 1))
+    #     result = balances[tokenIndexOut] - finalBalanceOut
+    #     sp.result(result)
 
-    @sp.entry_point
-    def calcBptOutGivenExactTokensIn(self, amplificationParameter, balances, amountsIn, bptTotalSupply, swapFee, swapFeePercentage):
-        currentInvariant = self._calculateInvariant(amplificationParameter, balances, True)
+    # def calcInGivenOut(params):
+    #     amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountOut, invariant = sp.match_tuple(
+    #         params, "amplificationParameter", "balances", "tokenIndexIn", "tokenIndexOut", "tokenAmountOut", "invariant")
 
-        sumBalances = sp.tez(0)
-        for balance in balances:
-            sumBalances += balance
+    #     balances[tokenIndexOut] = balances[tokenIndexOut] - tokenAmountOut
 
-        tokenBalanceRatiosWithoutFee = []
-        weightedBalanceRatio = sp.tez(0)
-        for i in range(len(balances)):
-            currentWeight = balances[i] // sumBalances
-            tokenBalanceRatiosWithoutFee.append(balances[i] + amountsIn[i] // balances[i] if amountsIn[i] % balances[i] == 0 else (amountsIn[i] // balances[i]) + 1)
-            weightedBalanceRatio += tokenBalanceRatiosWithoutFee[i] * currentWeight
+    #     finalBalanceIn = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
+    #         amplificationParameter, balances, invariant, tokenIndexIn)
 
-        tokenBalancePercentageExcess = sp.tez(0)
-        newBalances = []
-        for i in range(len(balances)):
-            if weightedBalanceRatio >= tokenBalanceRatiosWithoutFee[i]:
-                tokenBalancePercentageExcess = sp.tez(0)
-            else:
-                tokenBalancePercentageExcess = tokenBalanceRatiosWithoutFee[i] - weightedBalanceRatio // tokenBalanceRatiosWithoutFee[i] if tokenBalanceRatiosWithoutFee[i] % weightedBalanceRatio == 0 else (weightedBalanceRatio // tokenBalanceRatiosWithoutFee[i]) + 1
+    #     balances[tokenIndexOut] = balances[tokenIndexOut] + tokenAmountOut
+    #     result = finalBalanceIn - \
+    #         balances[tokenIndexIn] + sp.nat(1) // (10 ** 18)
+    #     sp.result(result)
 
-            swapFeeExcess = swapFeePercentage * tokenBalancePercentageExcess
-            amountInAfterFee = amountsIn[i] * (1 - swapFeeExcess)
-            newBalances.append(balances[i] + amountInAfterFee)
+    # def calcBptOutGivenExactTokensIn(self, amplificationParameter, balances, amountsIn, bptTotalSupply, swapFee, swapFeePercentage):
+    #     currentInvariant = self._calculateInvariant(
+    #         amplificationParameter, balances, True)
 
-        newInvariant = self._calculateInvariant(amplificationParameter, newBalances, True)
-        sp.result(bptTotalSupply * (newInvariant // currentInvariant if newInvariant % currentInvariant == 0 else (newInvariant // currentInvariant) + 1)) # TODO: Omitted subtracting ONE from current_invariant
+    #     sumBalances = sp.local(sp.nat(0))
+    #     with sp.for_('balance', balances) as balance:
+    #         sumBalances.value += balance
 
+    #     tokenBalanceRatiosWithoutFee = []
+    #     weightedBalanceRatio = sp.local(sp.nat(0))
+    #     with sp.for_('i', sp.range(sp.len(balances))) as i:
+    #         currentWeight = balances[i] // sumBalances.value
+    #         tokenBalanceRatiosWithoutFee.append(sp.eif(
+    #             amountsIn[i] % balances[i] == 0, balances[i] + amountsIn[i] // balances[i], balances[i] + (amountsIn[i] // balances[i]) + 1))
+    #         weightedBalanceRatio.value += tokenBalanceRatiosWithoutFee[i] * currentWeight
 
-    @sp.entry_point
-    def calcDueTokenProtocolSwapFeeAmount(self, amplificationParameter, balances, lastInvariant, tokenIndex, protocolSwapFeePercentage):
-        finalBalanceFeeToken = self.getTokenBalanceGivenInvariantAndAllOtherBalances(amplificationParameter, balances, lastInvariant, tokenIndex)
+    #     tokenBalancePercentageExcess = sp.local(sp.nat(0))
+    #     newBalances = []
+    #     with sp.for_('i', sp.range(sp.len(balances))) as i:
+    #         tokenBalancePercentageExcess.value = sp.eif(weightedBalanceRatio.value >= tokenBalanceRatiosWithoutFee[i], 0, sp.eif(tokenBalanceRatiosWithoutFee[i] % weightedBalanceRatio.value == 0, tokenBalanceRatiosWithoutFee[
+    #                                                     i] - weightedBalanceRatio.value // tokenBalanceRatiosWithoutFee[i], tokenBalanceRatiosWithoutFee[i] - (weightedBalanceRatio.value // tokenBalanceRatiosWithoutFee[i]) + 1))
 
-        if balances[tokenIndex] > finalBalanceFeeToken:
-            accumulatedTokenSwapFees = balances[tokenIndex] - finalBalanceFeeToken
-        else:
-            accumulatedTokenSwapFees = sp.tez(0)
+    #         swapFeeExcess = swapFeePercentage * tokenBalancePercentageExcess.value
+    #         amountInAfterFee = amountsIn[i] * (1 - swapFeeExcess)
+    #         newBalances.append(balances[i] + amountInAfterFee)
 
-        sp.result((accumulatedTokenSwapFees * protocolSwapFeePercentage) // 1)
+    #     newInvariant = self._calculateInvariant(
+    #         amplificationParameter, newBalances, True)
+    #     sp.result(bptTotalSupply * (sp.eif(newInvariant % currentInvariant == 0,
+    #               newInvariant // currentInvariant, (newInvariant // currentInvariant) + 1)))
 
-    @sp.entry_point
-    def calcInGivenOut(self, amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountOut):
-        invariant = self._calculateInvariant(amplificationParameter, balances, True)
-        balances[tokenIndexOut] = balances[tokenIndexOut] - tokenAmountOut
+    # def calcTokenInGivenExactBptOut(self, amplificationParameter, balances, tokenIndex, bptAmountOut, bptTotalSupply, swapFeePercentage):
+    #     currentInvariant = self.calculateInvariant(
+    #         amplificationParameter, balances, True)
 
-        finalBalanceIn = self.getTokenBalanceGivenInvariantAndAllOtherBalances(amplificationParameter, balances, invariant, tokenIndexIn)
+    #     newInvariant = ((bptTotalSupply + bptAmountOut) * bptTotalSupply *
+    #                     currentInvariant + currentInvariant - 1) // currentInvariant
 
-        balances[tokenIndexOut] = balances[tokenIndexOut] + tokenAmountOut
-        result = finalBalanceIn - balances[tokenIndexIn] + sp.tez(1) // (10 ** 18)
-        sp.result(result)
+    #     sumBalances = sp.local(sp.nat, 0)
+    #     with sp.for_('balance', sp.range(sp.len(balances))) as balance:
+    #         sumBalances.value += balances[balance]
 
-    @sp.entry_point
-    def calcOutGivenIn(self, amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountIn):
-        invariant = self._calculateInvariant(amplificationParameter, balances, True)
-        balances[tokenIndexIn] = balances[tokenIndexIn] + tokenAmountIn
+    #     newBalanceTokenIndex = self.getTokenBalanceGivenInvariantAndAllOtherBalances(
+    #         amplificationParameter, balances, newInvariant, tokenIndex)
+    #     amountInAfterFee = newBalanceTokenIndex - balances[tokenIndex]
 
-        finalBalanceOut = self.getTokenBalanceGivenInvariantAndAllOtherBalances(amplificationParameter, balances, invariant, tokenIndexOut)
+    #     currentWeight = balances[tokenIndex] // sumBalances.value
+    #     tokenBalancePercentageExcess = 1 - currentWeight
+    #     swapFeeExcess = swapFeePercentage * tokenBalancePercentageExcess
 
-        balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn
+    #     sp.result((amountInAfterFee * 1) // (1 - (1 - swapFeeExcess)))
 
-        result = balances[tokenIndexOut] - finalBalanceOut
-        sp.result(result)
+    # def calcBptInGivenExactTokensOut(
+    #     self,
+    #     amplificationParameter,
+    #     balances,
+    #     amountsOut,
+    #     bptTotalSupply,
+    #     swapFee
+    # ):
+    #     currentInvariants = self._calculateInvariant(
+    #         amplificationParameter, balances, True)
+    #     sumBalances = sp.local(sp.nat(0))
+    #     with sp.for_('balance', balances) as balance:
+    #         sumBalances.value += balance
 
+    #     tokenBalanceRatiosWithoutFee = [None] * sp.len(balances)
+    #     weightedBalanceRatio = sp.local(sp.nat(0))
 
+    #     with sp.for_('i', sp.range(sp.len(balances))) as i:
+    #         currentWeight = sp.eif(balances[i] % sumBalances.value == 0, balances[i] //
+    #                                sumBalances.value, (balances[i] // sumBalances.value) + 1)
+    #         tokenBalanceRatiosWithoutFee[i] = sp.eif(
+    #             amountsOut[i] % balances[i] == 0, balances[i] - amountsOut[i] // balances[i], balances[i] - (amountsOut[i] // balances[i]) + 1)
+    #         weightedBalanceRatio.value += tokenBalanceRatiosWithoutFee[i] * currentWeight
 
-    @sp.entry_point
-    def calcTokenInGivenExactBptOut(self, amplificationParameter, balances, tokenIndex, bptAmountOut, bptTotalSupply, swapFeePercentage):
-        currentInvariant = self._calculateInvariant(amplificationParameter, balances, True)
+    #     newBalances = []
+    #     with sp.for_('i', sp.range(sp.len(balances))) as i:
+    #         tokenBalancePercentageExcess = sp.eif(weightedBalanceRatio.value <= tokenBalanceRatiosWithoutFee[i], 0, sp.eif(tokenBalanceRatiosWithoutFee[i] % (
+    #             1 - tokenBalanceRatiosWithoutFee[i]) == 0, weightedBalanceRatio.value - tokenBalanceRatiosWithoutFee[i] // (1 - tokenBalanceRatiosWithoutFee[i]), (weightedBalanceRatio.value - tokenBalanceRatiosWithoutFee[i]) // (1 - tokenBalanceRatiosWithoutFee[i]) + 1))
 
-        newInvariant = ((bptTotalSupply + bptAmountOut) * bptTotalSupply * currentInvariant + currentInvariant - 1) // currentInvariant
+    #         swapFeeExcess = swapFee * tokenBalancePercentageExcess
+    #         amountOutBeforeFee = sp.eif(amountsOut[i] % (1 - swapFeeExcess) == 0, amountsOut[i] // (
+    #             1 - swapFeeExcess), (amountsOut[i] // (1 - swapFeeExcess)) + 1)
+    #         newBalances.append(balances[i] - amountOutBeforeFee)
 
-        sumBalances = sp.tez(0)
-        for balance in balances:
-            sumBalances += balance
+    #     newInvariant = self._calculateInvariant(
+    #         amplificationParameter, newBalances, True)
+    #     sp.result(bptTotalSupply * (newInvariant // (1 - currentInvariants) if newInvariant %
+    #               (1 - currentInvariants) == 0 else (newInvariant // (1 - currentInvariants)) + 1))
 
-        newBalanceTokenIndex = self.getTokenBalanceGivenInvariantAndAllOtherBalances(amplificationParameter, balances, newInvariant, tokenIndex)
-        amountInAfterFee = newBalanceTokenIndex - balances[tokenIndex]
+    # def calcTokenOutGivenExactBptIn(self, amplificationParameter, balances, tokenIndex, bptAmountIn, bptTotalSupply, swapFeePercentage):
+    #     currentInvariant = self.calculateInvariant(
+    #         amplificationParameter, balances, True)
+    #     newInvariant = bptTotalSupply - \
+    #         ((bptAmountIn * bptTotalSupply * currentInvariant +
+    #          currentInvariant - 1) // currentInvariant)
 
-        currentWeight = balances[tokenIndex] // sumBalances
-        tokenBalancePercentageExcess = 1 - currentWeight
-        swapFeeExcess = swapFeePercentage * tokenBalancePercentageExcess
+    #     sumBalances = sp.local(sp.nat, 0)
+    #     with sp.for_('balance', sp.range(sp.len(balances))) as balance:
+    #         sumBalances.value += balances[balance]
 
-        sp.result((amountInAfterFee * 1) // (1 - (1 - swapFeeExcess)))
+    #     newBalanceTokenIndex = self.getTokenBalanceGivenInvariantAndAllOtherBalances(
+    #         amplificationParameter, balances, newInvariant, tokenIndex)
+    #     amountOutBeforeFee = balances[tokenIndex] - newBalanceTokenIndex
 
+    #     currentWeight = balances[tokenIndex] // sumBalances.value
+    #     tokenbalancePercentageExcess = 1 - currentWeight
 
-    @sp.entry_point
-    def calcTokensOutGivenExactBptIn(self, balances, bptAmountIn, bptTotalSupply):
-        bptRatio = bptAmountIn // bptTotalSupply
-        amountsOut = sp.map(lambda balance: balance * bptRatio, balances)
-        sp.result(amountsOut)
+    #     swapFeeExcess = swapFeePercentage * tokenbalancePercentageExcess
 
-    @sp.entry_point
-    def calcTokenOutGivenExactBptIn(self, amplificationParameter, balances, tokenIndex, bptAmountIn, bptTotalSupply, swapFeePercentage):
-        currentInvariant = self._calculateInvariant(amplificationParameter, balances, True)
-        newInvariant = bptTotalSupply - ((bptAmountIn * bptTotalSupply * currentInvariant + currentInvariant - 1) // currentInvariant)
+    #     sp.result(amountOutBeforeFee * (1 - swapFeeExcess))
 
-        sumBalances = sp.tez(0)
-        for balance in balances:
-            sumBalances += balance
+    # def calcDueTokenProtocolSwapFeeAmount(self, amplificationParameter, balances, lastInvariant, tokenIndex, protocolSwapFeePercentage):
+    #     finalBalanceFeeToken = self.getTokenBalanceGivenInvariantAndAllOtherBalances(
+    #         amplificationParameter, balances, lastInvariant, tokenIndex)
 
-        newBalanceTokenIndex = self.getTokenBalanceGivenInvariantAndAllOtherBalances(amplificationParameter, balances, newInvariant, tokenIndex)
-        amountOutBeforeFee = balances[tokenIndex] - newBalanceTokenIndex
+    #     accumulatedTokenSwapFees = sp.eif(
+    #         balances[tokenIndex] > finalBalanceFeeToken, balances[tokenIndex] - finalBalanceFeeToken, 0)
 
-        currentWeight = balances[tokenIndex] // sumBalances
-        tokenbalancePercentageExcess = 1 - currentWeight
+    #     sp.result((accumulatedTokenSwapFees * protocolSwapFeePercentage) // 1)
 
-        swapFeeExcess = swapFeePercentage * tokenbalancePercentageExcess
+    # def calcTokensOutGivenExactBptIn(self, balances, bptAmountIn, bptTotalSupply):
+    #     bptRatio = bptAmountIn // bptTotalSupply
+    #     amountsOut = sp.map(lambda balance: balance * bptRatio, balances)
+    #     sp.result(amountsOut)
 
-        sp.result(amountOutBeforeFee * (1 - swapFeeExcess))
+    # def getTokenBalanceGivenInvariantAndAllOtherBalances(self, amplificationParameter, balances, invariant, tokenIndex):
+    #     ampTimesTotal = amplificationParameter * sp.len(balances)
+    #     bal_sum = sp.local(sp.nat, 0)
+    #     with sp.for_('balance', sp.range(sp.len(balances))) as balance:
+    #         bal_sum.value += balances[balance]
 
-    @sp.entry_point
-    def getTokenBalanceGivenInvariantAndAllOtherBalances(self, amplificationParameter, balances, invariant, tokenIndex):
-        ampTimesTotal = amplificationParameter * len(balances)
-        bal_sum = sp.tez(0)
-        for balance in balances:
-            bal_sum += balance
+    #     bal_sum.value -= balances[tokenIndex]
 
-        bal_sum -= balances[tokenIndex]
+    #     P_D = sp.local(sp.nat, sp.len(balances) * balances[0])
+    #     with sp.for_('i', sp.range(1, sp.len(balances))) as i:
+    #         P_D.value = (P_D.value * balances[i]
+    #                      * sp.len(balances)) // invariant
 
-        P_D = len(balances) * balances[0]
-        for i in range(1, len(balances)):
-            P_D = (P_D * balances[i] * len(balances)) // invariant
+    #     c = (invariant * invariant *
+    #          balances[tokenIndex]) // (ampTimesTotal * P_D.value)
+    #     b = bal_sum.value + invariant // ampTimesTotal
 
-        c = (invariant * invariant * balances[tokenIndex]) // (ampTimesTotal * P_D)
-        b = bal_sum + invariant // ampTimesTotal
+    #     prevTokenbalance = sp.local(sp.nat, 0)
+    #     tokenBalance = sp.local(
+    #         sp.nat, (invariant * invariant + c) // (invariant + b))
+    #     iteration = sp.local(sp.nat, 0)
+    #     with sp.while_(iteration.value < 255):
+    #         prevTokenbalance.value = tokenBalance.value
+    #         tokenBalance.value = ((tokenBalance.value * tokenBalance.value) +
+    #                               c) // ((tokenBalance.value * 2) + b - invariant)
+    #         diff = sp.local(sp.nat, 0)
+    #         with sp.if_(tokenBalance.value > prevTokenbalance.value):
+    #             diff.value = tokenBalance.value - prevTokenbalance.value
+    #         with sp.else_():
+    #             diff.value = prevTokenbalance.value - tokenBalance.value
+    #         with sp.if_(diff.value <= 1):
+    #             iteration.value = 255
+    #         with sp.else_():
+    #             iteration.value += 1
 
-        prevTokenbalance = sp.tez(0)
-        tokenBalance = (invariant * invariant + c) // (invariant + b)
-        for _ in range(255):
-            prevTokenbalance = tokenBalance
-            tokenBalance = ((tokenBalance * tokenBalance) + c) // ((tokenBalance * 2) + b - invariant)
-            if tokenBalance > prevTokenbalance:
-                if tokenBalance - prevTokenbalance <= sp.tez(1) / (10 ** 18):
-                    break
-            elif prevTokenbalance - tokenBalance <= sp.tez(1) / (10 ** 18):
-                break
-
-        sp.result(tokenBalance)
+    #     sp.result(tokenBalance.value)
