@@ -150,6 +150,65 @@ export class PoolToken {
   // ... other columns and relations for the PoolToken entity
 }
 
+@Entity()
+export class PoolSnapshot {
+  @PrimaryColumn('varchar', { length: 255 })
+  id!: string;
+
+  @ManyToOne(() => Pool, (pool) => pool.snapshots, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'poolId' })
+  pool!: Pool;
+
+  @Column('decimal', { array: true })
+  amounts!: string[];
+
+  @Column('decimal')
+  totalShares!: string;
+
+  @Column('decimal')
+  swapVolume!: string;
+
+  @Column('decimal')
+  swapFees!: string;
+
+  @Column('decimal')
+  liquidity!: string;
+
+  @Column('bigint')
+  swapsCount!: BigInt;
+
+  @Column('bigint')
+  holdersCount!: BigInt;
+
+  @Column('int')
+  timestamp!: number;
+}
+
+@Entity()
+export class PoolHistoricalLiquidity {
+  @PrimaryColumn('varchar', { length: 255 })
+  id!: string;
+
+  @ManyToOne(() => Pool, (pool) => pool.historicalValues, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'poolId' })
+  poolId!: Pool;
+
+  @Column('decimal')
+  poolTotalShares!: string;
+
+  @Column('decimal')
+  poolLiquidity!: string;
+
+  @Column('decimal')
+  poolShareValue!: string;
+
+  @Column('varchar', { length: 255 })
+  pricingAsset!: string;
+
+  @Column('bigint')
+  block!: BigInt;
+}
+
 // Token
 @Entity()
 export class Token {
