@@ -86,6 +86,7 @@ export class VaultIndexer {
         indexingContext: TransactionIndexingContext,
     ): Promise<void> {
         // Implement your indexing logic here or delete the method if not needed.
+
     }
 
     @indexEntrypoint('registerPool')
@@ -182,6 +183,7 @@ export class VaultIndexer {
         // Implement your indexing logic here or delete the method if not needed.
     }
 
+
     @indexEvent('PoolBalanceChanged')
     async indexPoolBalanceChangedEvent(
         payload: VaultPoolBalanceChangedPayload,
@@ -189,6 +191,7 @@ export class VaultIndexer {
         indexingContext: EventIndexingContext,
     ): Promise<void> {
         // Implement your indexing logic here or delete the method if not needed.
+
     }
 
     @indexEvent('PoolRegistered')
