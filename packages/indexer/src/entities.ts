@@ -2,10 +2,11 @@ import {
   Entity,
   Column,
   PrimaryColumn,
+  OneToOne,
   OneToMany,
   ManyToOne,
   ManyToMany,
-  JoinTable,
+  JoinColumn,
 } from "typeorm";
 
 // Balancer
@@ -102,6 +103,25 @@ export class Pool {
   @ManyToOne(() => Symmetric, (symmetric) => symmetric.pools)
   vault!: Symmetric;
 
+  @Column("simple-array")
+  tokensList!: string[];
+
+  @OneToMany(() => PoolToken, (poolToken) => poolToken.poolId)
+  tokens!: PoolToken[];
+
+  @OneToMany(() => Swap, (swap) => swap.poolId)
+  swaps!: Swap[];
+
+  @OneToMany(() => PoolShare, (poolShare) => poolShare.poolId)
+  shares!: PoolShare[];
+
+  @OneToMany(() => PoolSnapshot, (poolSnapshot) => poolSnapshot.pool)
+  snapshots!: PoolSnapshot[];
+
+  @OneToMany(() => PoolHistoricalLiquidity, (poolHistoricalLiquidity) => poolHistoricalLiquidity.poolId)
+  historicalValues!: PoolHistoricalLiquidity[];
+  priceRateProviders: any;
+
   // ... other columns and relations for the Pool entity
 }
 
@@ -180,8 +200,53 @@ export class User {
 
   @OneToMany(() => PoolShare, (poolShare) => poolShare.userAddress)
   sharesOwned!: PoolShare[];
+  swaps: any;
 
   // ... other relations for the User entity
+}
+
+@Entity()
+export class Swap {
+  @PrimaryColumn("varchar", { length: 42 })
+  id!: string;
+
+  @Column("varchar", { length: 42 })
+  caller!: string;
+
+  @Column("varchar", { length: 42 })
+  tokenIn!: string;
+
+  @Column()
+  tokenInSym!: string;
+
+  @Column("varchar", { length: 42 })
+  tokenOut!: string;
+
+  @Column()
+  tokenOutSym!: string;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  tokenAmountIn!: string;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  tokenAmountOut!: string;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  valueUSD!: string;
+
+  @ManyToOne(() => Pool, (pool) => pool.swaps)
+  @JoinColumn({ name: "poolId" })
+  poolId!: Pool;
+
+  @ManyToOne(() => User, (user) => user.swaps)
+  @JoinColumn({ name: "userAddress" })
+  userAddress!: User;
+
+  @Column("int")
+  timestamp!: number;
+
+  @Column("varchar", { length: 66 })
+  tx!: string;
 }
 
 // ... other TypeORM entities for the remaining schema
