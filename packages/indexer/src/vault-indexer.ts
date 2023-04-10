@@ -81,12 +81,61 @@ export class VaultIndexer {
 
     @indexEntrypoint('joinPool')
     async indexJoinPool(
-        parameter: VaultJoinPoolParameter,
-        dbContext: DbContext,
-        indexingContext: TransactionIndexingContext,
+      parameter: VaultJoinPoolParameter,
+      dbContext: DbContext,
+      indexingContext: TransactionIndexingContext,
     ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-
+      const poolId: string = parameter.poolId;
+      const amounts = parameter.request.assets.map((_, key) => parameter.request.limits.get(key));
+      const blockTimestamp = indexingContext.timestamp.toI32();
+      const logIndex = indexingContext.logIndex;
+      const transactionHash = indexingContext.transaction.hash;
+  
+      const pool = await dbContext.poolRepository.findOne(poolId);
+      if (pool === undefined) {
+        console.warn('Pool not found in indexJoinPool: {} {}', [poolId, transactionHash.toHexString()]);
+        return;
+      }
+  
+      const tokenAddresses = pool.tokensList;
+  
+      const joinId = transactionHash.toHexString().concat(logIndex.toString());
+      const join = new JoinExit();
+      join.id = joinId;
+      join.sender = parameter.sender;
+      const joinAmounts: string[] = [];
+      let valueUSD = '0';
+  
+      for (let i = 0; i < tokenAddresses.length; i++) {
+        const tokenAddress = tokenAddresses[i];
+        const poolToken = await dbContext.poolTokenRepository.findOne({ pool: pool, token: tokenAddress });
+        if (poolToken === undefined) {
+          throw new Error('poolToken not found');
+        }
+  
+        // You'll need to implement the scaleDown function
+        const joinAmount = scaleDown(amounts[i], poolToken.decimals);
+        joinAmounts[i] = joinAmount.toString();
+        const tokenJoinAmountInUSD = valueInUSD(joinAmount, tokenAddress); // You'll need to implement the valueInUSD function
+        valueUSD = (parseFloat(valueUSD) + parseFloat(tokenJoinAmountInUSD)).toString();
+      }
+  
+      join.type = 'Join';
+      join.amounts = joinAmounts;
+      join.pool = pool;
+      join.user = await dbContext.userRepository.findOne(parameter.sender) ?? new User(parameter.sender); // Assuming that User has a constructor taking the user address as the only argument
+      join.timestamp = blockTimestamp;
+      join.tx = transactionHash;
+  
+      join.valueUSD = valueUSD;
+      await dbContext.joinExitRepository.save(join);
+  
+      // The rest of the function depends on functions and data structures that are specific to the Balancer v2 subgraph
+      // You may need to adjust or implement these functions and data structures accordingly
+      // Also, note that some of the entity updates should be adjusted to work with your dbContext and TypeORM
+  
+      // ...
+  
     }
 
     @indexEntrypoint('registerPool')

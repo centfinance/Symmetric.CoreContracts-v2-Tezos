@@ -308,5 +308,64 @@ export class Swap {
   tx!: string;
 }
 
+export enum InvestType {
+  Join = 'Join',
+  Exit = 'Exit',
+}
+
+@Entity()
+export class JoinExit {
+  @PrimaryColumn('varchar', { length: 255 })
+  id!: string;
+
+  @Column({ type: 'enum', enum: InvestType })
+  type!: InvestType;
+
+  @Column('varchar', { length: 255 })
+  sender!: string;
+
+  @Column('simple-array')
+  amounts!: string[];
+
+  @Column('decimal', { nullable: true })
+  valueUSD?: string;
+
+  @ManyToOne(() => Pool)
+  @JoinColumn({ name: 'poolId' })
+  pool!: Pool;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'userId' })
+  user!: User;
+
+  @Column('int')
+  timestamp!: number;
+
+  @Column('varchar', { length: 255 })
+  tx!: string;
+}
+
+@Entity()
+export class LatestPrice {
+  @PrimaryColumn('varchar', { length: 255 })
+  id!: string;
+
+  @Column('varchar', { length: 255 })
+  asset!: string;
+
+  @Column('varchar', { length: 255 })
+  pricingAsset!: string;
+
+  @ManyToOne(() => Pool)
+  @JoinColumn({ name: 'poolId' })
+  poolId!: Pool;
+
+  @Column('decimal')
+  price!: string;
+
+  @Column('bigint')
+  block!: BigInt;
+}
+
 // ... other TypeORM entities for the remaining schema
 
