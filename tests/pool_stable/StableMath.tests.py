@@ -36,6 +36,22 @@ class MockStableMath(sp.Contract):
             invariant,
         ))
 
+    @sp.onchain_view()
+    def calcOutGivenIn(self, params):
+        invariant = self.data.calc_invariant((
+            params.amplificationParameter,
+            params.balances,
+            params.roundUp,
+        ))
+        sp.result(StableMath.calcOutGivenIn(
+            params.amplificationParameter,
+            params.balances,
+            params.tokenIndexIn,
+            params.tokenIndexOut,
+            params.tokenAmountIn,
+            invariant,
+        ))
+
 
 @sp.add_test(name="StableMath Test")
 def stableMathTest():
@@ -80,3 +96,18 @@ def stableMathTest():
         ))
 
     scenario.show(in_given_out)
+
+    # Test the calcOutGivenIn function
+    tokenAmountIn = sp.nat(5 * 10**18)
+
+    out_given_in = stable_math.calcOutGivenIn(
+        sp.record(
+            amplificationParameter=amplificationParameter,
+            balances=balances,
+            tokenIndexIn=tokenIndexIn,
+            tokenIndexOut=tokenIndexOut,
+            tokenAmountIn=tokenAmountIn,
+            roundUp=roundUp,
+        ))
+
+    scenario.show(out_given_in)

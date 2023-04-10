@@ -65,18 +65,15 @@ class StableMath:
             sp.failwith("STABLE_GET_BALANCE_DIDNT_CONVERGE")
         sp.result(result_value.value)
 
-    def calcOutGivenIn(params):
-        amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountIn, invariant = sp.match_tuple(
-            params, "amplificationParameter", "balances", "tokenIndexIn", "tokenIndexOut", "tokenAmountIn", "invariant")
-
-        balances[tokenIndexIn] = balances[tokenIndexIn] + tokenAmountIn
+    def calcOutGivenIn(amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountIn, invariant):
+        temp_balances = sp.local('temp_balances', balances)
+        temp_balances.value[tokenIndexIn] = temp_balances.value[tokenIndexIn] + tokenAmountIn
 
         finalBalanceOut = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
-            amplificationParameter, balances, invariant, tokenIndexOut)
+            amplificationParameter, temp_balances.value, invariant, tokenIndexOut)
 
-        balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn
-
-        result = balances[tokenIndexOut] - finalBalanceOut
+        result = sp.as_nat(
+            temp_balances.value[tokenIndexOut] - finalBalanceOut)
         return result
 
     def calcInGivenOut(amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountOut, invariant):
