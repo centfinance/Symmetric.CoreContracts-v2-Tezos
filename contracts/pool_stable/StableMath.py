@@ -1,5 +1,7 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricErrors as Errors
+
 MIN_AMP = 1
 MAX_AMP = 5000
 AMP_PRECISION = 1000
@@ -63,33 +65,30 @@ class StableMath:
             sp.failwith("STABLE_GET_BALANCE_DIDNT_CONVERGE")
         sp.result(result_value.value)
 
-    # def calcOutGivenIn(params):
-    #     amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountIn, invariant = sp.match_tuple(
-    #         params, "amplificationParameter", "balances", "tokenIndexIn", "tokenIndexOut", "tokenAmountIn", "invariant")
+    def calcOutGivenIn(params):
+        amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountIn, invariant = sp.match_tuple(
+            params, "amplificationParameter", "balances", "tokenIndexIn", "tokenIndexOut", "tokenAmountIn", "invariant")
 
-    #     balances[tokenIndexIn] = balances[tokenIndexIn] + tokenAmountIn
+        balances[tokenIndexIn] = balances[tokenIndexIn] + tokenAmountIn
 
-    #     finalBalanceOut = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
-    #         amplificationParameter, balances, invariant, tokenIndexOut)
+        finalBalanceOut = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
+            amplificationParameter, balances, invariant, tokenIndexOut)
 
-    #     balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn
+        balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn
 
-    #     result = balances[tokenIndexOut] - finalBalanceOut
-    #     sp.result(result)
+        result = balances[tokenIndexOut] - finalBalanceOut
+        return result
 
-    # def calcInGivenOut(params):
-    #     amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountOut, invariant = sp.match_tuple(
-    #         params, "amplificationParameter", "balances", "tokenIndexIn", "tokenIndexOut", "tokenAmountOut", "invariant")
+    def calcInGivenOut(amplificationParameter, balances, tokenIndexIn, tokenIndexOut, tokenAmountOut, invariant):
+        temp_balances = sp.local('temp_balances', balances)
+        temp_balances.value[tokenIndexOut] = sp.as_nat(
+            temp_balances.value[tokenIndexOut] - tokenAmountOut)
 
-    #     balances[tokenIndexOut] = balances[tokenIndexOut] - tokenAmountOut
+        finalBalanceIn = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
+            amplificationParameter, temp_balances.value, invariant, tokenIndexIn)
 
-    #     finalBalanceIn = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
-    #         amplificationParameter, balances, invariant, tokenIndexIn)
-
-    #     balances[tokenIndexOut] = balances[tokenIndexOut] + tokenAmountOut
-    #     result = finalBalanceIn - \
-    #         balances[tokenIndexIn] + sp.nat(1) // (10 ** 18)
-    #     sp.result(result)
+        result = sp.as_nat(finalBalanceIn - balances[tokenIndexIn]) + sp.nat(1)
+        return result
 
     # def calcBptOutGivenExactTokensIn(self, amplificationParameter, balances, amountsIn, bptTotalSupply, swapFee, swapFeePercentage):
     #     currentInvariant = self._calculateInvariant(
@@ -218,39 +217,45 @@ class StableMath:
     #     amountsOut = sp.map(lambda balance: balance * bptRatio, balances)
     #     sp.result(amountsOut)
 
-    # def getTokenBalanceGivenInvariantAndAllOtherBalances(self, amplificationParameter, balances, invariant, tokenIndex):
-    #     ampTimesTotal = amplificationParameter * sp.len(balances)
-    #     bal_sum = sp.local(sp.nat, 0)
-    #     with sp.for_('balance', sp.range(sp.len(balances))) as balance:
-    #         bal_sum.value += balances[balance]
+    def getTokenBalanceGivenInvariantAndAllOtherBalances(amplificationParameter, balances, invariant, tokenIndex):
+        ampTimesTotal = amplificationParameter * sp.len(balances)
+        bal_sum = sp.local('bal_sum', 0)
+        with sp.for_('balance', sp.range(0, sp.len(balances))) as balance:
+            bal_sum.value += balances[balance]
 
-    #     bal_sum.value -= balances[tokenIndex]
+        bal_sum.value = sp.as_nat(bal_sum.value - balances[tokenIndex])
 
-    #     P_D = sp.local(sp.nat, sp.len(balances) * balances[0])
-    #     with sp.for_('i', sp.range(1, sp.len(balances))) as i:
-    #         P_D.value = (P_D.value * balances[i]
-    #                      * sp.len(balances)) // invariant
+        P_D = sp.local('P_D', sp.len(balances) * balances[0])
+        with sp.for_('i', sp.range(1, sp.len(balances))) as i:
+            P_D.value = (P_D.value * balances[i]
+                         * sp.len(balances)) // invariant
 
-    #     c = (invariant * invariant *
-    #          balances[tokenIndex]) // (ampTimesTotal * P_D.value)
-    #     b = bal_sum.value + invariant // ampTimesTotal
+        c = (invariant * invariant *
+             balances[tokenIndex]) // (ampTimesTotal * P_D.value // AMP_PRECISION)
+        b = bal_sum.value + invariant // ampTimesTotal
 
-    #     prevTokenbalance = sp.local(sp.nat, 0)
-    #     tokenBalance = sp.local(
-    #         sp.nat, (invariant * invariant + c) // (invariant + b))
-    #     iteration = sp.local(sp.nat, 0)
-    #     with sp.while_(iteration.value < 255):
-    #         prevTokenbalance.value = tokenBalance.value
-    #         tokenBalance.value = ((tokenBalance.value * tokenBalance.value) +
-    #                               c) // ((tokenBalance.value * 2) + b - invariant)
-    #         diff = sp.local(sp.nat, 0)
-    #         with sp.if_(tokenBalance.value > prevTokenbalance.value):
-    #             diff.value = tokenBalance.value - prevTokenbalance.value
-    #         with sp.else_():
-    #             diff.value = prevTokenbalance.value - tokenBalance.value
-    #         with sp.if_(diff.value <= 1):
-    #             iteration.value = 255
-    #         with sp.else_():
-    #             iteration.value += 1
+        prevTokenbalance = sp.local('prevTokenbalance', 0)
+        tokenBalance = sp.local('tokenBalance',
+                                (invariant * invariant + c) // (invariant + b))
+        iteration = sp.local('iteration', 0)
+        diff = sp.local('diff', 0)
+        with sp.while_(iteration.value < 255):
+            prevTokenbalance.value = tokenBalance.value
+            tokenBalance.value = ((tokenBalance.value * tokenBalance.value) +
+                                  c) // sp.as_nat(((tokenBalance.value * 2) + b) - invariant)
 
-    #     sp.result(tokenBalance.value)
+            with sp.if_(tokenBalance.value > prevTokenbalance.value):
+                diff.value = sp.as_nat(
+                    tokenBalance.value - prevTokenbalance.value)
+            with sp.else_():
+                diff.value = sp.as_nat(
+                    prevTokenbalance.value - tokenBalance.value)
+            with sp.if_(diff.value <= 1):
+                iteration.value = 255
+            with sp.else_():
+                iteration.value += 1
+
+        with sp.if_(diff.value > sp.nat(1)):
+            sp.failwith(Errors.STABLE_GET_BALANCE_DIDNT_CONVERGE)
+
+        return tokenBalance.value
