@@ -1,6 +1,7 @@
 import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
+import contracts.utils.math.FixedPoint as FixedPoint
 
 MIN_AMP = 1
 MAX_AMP = 5000
@@ -143,6 +144,56 @@ class StableMath:
                 (sptTotalSupply, (sp.as_nat(invariantRatio - ONE)))),
             sp.nat(0),
         )
+
+    def calcSptInGivenExactTokensOut(
+        amp,
+        balances,
+        amountsOut,
+        sptTotalSupply,
+        currentInvariant,
+        swapFeePercentage,
+        calcInvariant,
+        fpm,
+    ):
+        sumBalances = sp.local('sumBalances', sp.nat(0))
+        with sp.for_('x', sp.range(0, sp.len(balances))) as x:
+            sumBalances.value += balances[x]
+
+        balanceRatiosWithoutFee = sp.compute(
+            sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
+        invariantRatioWithoutFees = sp.local(
+            'invariantRatioWithoutFees', sp.nat(0))
+        with sp.for_('i', sp.range(0, sp.len(balances))) as i:
+            currentWeight = fpm['divUp']((balances[i], sumBalances.value))
+            balanceRatiosWithoutFee[i] = sp.as_nat(balances[i] -
+                                                   fpm['divUp']((amountsOut[i], balances[i])))
+            invariantRatioWithoutFees.value = invariantRatioWithoutFees.value + \
+                fpm['mulUp']((balanceRatiosWithoutFee[i], currentWeight))
+
+        newBalances = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
+        with sp.for_('i', sp.range(0, sp.len(balances))) as i:
+            amountOutWithFee = sp.local('amountOutWithFee', sp.nat(0))
+            with sp.if_(invariantRatioWithoutFees.value > balanceRatiosWithoutFee[i]):
+                nonTaxableAmount = fpm['mulDown'](
+                    (balances[i], FixedPoint.complement(invariantRatioWithoutFees.value)))
+                taxableAmount = sp.eif(
+                    (amountsOut[i] - nonTaxableAmount) > 0,
+                    sp.as_nat(amountsOut[i] - nonTaxableAmount),
+                    0,
+                )
+                amountOutWithFee.value = nonTaxableAmount + \
+                    (fpm['divUp']((taxableAmount, sp.as_nat(ONE - swapFeePercentage))))
+            with sp.else_():
+                amountOutWithFee.value = amountsOut[i]
+
+            newBalances[i] = sp.as_nat(balances[i] - amountOutWithFee.value)
+
+        newInvariant = calcInvariant(
+            (amp, newBalances, True))
+        invariantRatio = fpm['divDown']((newInvariant, currentInvariant))
+
+        return fpm['mulUp'](
+            (sptTotalSupply, (FixedPoint.complement(invariantRatio))))
 
     # def calcTokenInGivenExactBptOut(self, amp, balances, tokenIndex, bptAmountOut, bptTotalSupply, swapFeePercentage):
     #     currentInvariant = self.calculateInvariant(

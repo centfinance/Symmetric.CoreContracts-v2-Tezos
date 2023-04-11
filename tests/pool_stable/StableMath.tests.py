@@ -77,6 +77,24 @@ class MockStableMath(sp.Contract):
             self.data.fpm,
         ))
 
+    @sp.onchain_view()
+    def calcSptInGivenExactTokensOut(self, params):
+        invariant = self.data.calc_invariant((
+            params.amp,
+            params.balances,
+            params.roundUp,
+        ))
+        sp.result(StableMath.calcSptInGivenExactTokensOut(
+            params.amp,
+            params.balances,
+            params.amountsOut,
+            params.sptTotalSupply,
+            invariant,
+            params.swapFeePercentage,
+            self.data.calc_invariant,
+            self.data.fpm,
+        ))
+
 
 @sp.add_test(name="StableMath Test")
 def stableMathTest():
@@ -161,3 +179,26 @@ def stableMathTest():
     )
 
     scenario.show(spt_out)
+
+    # Test the calcSptInGivenExactTokensOut function
+    amountsOut = sp.map(
+        {0: sp.nat(15 * 10**18),
+         1: sp.nat(15 * 10**18),
+         2: sp.nat(15 * 10**18),
+         3: sp.nat(15 * 10**18)})
+
+    sptTotalSupply = sp.nat(400000000000009 * 10**6)
+    swapFeePercentage = sp.nat(15 * 10**16)
+
+    spt_in = stable_math.calcSptInGivenExactTokensOut(
+        sp.record(
+            amp=amplificationParameter,
+            balances=balances,
+            amountsOut=amountsOut,
+            sptTotalSupply=sptTotalSupply,
+            swapFeePercentage=swapFeePercentage,
+            roundUp=roundUp,
+        )
+    )
+
+    scenario.show(spt_in)

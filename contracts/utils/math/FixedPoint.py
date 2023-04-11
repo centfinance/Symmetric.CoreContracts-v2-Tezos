@@ -94,6 +94,7 @@ def square_root(x):
 
     return y.value
 
+
 def nth_root(x, n):
     """Calculates the nth root of a given integer
 
@@ -120,7 +121,8 @@ def nth_root(x, n):
 
     # Newton-Raphson method
     while True:
-        y_next = sp.local('y_next', ((n - 1) * y.value + x // (y.value ** (n - 1))) // n)
+        y_next = sp.local('y_next', ((n - 1) * y.value +
+                          x // (y.value ** (n - 1))) // n)
 
         with sp.if_(abs(y_next.value - y.value) <= 1):
             break
@@ -143,11 +145,11 @@ def powDown(p):
     def mul(x, y): return (x * y) // ONE
     def mulUp(x, y): return sp.as_nat(
         sp.fst(sp.ediv(((x * y) - 1), ONE).open_some()) + 1)
-    
+
     x, y = sp.match_pair(p)
-    
+
     powDown = sp.local('powDown', sp.nat(0))
-    
+
     # with sp.if_(y == HALF):
     #     powDown.value = square_root(x)
     with sp.if_(y == ONE):
@@ -196,7 +198,7 @@ def powUp(p):
     def mul(x, y): return sp.as_nat(
         sp.fst(sp.ediv(((x * y) - 1), ONE).open_some()) + 1)
     x, y = sp.match_pair(p)
-    
+
     powUp = sp.local('powUp', 1)
     # with sp.if_(y == HALF):
     #     powUp.value = square_root(x)
@@ -207,12 +209,12 @@ def powUp(p):
     with sp.if_(y == FOUR):
         square = mul(x, x)
         powUp.value = mul(square, square)
-    
+
     with sp.if_((y != ONE) & (y != TWO) & (y != FOUR)):
         raw = LogExpMath.power(x, y)
         maxError = (mul(raw, MAX_POW_RELATIVE_ERROR) + 1)
         powUp.value = (raw + maxError)
-    
+
     sp.result(powUp.value)
 
 # /**
@@ -226,10 +228,8 @@ def powUp(p):
 def complement(x):
     # Equivalent to:
     #  = (x < ONE) ? (ONE - x) : 0;
-    complement = sp.local('complement', 0)
-    with sp.if_(x < ONE):
-        complement.value = sp.as_nat(ONE - x)
-
-    return complement.value
-
-
+    return sp.eif(
+        (x < ONE),
+        sp.as_nat(ONE - x),
+        sp.nat(0,)
+    )
