@@ -241,7 +241,6 @@ class StableMath:
 
         newBalanceTokenIndex = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
             amp, balances, newInvariant, tokenIndex)
-
         amountOutWithoutFee = sp.as_nat(
             balances[tokenIndex] - newBalanceTokenIndex)
 
@@ -256,81 +255,6 @@ class StableMath:
         nonTaxableAmount = sp.as_nat(amountOutWithoutFee - taxableAmount)
 
         return nonTaxableAmount + (fpm['mulDown']((taxableAmount, sp.as_nat(ONE - swapFeePercentage))))
-
-    # def calcBptInGivenExactTokensOut(
-    #     self,
-    #     amp,
-    #     balances,
-    #     amountsOut,
-    #     bptTotalSupply,
-    #     swapFee
-    # ):
-    #     currentInvariants = self._calculateInvariant(
-    #         amp, balances, True)
-    #     sumBalances = sp.local(sp.nat(0))
-    #     with sp.for_('balance', balances) as balance:
-    #         sumBalances.value += balance
-
-    #     tokenBalanceRatiosWithoutFee = [None] * sp.len(balances)
-    #     weightedBalanceRatio = sp.local(sp.nat(0))
-
-    #     with sp.for_('i', sp.range(sp.len(balances))) as i:
-    #         currentWeight = sp.eif(balances[i] % sumBalances.value == 0, balances[i] //
-    #                                sumBalances.value, (balances[i] // sumBalances.value) + 1)
-    #         tokenBalanceRatiosWithoutFee[i] = sp.eif(
-    #             amountsOut[i] % balances[i] == 0, balances[i] - amountsOut[i] // balances[i], balances[i] - (amountsOut[i] // balances[i]) + 1)
-    #         weightedBalanceRatio.value += tokenBalanceRatiosWithoutFee[i] * currentWeight
-
-    #     newBalances = []
-    #     with sp.for_('i', sp.range(sp.len(balances))) as i:
-    #         tokenBalancePercentageExcess = sp.eif(weightedBalanceRatio.value <= tokenBalanceRatiosWithoutFee[i], 0, sp.eif(tokenBalanceRatiosWithoutFee[i] % (
-    #             1 - tokenBalanceRatiosWithoutFee[i]) == 0, weightedBalanceRatio.value - tokenBalanceRatiosWithoutFee[i] // (1 - tokenBalanceRatiosWithoutFee[i]), (weightedBalanceRatio.value - tokenBalanceRatiosWithoutFee[i]) // (1 - tokenBalanceRatiosWithoutFee[i]) + 1))
-
-    #         swapFeeExcess = swapFee * tokenBalancePercentageExcess
-    #         amountOutBeforeFee = sp.eif(amountsOut[i] % (1 - swapFeeExcess) == 0, amountsOut[i] // (
-    #             1 - swapFeeExcess), (amountsOut[i] // (1 - swapFeeExcess)) + 1)
-    #         newBalances.append(balances[i] - amountOutBeforeFee)
-
-    #     newInvariant = self._calculateInvariant(
-    #         amp, newBalances, True)
-    #     sp.result(bptTotalSupply * (newInvariant // (1 - currentInvariants) if newInvariant %
-    #               (1 - currentInvariants) == 0 else (newInvariant // (1 - currentInvariants)) + 1))
-
-    # def calcTokenOutGivenExactBptIn(self, amp, balances, tokenIndex, bptAmountIn, bptTotalSupply, swapFeePercentage):
-    #     currentInvariant = self.calculateInvariant(
-    #         amp, balances, True)
-    #     newInvariant = bptTotalSupply - \
-    #         ((bptAmountIn * bptTotalSupply * currentInvariant +
-    #          currentInvariant - 1) // currentInvariant)
-
-    #     sumBalances = sp.local(sp.nat, 0)
-    #     with sp.for_('balance', sp.range(sp.len(balances))) as balance:
-    #         sumBalances.value += balances[balance]
-
-    #     newBalanceTokenIndex = self.getTokenBalanceGivenInvariantAndAllOtherBalances(
-    #         amp, balances, newInvariant, tokenIndex)
-    #     amountOutBeforeFee = balances[tokenIndex] - newBalanceTokenIndex
-
-    #     currentWeight = balances[tokenIndex] // sumBalances.value
-    #     tokenbalancePercentageExcess = 1 - currentWeight
-
-    #     swapFeeExcess = swapFeePercentage * tokenbalancePercentageExcess
-
-    #     sp.result(amountOutBeforeFee * (1 - swapFeeExcess))
-
-    # def calcDueTokenProtocolSwapFeeAmount(self, amp, balances, lastInvariant, tokenIndex, protocolSwapFeePercentage):
-    #     finalBalanceFeeToken = self.getTokenBalanceGivenInvariantAndAllOtherBalances(
-    #         amp, balances, lastInvariant, tokenIndex)
-
-    #     accumulatedTokenSwapFees = sp.eif(
-    #         balances[tokenIndex] > finalBalanceFeeToken, balances[tokenIndex] - finalBalanceFeeToken, 0)
-
-    #     sp.result((accumulatedTokenSwapFees * protocolSwapFeePercentage) // 1)
-
-    # def calcTokensOutGivenExactBptIn(self, balances, bptAmountIn, bptTotalSupply):
-    #     bptRatio = bptAmountIn // bptTotalSupply
-    #     amountsOut = sp.map(lambda balance: balance * bptRatio, balances)
-    #     sp.result(amountsOut)
 
     def getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, invariant, tokenIndex):
         ampTimesTotal = amp * sp.len(balances)

@@ -240,7 +240,7 @@ def stableMathTest():
     scenario.show(spt_in)
 
     # Test the calcTokenInGivenExactSptOut function
-    sptAmountOut = sp.nat(50000 * 10 ** 6)
+    sptAmountOut = sp.nat(5 * 10 ** 18)
     tokenIndex = 0
     tokenInAmount = stable_math.calcTokenInGivenExactSptOut(
         sp.record(
@@ -258,7 +258,7 @@ def stableMathTest():
     scenario.show(tokenInAmount)
 
     # Test the calcTokenOutGivenExactSptIn function
-    sptAmountIn = sp.nat(50000 * 10 ** 6)
+    sptAmountIn = sp.nat(5 * 10 ** 18)
     tokenIndex = 0
     tokenInAmount = stable_math.calcTokenOutGivenExactSptIn(
         sp.record(
