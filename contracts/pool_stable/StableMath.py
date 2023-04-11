@@ -195,26 +195,67 @@ class StableMath:
         return fpm['mulUp'](
             (sptTotalSupply, (FixedPoint.complement(invariantRatio))))
 
-    # def calcTokenInGivenExactBptOut(self, amp, balances, tokenIndex, bptAmountOut, bptTotalSupply, swapFeePercentage):
-    #     currentInvariant = self.calculateInvariant(
-    #         amp, balances, True)
+    def calcTokenInGivenExactSptOut(
+            amp,
+            balances,
+            tokenIndex,
+            sptAmountOut,
+            sptTotalSupply,
+            currentInvariant,
+            swapFeePercentage,
+            fpm,
+    ):
+        newInvariant = fpm['mulUp']((fpm['divUp'](
+            ((sptTotalSupply + sptAmountOut),  sptTotalSupply)), currentInvariant))
 
-    #     newInvariant = ((bptTotalSupply + bptAmountOut) * bptTotalSupply *
-    #                     currentInvariant + currentInvariant - 1) // currentInvariant
+        newBalanceTokenIndex = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
+            amp, balances, newInvariant, tokenIndex)
 
-    #     sumBalances = sp.local(sp.nat, 0)
-    #     with sp.for_('balance', sp.range(sp.len(balances))) as balance:
-    #         sumBalances.value += balances[balance]
+        amountInWithoutFee = sp.as_nat(
+            newBalanceTokenIndex - balances[tokenIndex])
 
-    #     newBalanceTokenIndex = self.getTokenBalanceGivenInvariantAndAllOtherBalances(
-    #         amp, balances, newInvariant, tokenIndex)
-    #     amountInAfterFee = newBalanceTokenIndex - balances[tokenIndex]
+        sumBalances = sp.local('sumBalances', 0)
+        with sp.for_('x', sp.range(0, sp.len(balances))) as x:
+            sumBalances.value += balances[x]
 
-    #     currentWeight = balances[tokenIndex] // sumBalances.value
-    #     tokenBalancePercentageExcess = 1 - currentWeight
-    #     swapFeeExcess = swapFeePercentage * tokenBalancePercentageExcess
+        currentWeight = fpm['divDown'](
+            (balances[tokenIndex], sumBalances.value))
+        taxablePercentage = FixedPoint.complement(currentWeight)
+        taxableAmount = fpm['mulUp']((amountInWithoutFee, taxablePercentage))
+        nonTaxableAmount = sp.as_nat(amountInWithoutFee - taxableAmount)
 
-    #     sp.result((amountInAfterFee * 1) // (1 - (1 - swapFeeExcess)))
+        return nonTaxableAmount + (fpm['divUp']((taxableAmount, sp.as_nat(ONE - swapFeePercentage))))
+
+    def calcTokenOutGivenExactSptIn(
+            amp,
+            balances,
+            tokenIndex,
+            sptAmountIn,
+            sptTotalSupply,
+            currentInvariant,
+            swapFeePercentage,
+            fpm,
+    ):
+        newInvariant = fpm['mulUp']((fpm['divUp'](
+            (sp.as_nat(sptTotalSupply - sptAmountIn),  sptTotalSupply)), currentInvariant))
+
+        newBalanceTokenIndex = StableMath.getTokenBalanceGivenInvariantAndAllOtherBalances(
+            amp, balances, newInvariant, tokenIndex)
+
+        amountOutWithoutFee = sp.as_nat(
+            balances[tokenIndex] - newBalanceTokenIndex)
+
+        sumBalances = sp.local('sumBalances', 0)
+        with sp.for_('x', sp.range(0, sp.len(balances))) as x:
+            sumBalances.value += balances[x]
+
+        currentWeight = fpm['divDown'](
+            (balances[tokenIndex], sumBalances.value))
+        taxablePercentage = FixedPoint.complement(currentWeight)
+        taxableAmount = fpm['mulUp']((amountOutWithoutFee, taxablePercentage))
+        nonTaxableAmount = sp.as_nat(amountOutWithoutFee - taxableAmount)
+
+        return nonTaxableAmount + (fpm['mulDown']((taxableAmount, sp.as_nat(ONE - swapFeePercentage))))
 
     # def calcBptInGivenExactTokensOut(
     #     self,

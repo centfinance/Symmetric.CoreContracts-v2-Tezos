@@ -95,6 +95,42 @@ class MockStableMath(sp.Contract):
             self.data.fpm,
         ))
 
+    @sp.onchain_view()
+    def calcTokenInGivenExactSptOut(self, params):
+        invariant = self.data.calc_invariant((
+            params.amp,
+            params.balances,
+            params.roundUp,
+        ))
+        sp.result(StableMath.calcTokenInGivenExactSptOut(
+            params.amp,
+            params.balances,
+            params.tokenIndex,
+            params.sptAmountOut,
+            params.sptTotalSupply,
+            invariant,
+            params.swapFeePercentage,
+            self.data.fpm,
+        ))
+
+    @sp.onchain_view()
+    def calcTokenOutGivenExactSptIn(self, params):
+        invariant = self.data.calc_invariant((
+            params.amp,
+            params.balances,
+            params.roundUp,
+        ))
+        sp.result(StableMath.calcTokenOutGivenExactSptIn(
+            params.amp,
+            params.balances,
+            params.tokenIndex,
+            params.sptAmountIn,
+            params.sptTotalSupply,
+            invariant,
+            params.swapFeePercentage,
+            self.data.fpm,
+        ))
+
 
 @sp.add_test(name="StableMath Test")
 def stableMathTest():
@@ -202,3 +238,39 @@ def stableMathTest():
     )
 
     scenario.show(spt_in)
+
+    # Test the calcTokenInGivenExactSptOut function
+    sptAmountOut = sp.nat(50000 * 10 ** 6)
+    tokenIndex = 0
+    tokenInAmount = stable_math.calcTokenInGivenExactSptOut(
+        sp.record(
+            amp=amplificationParameter,
+            balances=balances,
+            tokenIndex=tokenIndex,
+            sptAmountOut=sptAmountOut,
+            sptTotalSupply=sptTotalSupply,
+            swapFeePercentage=swapFeePercentage,
+            currentInvariant=invariant,
+            roundUp=roundUp,
+        )
+    )
+
+    scenario.show(tokenInAmount)
+
+    # Test the calcTokenOutGivenExactSptIn function
+    sptAmountIn = sp.nat(50000 * 10 ** 6)
+    tokenIndex = 0
+    tokenInAmount = stable_math.calcTokenOutGivenExactSptIn(
+        sp.record(
+            amp=amplificationParameter,
+            balances=balances,
+            tokenIndex=tokenIndex,
+            sptAmountIn=sptAmountIn,
+            sptTotalSupply=sptTotalSupply,
+            swapFeePercentage=swapFeePercentage,
+            currentInvariant=invariant,
+            roundUp=roundUp,
+        )
+    )
+
+    scenario.show(tokenInAmount)
