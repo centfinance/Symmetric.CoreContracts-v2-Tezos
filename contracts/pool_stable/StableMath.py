@@ -54,7 +54,7 @@ class StableMath:
                 loop_flag.value = False
 
         with sp.if_(result_value.value == sp.nat(0)):
-            sp.failwith("STABLE_GET_BALANCE_DIDNT_CONVERGE")
+            sp.failwith(Errors.STABLE_GET_BALANCE_DIDNT_CONVERGE)
         sp.result(result_value.value)
 
     def calcOutGivenIn(amp, balances, tokenIndexIn, tokenIndexOut, tokenAmountIn, invariant):
