@@ -13,9 +13,8 @@ ONE = sp.nat(1000000000000000000)
 
 
 class StableMath:
-    def calculateInvariant(t):
-        amp, balances, roundUp = sp.match_tuple(
-            t, 'amp', 'balances', 'roundUp')
+    def calculateInvariant(p):
+        amp, balances = sp.match_pair(p)
         totalBalance = sp.local('totalBalance', sp.nat(0))
         numTokens = sp.len(balances)
         with sp.for_('x', sp.range(0, sp.len(balances))) as x:
@@ -33,23 +32,13 @@ class StableMath:
         with sp.while_(loop_flag.value):
             P_D = sp.local('P_D', numTokens * balances[0])
             with sp.for_('j', sp.range(1, sp.len(balances))) as j:
-                P_D.value = sp.eif(roundUp, (P_D.value * balances[j] * numTokens) // invariant.value,
-                                   (P_D.value * balances[j] * numTokens) // invariant.value + 1)
+                P_D.value = (
+                    P_D.value * balances[j] * numTokens) // invariant.value
             prevInvariant.value = invariant.value
-            invariant.value = sp.eif(
-                roundUp,
-                (numTokens * invariant.value * invariant.value +
-                 (ampTimesTotal * totalBalance.value * P_D.value) // AMP_PRECISION),
-                (numTokens * invariant.value * invariant.value + sp.as_nat((ampTimesTotal *
-                                                                            totalBalance.value * P_D.value) + AMP_PRECISION - 1) // AMP_PRECISION)
-            ) // sp.eif(
-                roundUp == False,
-                (numTokens + 1) * invariant.value +
-                sp.as_nat(ampTimesTotal - AMP_PRECISION) *
-                P_D.value // AMP_PRECISION,
-                ((numTokens + 1) * invariant.value + sp.as_nat(sp.as_nat(ampTimesTotal -
-                                                                         AMP_PRECISION) * P_D.value + AMP_PRECISION - 1) // AMP_PRECISION)
-            )
+            invariant.value = (numTokens * invariant.value * invariant.value +
+                               (ampTimesTotal * totalBalance.value * P_D.value) // AMP_PRECISION) // ((numTokens + 1) * invariant.value +
+                                                                                                      sp.as_nat(ampTimesTotal - AMP_PRECISION) *
+                                                                                                      P_D.value // AMP_PRECISION)
 
             with sp.if_(invariant.value > prevInvariant.value):
                 with sp.if_(sp.as_nat(invariant.value - prevInvariant.value) <= sp.nat(1)):
@@ -134,7 +123,7 @@ class StableMath:
             newBalances[i] = balances[i] + amountInWithoutFee.value
 
         newInvariant = calcInvariant(
-            (amp, newBalances, True))
+            (amp, newBalances))
 
         invariantRatio = fpm['divDown']((newInvariant, currentInvariant))
 
@@ -189,7 +178,7 @@ class StableMath:
             newBalances[i] = sp.as_nat(balances[i] - amountOutWithFee.value)
 
         newInvariant = calcInvariant(
-            (amp, newBalances, True))
+            (amp, newBalances))
         invariantRatio = fpm['divDown']((newInvariant, currentInvariant))
 
         return fpm['mulUp'](

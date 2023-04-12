@@ -24,7 +24,6 @@ class MockStableMath(sp.Contract):
         sp.result(self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         )))
 
     @sp.onchain_view()
@@ -32,7 +31,6 @@ class MockStableMath(sp.Contract):
         invariant = self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         ))
         sp.result(StableMath.calcInGivenOut(
             params.amp,
@@ -48,7 +46,6 @@ class MockStableMath(sp.Contract):
         invariant = self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         ))
         sp.result(StableMath.calcOutGivenIn(
             params.amp,
@@ -64,7 +61,6 @@ class MockStableMath(sp.Contract):
         invariant = self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         ))
         sp.result(StableMath.calcSptOutGivenExactTokensIn(
             params.amp,
@@ -82,7 +78,6 @@ class MockStableMath(sp.Contract):
         invariant = self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         ))
         sp.result(StableMath.calcSptInGivenExactTokensOut(
             params.amp,
@@ -100,7 +95,6 @@ class MockStableMath(sp.Contract):
         invariant = self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         ))
         sp.result(StableMath.calcTokenInGivenExactSptOut(
             params.amp,
@@ -118,7 +112,6 @@ class MockStableMath(sp.Contract):
         invariant = self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         ))
         sp.result(StableMath.calcTokenOutGivenExactSptIn(
             params.amp,
@@ -149,14 +142,12 @@ def stableMathTest():
          2: sp.nat(100000000000009 * 10**6),
          3: sp.nat(100 * 10**18),
          })
-    roundUp = True
 
     # Test the calculateInvariant function
     invariant = stable_math.calculateInvariant(
         sp.record(
             amp=amplificationParameter,
             balances=balances,
-            roundUp=roundUp,
         ))
 
     scenario.show(invariant)
@@ -173,7 +164,6 @@ def stableMathTest():
             tokenIndexIn=tokenIndexIn,
             tokenIndexOut=tokenIndexOut,
             tokenAmountOut=tokenAmountOut,
-            roundUp=roundUp,
         ))
 
     scenario.show(in_given_out)
@@ -188,7 +178,6 @@ def stableMathTest():
             tokenIndexIn=tokenIndexIn,
             tokenIndexOut=tokenIndexOut,
             tokenAmountIn=tokenAmountIn,
-            roundUp=roundUp,
         ))
 
     scenario.show(out_given_in)
@@ -210,7 +199,6 @@ def stableMathTest():
             amountsIn=amountsIn,
             sptTotalSupply=sptTotalSupply,
             swapFeePercentage=swapFeePercentage,
-            roundUp=roundUp,
         )
     )
 
@@ -233,7 +221,6 @@ def stableMathTest():
             amountsOut=amountsOut,
             sptTotalSupply=sptTotalSupply,
             swapFeePercentage=swapFeePercentage,
-            roundUp=roundUp,
         )
     )
 
@@ -251,7 +238,6 @@ def stableMathTest():
             sptTotalSupply=sptTotalSupply,
             swapFeePercentage=swapFeePercentage,
             currentInvariant=invariant,
-            roundUp=roundUp,
         )
     )
 
@@ -269,7 +255,6 @@ def stableMathTest():
             sptTotalSupply=sptTotalSupply,
             swapFeePercentage=swapFeePercentage,
             currentInvariant=invariant,
-            roundUp=roundUp,
         )
     )
 

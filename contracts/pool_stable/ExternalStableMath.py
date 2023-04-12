@@ -21,7 +21,6 @@ class ExternalStableMath(sp.Contract):
         sp.result(self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         )))
 
     @sp.onchain_view()
@@ -29,7 +28,6 @@ class ExternalStableMath(sp.Contract):
         invariant = self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         ))
         sp.result(StableMath.calcInGivenOut(
             params.amp,
@@ -45,7 +43,6 @@ class ExternalStableMath(sp.Contract):
         invariant = self.data.calc_invariant((
             params.amp,
             params.balances,
-            params.roundUp,
         ))
         sp.result(StableMath.calcOutGivenIn(
             params.amp,
