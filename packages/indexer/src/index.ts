@@ -3,11 +3,17 @@ import { createContractIndexerFromDecorators } from '@tezos-dappetizer/decorator
 
 import { VaultIndexer } from './vault-indexer';
 
+import {
+  JoinExit,
+
+} from './entities'
+
 export const indexerModule: IndexerModuleUsingDb = {
     name: 'Indexer',
     dbEntities: [
         // Register your DB entity classes to TypeORM here:
         // MyDbEntity,
+        JoinExit,
     ],
     contractIndexers: [
         // Create your contract indexers here:

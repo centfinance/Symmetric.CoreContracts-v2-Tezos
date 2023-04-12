@@ -14,6 +14,7 @@ import {
     StorageChangeIndexingContext,
     TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
+import { JoinExit } from './entities';
 
 import {
     VaultAcceptAdminParameter,
@@ -100,9 +101,7 @@ export class VaultIndexer {
       const tokenAddresses = pool.tokensList;
   
       const joinId = transactionHash.toHexString().concat(logIndex.toString());
-      const join = new JoinExit();
-      join.id = joinId;
-      join.sender = parameter.sender;
+
       const joinAmounts: string[] = [];
       let valueUSD = '0';
   
@@ -119,16 +118,20 @@ export class VaultIndexer {
         const tokenJoinAmountInUSD = valueInUSD(joinAmount, tokenAddress); // You'll need to implement the valueInUSD function
         valueUSD = (parseFloat(valueUSD) + parseFloat(tokenJoinAmountInUSD)).toString();
       }
-  
-      join.type = 'Join';
-      join.amounts = joinAmounts;
-      join.pool = pool;
-      join.user = await dbContext.userRepository.findOne(parameter.sender) ?? new User(parameter.sender); // Assuming that User has a constructor taking the user address as the only argument
-      join.timestamp = blockTimestamp;
-      join.tx = transactionHash;
-  
-      join.valueUSD = valueUSD;
-      await dbContext.joinExitRepository.save(join);
+      const join = {
+        id: joinId,
+        sender: parameter.sender,
+        type: 'Join',
+        amounts: joinAmounts,
+        pool: pool,
+        user: await dbContext.userRepository.findOne(parameter.sender) ?? new User(parameter.sender), // Assuming that User has a constructor taking the user address as the only argument
+        timestamp: blockTimestamp,
+        tx: transactionHash,
+        valueUSD: valueUSD,
+      }
+
+
+      await dbContext.transaction.insert(JoinExit, join);
   
       // The rest of the function depends on functions and data structures that are specific to the Balancer v2 subgraph
       // You may need to adjust or implement these functions and data structures accordingly
@@ -145,6 +148,7 @@ export class VaultIndexer {
         indexingContext: TransactionIndexingContext,
     ): Promise<void> {
         // Implement your indexing logic here or delete the method if not needed.
+        
     }
 
     @indexEntrypoint('registerTokens')
