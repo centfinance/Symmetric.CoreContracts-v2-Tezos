@@ -1,0 +1,19 @@
+{
+    "indexing": {
+        "fromBlockLevel": 851969,
+        "contractBoost": {
+            "type": "tzkt"
+        },
+        "contracts": [
+            {
+                "name": "WeightedPoolFactory",
+                "addresses": [
+                    "KT1Ewux3ZjVaGnowHo9sVu7wzGhDbq3he65o"
+                ]
+            }
+        ]
+    },
+    "tezosNode": {
+        "url": "https://ghostnet.ecadinfra.com"
+    }
+}

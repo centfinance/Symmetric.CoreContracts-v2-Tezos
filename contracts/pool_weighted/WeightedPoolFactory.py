@@ -16,17 +16,6 @@ import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
 # class Types:
 
-#     CREATE_PARAMS = sp.TRecord(
-#         name=sp.TString,
-#         symbol=sp.TString,
-#         tokens=sp.TList(t=sp.TAddress),
-#         tokenIds=sp.TList(t=sp.TNat),
-#         normalizedWeights=sp.TList(t=sp.TNat),
-#         # Implement later
-#         # rateProviders=sp.TList(t=sp.TNat)
-#         swapFeePercentage=sp.TNat,
-#         owner=sp.TAddress
-#     )
 MIN_TOKENS = 2
 MAX_TOKENS = 8
 MIN_SWAP_FEE_PERCENTAGE = 1000000000000
@@ -36,6 +25,18 @@ MIN_WEIGHT = 10000000000000000  # 0.01e18
 TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
 FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
+
+
+class IWeightedPoolFactory:
+    CreateParams = sp.TRecord(
+        tokens=sp.TMap(sp.TNat, sp.TPair(sp.TAddress, sp.TOption(sp.TNat))),
+        normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
+        tokenDecimals=sp.TMap(sp.TNat, sp.TNat),
+        rateProviders=sp.TOption(sp.TMap(sp.TNat, sp.TOption(sp.TAddress))),
+        swapFeePercentage=sp.TNat,
+        metadata=sp.TBytes,
+        token_metadata=sp.TMap(sp.TString, sp.TBytes),
+    )
 
 
 def getTokenValue(t):
@@ -85,15 +86,6 @@ class WeightedPoolFactory(
             metadata=sp.big_map(
                 normalize_metadata(self, metadata)),
             feeCache=feeCache,
-            fixedPoint=sp.big_map({
-                "mulDown": FixedPoint.mulDown,
-                "mulUp": FixedPoint.mulUp,
-                "divDown": FixedPoint.divDown,
-                "divUp": FixedPoint.divUp,
-                "powDown": FixedPoint.powDown,
-                "powUp": FixedPoint.powUp,
-                "pow": FixedPoint.pow,
-            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
             weightedMathLib=weightedMathLib,
             weightedProtocolFeesLib=weightedProtocolFeesLib,
         )
@@ -110,7 +102,7 @@ class WeightedPoolFactory(
 
         self._creationCode = WeightedPool()
 
-    @sp.entry_point(lazify=False)
+    @sp.entry_point(lazify=False, parameter_type=IWeightedPoolFactory.CreateParams)
     def create(self, params):
         """
             Deploys a new WeightedPool
@@ -185,7 +177,15 @@ class WeightedPoolFactory(
             totalSupply=sp.nat(0),
             vault=self.data.vault,
             getTokenValue=sp.compute(getTokenValue),
-            fixedPoint=sp.compute(self.data.fixedPoint),
+            fixedPoint=sp.big_map({
+                "mulDown": FixedPoint.mulDown,
+                "mulUp": FixedPoint.mulUp,
+                "divDown": FixedPoint.divDown,
+                "divUp": FixedPoint.divUp,
+                "powDown": FixedPoint.powDown,
+                "powUp": FixedPoint.powUp,
+                "pow": FixedPoint.pow,
+            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
             entries=sp.big_map({
                 'totalTokens': numTokens,
                 'athRateProduct': sp.nat(0),
@@ -205,7 +205,7 @@ class WeightedPoolFactory(
     def _computeScalingFactor(self, decimals):
         sp.set_type(decimals, sp.TNat)
         decimalsDifference = sp.as_nat(18 - decimals)
-        return FixedPoint.ONE * (self.data.fixedPoint['pow']((sp.nat(10), decimalsDifference)))
+        return FixedPoint.ONE * (self.power((sp.nat(10), decimalsDifference)))
 
     def _getYieldFeeExemption(self, rateProviders):
         exempt = sp.local('exempt', True)
@@ -215,3 +215,18 @@ class WeightedPoolFactory(
                 exempt.value = False
 
         return exempt.value
+
+    def power(self, p):
+        x, y = sp.match_pair(p)
+        powResult = sp.local('powResult', 1)
+        base = sp.local('base', x)
+        exponent = sp.local('exponent', y)
+
+        with sp.while_(exponent.value != 0):
+            with sp.if_((exponent.value % 2) != 0):
+                powResult.value *= base.value
+
+            exponent.value = exponent.value >> 1  # Equivalent to exponent.value / 2
+            base.value *= base.value
+
+        return powResult.value
