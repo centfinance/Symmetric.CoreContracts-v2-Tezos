@@ -52,8 +52,8 @@ export class Pool {
   @Column("varchar", { length: 42 })
   factory!: string;
 
-  @Column("int")
-  strategyType!: number;
+  // @Column("int")
+  // strategyType!: number;
 
   @Column("boolean")
   oracleEnabled!: boolean;
@@ -100,8 +100,9 @@ export class Pool {
   @Column("bigint")
   holdersCount!: bigint;
 
-  @ManyToOne(() => Symmetric, (symmetric) => symmetric.pools)
-  vault!: Symmetric;
+  // @ManyToOne(() => Symmetric, (symmetric) => symmetric.pools)
+  @Column("numeric")
+  vaultID!: string;
 
   @Column("simple-array")
   tokensList!: string[];
