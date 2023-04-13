@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile": "PYTHONPATH=\"./\" taq compile ${npm_config_file} --json",
+    "compile": "PYTHONPATH=\"./\" taq compile ${npm_config_file}",
     "deploy:all": "ts-node deploy.ts",
+    "types": "taq generate types",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -314,3 +314,6 @@ class WeightedPool(
 
             with sp.if_(rateProduct > athRateProduct):
                 self.data.entries['athRateProduct'] = rateProduct
+
+
+sp.add_compilation_target('Symmetric', WeightedPool())

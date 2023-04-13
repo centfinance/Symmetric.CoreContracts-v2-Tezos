@@ -14,7 +14,7 @@ import {
     StorageChangeIndexingContext,
     TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
-import { Pool } from './entities';
+import { Pool, Token } from './entities';
 
 import { 
   WeightedPoolFactoryCreateParameter, 
@@ -40,6 +40,9 @@ export function newPoolEntity(poolId: string): Pool {
   return pool;
 }
 
+export function scaleDown(num: bigint, decimals: number): string {
+  return (num / BigInt(10 ** decimals)).toString()
+}
 @contractFilter({ name: 'WeightedPoolFactory' })
 export class WeightedPoolFactoryIndexer {
   @indexEvent('PoolCreated')
@@ -47,13 +50,18 @@ export class WeightedPoolFactoryIndexer {
       key: WeightedPoolFactoryIsPoolFromFactoryKey,
       parameter: WeightedPoolFactoryIsPoolFromFactoryValue,
       dbContext: DbContext,
-      indexingContext: TransactionIndexingContext,
+      indexingContext: BigMapUpdateIndexingContext,
   ): Promise<void> {
       // Implement your indexing logic here or delete the method if not needed.
       const poolAddress = key
-      
+      const params = indexingContext.transactionParameter?.value.convert()
+      const metadata = await indexingContext.contract.abstraction.tzip12().getTokenMetadata(0)
+      const token = {
+        name: metadata.name,
+        symbol: metadata.symbol,
+      }
       const pool = newPoolEntity('poolId')
-      pool.swapFee = scaleDown(swapFee, 18);
+      pool.swapFee = scaleDown(params.swapFee, 18);
       pool.createTime = indexingContext.block.timestamp.getTime();
       pool.address = poolAddress;
       pool.factory = indexingContext.contract.address;
@@ -62,7 +70,24 @@ export class WeightedPoolFactoryIndexer {
       pool.swapEnabled = true;
       pool.isPaused = false;
 
-      pool.name = '';
-      pool.symbol = '';
+      pool.name = token.name!;
+      pool.symbol = token.symbol!;
+
+      dbContext.transaction.insert(Pool, pool)
+
+      let vault = findOrInitializeVault();
+      vault.poolCount += 1;
+      vault.save();
+  
+      let vaultSnapshot = getBalancerSnapshot(vault.id, event.block.timestamp.toI32());
+      vaultSnapshot.poolCount += 1;
+      vaultSnapshot.save();
+  
+      let poolContract = PoolContract.load(poolAddress.toHexString());
+      if (poolContract == null) {
+        poolContract = new PoolContract(poolAddress.toHexString());
+        poolContract.pool = poolId.toHexString();
+        poolContract.save();
+      }
   }
 }
