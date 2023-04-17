@@ -1,7 +1,11 @@
+import { TezosToolkit } from '@taquito/taquito';
+import { Tzip12Module, tzip12 } from '@taquito/tzip12';
 import BigNumber from 'bignumber.js';
 import { Pool, Token } from '../entities';
-import { TezosToolkit } from '@taquito/taquito';
 import { WeightedPoolFactoryInitialStorage } from '../weighted-pool-factory-indexer-interfaces.generated';
+
+const tezos = new TezosToolkit('http://localhost:20000');
+tezos.addExtension(new Tzip12Module());
 
 const ZERO_BD = '0';
 
@@ -26,7 +30,11 @@ export function scaleDown(num: BigNumber, decimals: number): string {
 }
 
 export async function getStorage(poolAddress: string) {
-  const tezos = new TezosToolkit('http:localhost:20000');
-  const contract = await tezos.contract.at(poolAddress);
-  return await contract.storage() as WeightedPoolFactoryInitialStorage;
+  const contract = await tezos.contract.at(poolAddress, tzip12);
+  return await contract.storage();
+}
+
+export async function getTokenMetadata(tokenAddress: string, tokenId: number) {
+  const contract = await tezos.contract.at(tokenAddress, tzip12);
+  return await contract.tzip12().getTokenMetadata(tokenId);
 }

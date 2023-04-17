@@ -15,7 +15,7 @@ import {
     TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
 import { Pool, Symmetric, Token } from './entities';
-import { newPoolEntity, scaleDown } from './helpers/misc';
+import { getStorage, getTokenMetadata, newPoolEntity, scaleDown } from './helpers/misc';
 
 import { 
   WeightedPoolFactoryCreateParameter, 
@@ -40,8 +40,8 @@ export class WeightedPoolFactoryIndexer {
       // Implement your indexing logic here or delete the method if not needed.
       const poolAddress = key
       const params = indexingContext.transactionParameter?.value.convert() as WeightedPoolFactoryCreateParameter
-
-      const pool = newPoolEntity('poolId')
+      const poolStorage = await getStorage(poolAddress);
+      const pool = newPoolEntity(poolStorage.poolId)
       pool.swapFee = scaleDown(params.swapFeePercentage, 18);
       pool.createTime = indexingContext.block.timestamp.getTime();
       pool.address = poolAddress;
@@ -51,8 +51,9 @@ export class WeightedPoolFactoryIndexer {
       pool.swapEnabled = true;
       pool.isPaused = false;
 
-      pool.name = token.name!;
-      pool.symbol = token.symbol!;
+      const metadata = await getTokenMetadata(poolAddress, 0)
+      pool.name = metadata.name!;
+      pool.symbol = metadata.symbol!;
 
       dbContext.transaction.save(Pool, pool)
       
