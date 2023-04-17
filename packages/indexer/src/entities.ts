@@ -18,7 +18,7 @@ export class Symmetric {
   @Column("int")
   poolCount!: number;
 
-  @OneToMany(() => Pool, (pool) => pool.vault)
+  @OneToMany(() => Pool, (pool) => pool.vaultID)
   pools!: Pool[];
 
   @Column("numeric")

@@ -1,7 +1,7 @@
 import { TezosToolkit } from '@taquito/taquito';
 import { InMemorySigner } from '@taquito/signer';
-import { ProtocolFeesCollectorCompileCode } from '../../../types/ProtocolFeesCollector.compile.code';
-import { Storage } from '../../../types/ProtocolFeesCollector.compile.types';
+import { ProtocolFeesCollectorCode } from '../../../types/ProtocolFeesCollector.code';
+import { Storage } from '../../../types/ProtocolFeesCollector.types';
 import { tas } from '../../../types/type-aliases';
 
 const config = require('../../../.taq/config.local.development.json');
@@ -13,7 +13,7 @@ export async function deployProtocolFeesCollector(adminAddress: string, vaultAdd
         const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
         tezos.setProvider({ signer });
 
-        const protocolFeesCollectorCode = ProtocolFeesCollectorCompileCode.code;
+        const protocolFeesCollectorCode = ProtocolFeesCollectorCode.code;
 
         const storage: Storage = {
             admin: tas.address(adminAddress),
@@ -43,4 +43,4 @@ const vaultAddress = '<your_vault_address>';
 const flashLoanFeePercentage = '1000000000000000';
 const swapFeePercentage = '400000000000000000';
 
-deployProtocolFeesCollector(adminAddress, vaultAddress, flashLoanFeePercentage, swapFeePercentage);
+// deployProtocolFeesCollector(adminAddress, vaultAddress, flashLoanFeePercentage, swapFeePercentage);

@@ -237,3 +237,6 @@ class ExternalWeightedMath(sp.Contract):
             params.swapFeePercentage,
             self.data.fixedPoint,
         ))
+
+
+sp.add_compilation_target('ExternalWeightedMath', ExternalWeightedMath())

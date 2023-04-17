@@ -1,6 +1,6 @@
 import { deployAll } from './contracts/deployments/helpers/deployAll';
 
-const adminAddress = process.argv[2];
+const adminAddress = 'tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb';
 
 if (adminAddress) {
   deployAll(adminAddress).catch((error) => {

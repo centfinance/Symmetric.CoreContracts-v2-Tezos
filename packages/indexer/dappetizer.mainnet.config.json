@@ -1,25 +1,25 @@
 {
-  "indexing": {
-    "fromBlockLevel": 851969,
-    "contractBoost": {
-      "type": "tzkt"
+    "indexing": {
+        "fromBlockLevel": 851969,
+        "contractBoost": {
+            "type": "tzkt"
+        },
+        "contracts": [
+            {
+                "name": "Vault",
+                "addresses": [
+                    "KT1DSsMYr3n7C1ecYSgZimtFkDXdEQbxULFw"
+                ]
+            },
+            {
+                "name": "WeightedPoolFactory",
+                "addresses": [
+                    "KT1QmzwyMArWDrEkhHDHBtM4sh39xfVinqoE"
+                ]
+            }
+        ]
     },
-    "contracts": [
-      {
-        "name": "Vault",
-        "addresses": [
-          "KT1DSsMYr3n7C1ecYSgZimtFkDXdEQbxULFw"
-        ]
-      },
-      {
-        "name": "WeightedPoolFactory",
-        "addresses": [
-          "KT1Ewux3ZjVaGnowHo9sVu7wzGhDbq3he65o"
-        ]
-      }
-    ]
-  },
-  "tezosNode": {
-    "url": "https://ghostnet.ecadinfra.com"
-  }
+    "tezosNode": {
+        "url": "http://localhost:20000"
+    }
 }

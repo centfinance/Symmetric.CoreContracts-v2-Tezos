@@ -14,7 +14,8 @@ import {
     StorageChangeIndexingContext,
     TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
-import { Pool, Token } from './entities';
+import { Pool, Symmetric, Token } from './entities';
+import { newPoolEntity, scaleDown } from './helpers/misc';
 
 import { 
   WeightedPoolFactoryCreateParameter, 
@@ -22,27 +23,11 @@ import {
   WeightedPoolFactoryIsPoolFromFactoryValue 
 } from './weighted-pool-factory-indexer-interfaces.generated';
 
-const ZERO_BD = '0';
 
-export function newPoolEntity(poolId: string): Pool {
-  let pool = new Pool();
-  pool.id = poolId;
-  pool.vaultID = '1';
-  pool.tokensList = [];
-  pool.totalWeight = ZERO_BD;
-  pool.totalSwapVolume = ZERO_BD;
-  pool.totalSwapFee = ZERO_BD;
-  pool.totalLiquidity = ZERO_BD;
-  pool.totalShares = ZERO_BD;
-  pool.swapsCount = BigInt(0);
-  pool.holdersCount = BigInt(0);
 
-  return pool;
-}
 
-export function scaleDown(num: bigint, decimals: number): string {
-  return (num / BigInt(10 ** decimals)).toString()
-}
+
+
 @contractFilter({ name: 'WeightedPoolFactory' })
 export class WeightedPoolFactoryIndexer {
   @indexEvent('PoolCreated')
@@ -50,18 +35,14 @@ export class WeightedPoolFactoryIndexer {
       key: WeightedPoolFactoryIsPoolFromFactoryKey,
       parameter: WeightedPoolFactoryIsPoolFromFactoryValue,
       dbContext: DbContext,
-      indexingContext: BigMapUpdateIndexingContext,
+      indexingContext: EventIndexingContext,
   ): Promise<void> {
       // Implement your indexing logic here or delete the method if not needed.
       const poolAddress = key
-      const params = indexingContext.transactionParameter?.value.convert()
-      const metadata = await indexingContext.contract.abstraction.tzip12().getTokenMetadata(0)
-      const token = {
-        name: metadata.name,
-        symbol: metadata.symbol,
-      }
+      const params = indexingContext.transactionParameter?.value.convert() as WeightedPoolFactoryCreateParameter
+
       const pool = newPoolEntity('poolId')
-      pool.swapFee = scaleDown(params.swapFee, 18);
+      pool.swapFee = scaleDown(params.swapFeePercentage, 18);
       pool.createTime = indexingContext.block.timestamp.getTime();
       pool.address = poolAddress;
       pool.factory = indexingContext.contract.address;
@@ -73,21 +54,60 @@ export class WeightedPoolFactoryIndexer {
       pool.name = token.name!;
       pool.symbol = token.symbol!;
 
-      dbContext.transaction.insert(Pool, pool)
+      dbContext.transaction.save(Pool, pool)
+      
+      const vault = await dbContext.transaction.findOneOrFail(Symmetric, {
+        where: {
+          id: '1',
+        }
+      })
 
-      let vault = findOrInitializeVault();
       vault.poolCount += 1;
-      vault.save();
+      dbContext.transaction.save(Symmetric, vault)
   
-      let vaultSnapshot = getBalancerSnapshot(vault.id, event.block.timestamp.toI32());
-      vaultSnapshot.poolCount += 1;
-      vaultSnapshot.save();
+      // let vaultSnapshot = getBalancerSnapshot(vault.id, event.block.timestamp.toI32());
+      // vaultSnapshot.poolCount += 1;
+      // vaultSnapshot.save();
   
-      let poolContract = PoolContract.load(poolAddress.toHexString());
-      if (poolContract == null) {
-        poolContract = new PoolContract(poolAddress.toHexString());
-        poolContract.pool = poolId.toHexString();
-        poolContract.save();
-      }
+      // let poolContract = PoolContract.load(poolAddress.toHexString());
+      // if (poolContract == null) {
+      //   poolContract = new PoolContract(poolAddress.toHexString());
+      //   poolContract.pool = poolId.toHexString();
+      //   poolContract.save();
+      // }
   }
 }
+
+// function createWeightedLikePool(poolAddress: string, poolType: string, poolTypeVersion: number = 1): string | null {
+//   let poolContract = WeightedPool.bind(poolAddress);
+
+//   let poolIdCall = poolContract.try_getPoolId();
+//   let poolId = poolIdCall.value;
+
+//   let swapFeeCall = poolContract.try_getSwapFeePercentage();
+//   let swapFee = swapFeeCall.value;
+
+//   let ownerCall = poolContract.try_getOwner();
+//   let owner = ownerCall.value;
+
+//   let pool = handleNewPool(poolAddress, poolId, swapFee);
+//   pool.poolType = poolType;
+//   pool.poolTypeVersion = poolTypeVersion;
+//   pool.owner = owner;
+
+//   // let tokens = getPoolTokens(poolId);
+//   // if (tokens == null) return null;
+//   // pool.tokensList = tokens;
+
+//   pool.save();
+
+//   // handleNewPoolTokens(pool, tokens);
+
+//   // // Load pool with initial weights
+//   // updatePoolWeights(poolId.toHexString());
+
+//   // // Create PriceRateProvider entities for WeightedPoolV2
+//   // if (poolTypeVersion == 2) setPriceRateProviders(poolId.toHex(), poolAddress, tokens);
+
+//   return poolId.toHexString();
+// }
