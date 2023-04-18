@@ -9,7 +9,7 @@ import { WeightedPoolFactoryInitialStorage } from '../weighted-pool-factory-inde
 const tezos = new TezosToolkit('http://localhost:20000');
 tezos.addExtension(new Tzip12Module());
 
-const ZERO_BD = '0';
+export const ZERO_BD = '0';
 
 export function newPoolEntity(poolId: string): Pool {
   let pool = new Pool();
