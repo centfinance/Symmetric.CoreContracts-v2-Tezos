@@ -228,6 +228,9 @@ export class Token {
   @Column("varchar", { length: 42 })
   address!: string;
 
+  @Column("numeric")
+  tokenId!: number;
+
   @Column("decimal", { precision: 40, scale: 18 })
   totalBalanceUSD!: string;
 
