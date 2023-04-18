@@ -228,11 +228,18 @@ export class Token {
 // PriceRateProvider
 @Entity()
 export class PriceRateProvider {
-  @PrimaryColumn("varchar", { length: 42 })
+  @PrimaryColumn('text')
   id!: string;
 
-  @ManyToOne(() => Pool, (pool) => pool.priceRateProviders)
-  poolId!: Pool;
+  @Column('text')
+  poolId!: string;
+
+  @Column('text')
+  address!: string | undefined | null;
+
+  @Column('text')
+  token!: string;
+
 
   // ... other columns and relations for the PriceRateProvider entity
 }

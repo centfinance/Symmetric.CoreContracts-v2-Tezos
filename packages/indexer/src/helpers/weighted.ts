@@ -1,35 +1,42 @@
+import { MichelsonMap } from "@taquito/michelson-encoder";
+import { DbContext } from "@tezos-dappetizer/database";
+import BigNumber from "bignumber.js";
+import { Pool } from "../entities";
+import { scaleDown } from "./misc";
 
 
-// export function updatePoolWeights(poolId: string): void {
-//   let pool = Pool.load(poolId);
+// export async function updatePoolWeights(
+//   poolId: string, 
+//   weights:MichelsonMap<BigNumber, BigNumber>,
+//   dbContext: DbContext
+// ): Promise<void> {
+
+//   const pool = await dbContext.transaction.findOneOrFail(Pool, {
+//     where: {
+//       id: poolId,
+//     }
+//   })
 //   if (pool == null) return;
 
-//   let poolContract = WeightedPool.bind(changetype<Address>(pool.address));
-
-//   let tokensList = pool.tokensList;
-//   let weightsCall = poolContract.try_getNormalizedWeights();
-//   if (!weightsCall.reverted) {
-//     let weights = weightsCall.value;
-
-//     if (weights.length == tokensList.length) {
+//   const tokensList = pool.tokensList;
+//   if (weights.size == tokensList.length) {
 //       let totalWeight = ZERO_BD;
 
 //       for (let i = 0; i < tokensList.length; i++) {
-//         let tokenAddress = changetype<Address>(tokensList[i]);
-//         let weight = weights[i];
+//         const weight = weights.get(BigNumber(i));
 
-//         let poolToken = loadPoolToken(poolId, tokenAddress);
-//         if (poolToken != null) {
-//           poolToken.weight = scaleDown(weight, 18);
-//           poolToken.save();
-//         }
+//         // let poolToken = loadPoolToken(poolId, tokenAddress);
+//         // if (poolToken != null) {
+//         //   poolToken.weight = scaleDown(weight, 18);
+//         //   poolToken.save();
+//         // }
 
 //         totalWeight = totalWeight.plus(scaleDown(weight, 18));
 //       }
 
 //       pool.totalWeight = totalWeight;
 //     }
-//   }
+  
 
-//   pool.save();
+//     dbContext.transaction.save(Pool, pool)
 // }

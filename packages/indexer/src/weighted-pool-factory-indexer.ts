@@ -1,23 +1,15 @@
 import { DbContext } from '@tezos-dappetizer/database';
 import {
     contractFilter,
-    indexBigMapUpdate,
-    indexEntrypoint,
     indexEvent,
-    indexOrigination,
-    indexStorageChange,
 } from '@tezos-dappetizer/decorators';
 import {
-    BigMapUpdateIndexingContext,
     EventIndexingContext,
-    OriginationIndexingContext,
-    StorageChangeIndexingContext,
-    TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
 import { Pool, Symmetric, Token } from './entities';
 import { getStorage, getTokenMetadata, newPoolEntity, scaleDown } from './helpers/misc';
+import { setPriceRateProviders } from './helpers/pools';
 import { address, nat } from './types/type-aliases';
-import { Storage } from './types/weighted-pool-types';
 
 import { 
   WeightedPoolFactoryCreateParameter, 
@@ -50,11 +42,11 @@ async function handleNewPool(
   poolId: {
     0: address;
     1: nat;
-  }| undefined, 
+  }| undefined,
+  params: WeightedPoolFactoryCreateParameter,
   indexingContext: EventIndexingContext, 
   dbContext: DbContext
 ) {
-  const params = indexingContext.transactionParameter?.value.convert() as WeightedPoolFactoryCreateParameter
   const pool = newPoolEntity(JSON.stringify(poolId))
   pool.swapFee = scaleDown(params.swapFeePercentage, 18);
   pool.createTime = indexingContext.block.timestamp.getTime();
@@ -93,27 +85,20 @@ async function handleNewPool(
   return pool;
 }
 
-async function createWeightedLikePool(poolAddress: string, indexingContext: EventIndexingContext, dbContext: DbContext): string | null {
+async function createWeightedLikePool(poolAddress: string, indexingContext: EventIndexingContext, dbContext: DbContext): Promise<void> {
+  const params = indexingContext.transactionParameter?.value.convert() as WeightedPoolFactoryCreateParameter
   const poolStorage = await getStorage(poolAddress);
 
-  let pool = await handleNewPool(poolAddress, poolStorage.poolId, indexingContext, dbContext);
+  let pool = await handleNewPool(poolAddress, poolStorage.poolId, params, indexingContext, dbContext);
   pool.poolType = 'Weighted';
   pool.poolTypeVersion = 1;
   pool.owner = poolStorage.admin;
 
-  // let tokens = getPoolTokens(poolId);
-  // if (tokens == null) return null;
-  // pool.tokensList = tokens;
+  pool.tokensList = [...params.tokens.values()].map(t => JSON.stringify(t));
+  pool.totalWeight = '100';
 
   dbContext.transaction.save(Pool, pool)
 
-  // handleNewPoolTokens(pool, tokens);
-
-  // // Load pool with initial weights
-  // updatePoolWeights(poolId.toHexString());
-
-  // // Create PriceRateProvider entities for WeightedPoolV2
-  // if (poolTypeVersion == 2) setPriceRateProviders(poolId.toHex(), poolAddress, tokens);
-
-  return poolId.toHexString();
+  setPriceRateProviders(JSON.stringify(poolStorage.poolId),  params.rateProviders!, pool.tokensList, dbContext);
 }
+
