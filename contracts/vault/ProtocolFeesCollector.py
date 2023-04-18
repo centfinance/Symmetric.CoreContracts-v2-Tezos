@@ -18,8 +18,8 @@ class ProtocolFeesCollector(
 ):
     def __init__(
             self,
-            vault,
-            admin,
+            vault=sp.address('KT1DSsMYr3n7C1ecYSgZimtFkDXdEQbxULFw'),
+            admin=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
     ):
         self.init(
             vault=vault,
@@ -85,3 +85,6 @@ class ProtocolFeesCollector(
     #             self.address,
     #             t=sp.TNat
     #         ).open_some('Invalid View'))
+
+
+sp.add_compilation_target('ProtocolFeesCollector', ProtocolFeesCollector())

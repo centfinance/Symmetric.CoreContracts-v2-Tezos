@@ -26,6 +26,10 @@ TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 
 FEE_CACHE = sp.TTuple(sp.TNat, sp.TNat, sp.TNat)
 
+CONTRACT_METADATA = {
+    "": "https://raw.githubusercontent.com/centfinance/Symmetric.CoreContracts-v2-Tezos/main/metadata/testnet/WeightedPoolFactory.json",
+}
+
 
 class IWeightedPoolFactory:
     CreateParams = sp.TRecord(
@@ -74,13 +78,14 @@ class WeightedPoolFactory(
 
     def __init__(
         self,
-        admin,
-        vault,
-        weightedMathLib,
-        weightedProtocolFeesLib,
-        protocolFeeProvider,
-        feeCache,
-        metadata
+        admin=sp.address('tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb'),
+        vault=sp.address('KT19vqRahNHjLQUSwK6hotc5sgdnnngyHbAK'),
+        weightedMathLib=sp.address('KT1C6tChcwy7YAqg9SCJWHPdHUp4fK5pJGXF'),
+        weightedProtocolFeesLib=sp.address(
+            'KT1Hzg8h1VQ7ftnJ4kdtZdxNvhgz8wuBFPDB'),
+        protocolFeeProvider=sp.address('KT1HB23EeQ3dv2GqLniUrRhKDd5YJG9RKC23'),
+        feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
+        metadata=CONTRACT_METADATA,
     ):
         self.init(
             metadata=sp.big_map(
@@ -114,7 +119,7 @@ class WeightedPoolFactory(
         sp.verify((numTokens == sp.len(params.normalizedWeights))
                   & (numTokens == sp.len(params.tokenDecimals)))
 
-        # // Ensure each normalized weight is above the minimum
+        # Ensure each normalized weight is above the minimum
         normalizedSum = sp.local('normalizedSum', 0)
         with sp.for_('i', sp.range(0, numTokens)) as i:
             normalizedWeight = params.normalizedWeights[i]
@@ -123,11 +128,8 @@ class WeightedPoolFactory(
                       MIN_WEIGHT, Errors.MIN_WEIGHT)
             normalizedSum.value = normalizedSum.value + normalizedWeight
 
-        # // Ensure that the normalized weights sum to ONE
         sp.verify(normalizedSum.value == FixedPoint.ONE,
                   Errors.NORMALIZED_WEIGHT_INVARIANT)
-
-        # self.data.normalizedWeights = params.normalizedWeights
         scalingFactors = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         with sp.for_('i', sp.range(0, numTokens)) as i:
             scalingFactors[i] = self._computeScalingFactor(
@@ -230,3 +232,6 @@ class WeightedPoolFactory(
             base.value *= base.value
 
         return powResult.value
+
+
+sp.add_compilation_target('WeightedPoolFactory', WeightedPoolFactory())

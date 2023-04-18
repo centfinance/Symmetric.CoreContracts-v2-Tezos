@@ -6,6 +6,10 @@ from contracts.utils.mixins.Administrable import Administrable
 
 from contracts.utils.mixins.Pausable import Pausable
 
+CONTRACT_METADATA = {
+    "": "https://raw.githubusercontent.com/centfinance/Symmetric.CoreContracts-v2-Tezos/main/metadata/testnet/Vault.json",
+}
+
 
 def normalize_metadata(self, metadata):
     meta = {}
@@ -21,7 +25,11 @@ class Vault(
     Pausable,
     Swaps,
 ):
-    def __init__(self, owner, metadata):
+    def __init__(
+            self,
+            owner=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
+            metadata=CONTRACT_METADATA,
+    ):
         self.init(
             metadata=sp.big_map(
                 normalize_metadata(self, metadata))
@@ -30,3 +38,6 @@ class Vault(
         Administrable.__init__(self, owner, False)
         Pausable.__init__(self, False, False)
         Swaps.__init__(self)
+
+
+sp.add_compilation_target('Vault', Vault())

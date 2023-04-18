@@ -18,7 +18,7 @@ export class Symmetric {
   @Column("int")
   poolCount!: number;
 
-  @OneToMany(() => Pool, (pool) => pool.vault)
+  @OneToMany(() => Pool, (pool) => pool.vaultID)
   pools!: Pool[];
 
   @Column("numeric")
@@ -52,8 +52,8 @@ export class Pool {
   @Column("varchar", { length: 42 })
   factory!: string;
 
-  @Column("int")
-  strategyType!: number;
+  // @Column("int")
+  // strategyType!: number;
 
   @Column("boolean")
   oracleEnabled!: boolean;
@@ -100,8 +100,9 @@ export class Pool {
   @Column("bigint")
   holdersCount!: bigint;
 
-  @ManyToOne(() => Symmetric, (symmetric) => symmetric.pools)
-  vault!: Symmetric;
+  // @ManyToOne(() => Symmetric, (symmetric) => symmetric.pools)
+  @Column("numeric")
+  vaultID!: string;
 
   @Column("simple-array")
   tokensList!: string[];
@@ -227,11 +228,18 @@ export class Token {
 // PriceRateProvider
 @Entity()
 export class PriceRateProvider {
-  @PrimaryColumn("varchar", { length: 42 })
+  @PrimaryColumn('text')
   id!: string;
 
-  @ManyToOne(() => Pool, (pool) => pool.priceRateProviders)
-  poolId!: Pool;
+  @Column('text')
+  poolId!: string;
+
+  @Column('text')
+  address!: string | undefined | null;
+
+  @Column('text')
+  token!: string;
+
 
   // ... other columns and relations for the PriceRateProvider entity
 }

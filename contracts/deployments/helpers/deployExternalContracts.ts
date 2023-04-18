@@ -1,10 +1,10 @@
 import { TezosToolkit } from '@taquito/taquito';
 import { InMemorySigner } from '@taquito/signer';
-import { ExternalWeightedMathCompileCode } from '../../../types/ExternalWeightedMath.compile.code';
-import { ExternalWeightedProtocolFeesCompileCode } from '../../../types/ExternalWeightedProtocolFees.compile.code';
+import { ExternalWeightedMathCode } from '../../../types/ExternalWeightedMath.code';
+import { ExternalWeightedProtocolFeesCode } from '../../../types/ExternalWeightedProtocolFees.code';
 
-const externalWeightedMathStorage = require('../../../artifacts/ExternalWeightedMath.compile.default_storage.json')
-const externalWeightedProtocolFeesStorage = require('../../../artifacts/ExternalWeightedMath.compile.default_storage.json')
+const externalWeightedMathStorage = require('../../../artifacts/ExternalWeightedMath.default_storage.json')
+const externalWeightedProtocolFeesStorage = require('../../../artifacts/ExternalWeightedMath.default_storage.json')
 
 const config = require('../../../.taq/config.local.development.json');
 
@@ -15,8 +15,8 @@ export async function deployExternalContracts() {
     const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
     tezos.setProvider({ signer });
   
-    const externalWeightedMathCode = ExternalWeightedMathCompileCode.code;
-    const externalWeightedProtocolFeesCode = ExternalWeightedProtocolFeesCompileCode.code;
+    const externalWeightedMathCode = ExternalWeightedMathCode.code;
+    const externalWeightedProtocolFeesCode = ExternalWeightedProtocolFeesCode.code;
     const batch = await tezos.contract.batch()
       .withOrigination({
         code: externalWeightedMathCode,
@@ -44,7 +44,7 @@ export async function deployExternalContracts() {
     console.log('ExternalWeightedMath contract deployed at address:', contract1[0]);
     console.log('ExternalWeightedProtocolFees contract deployed at address:', contract2[0]);
     
-    return [contract1, contract2];
+    return [contract1[0], contract2[0]];
   } catch (error) {
     console.error('Error deploying contracts:', error);
   }

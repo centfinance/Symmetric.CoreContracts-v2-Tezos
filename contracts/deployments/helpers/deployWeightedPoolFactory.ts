@@ -1,8 +1,8 @@
 import { TezosToolkit } from '@taquito/taquito';
 import { InMemorySigner } from '@taquito/signer';
 
-import { WeightedPoolFactoryCompileCode } from '../../../types/WeightedPoolFactory.compile.code';
-import { Storage } from '../../../types/WeightedPoolFactory.compile.types';
+import { WeightedPoolFactoryCode } from '../../../types/WeightedPoolFactory.code';
+import { Storage } from '../../../types/WeightedPoolFactory.types';
 import { tas } from '../../../types/type-aliases';
 
 const config = require('../../../.taq/config.local.development.json');
@@ -22,13 +22,20 @@ export async function deployWeightedPoolFactory(
         tezos.setProvider({ signer });
 
         // Replace with the Michelson code of the WeightedPoolFactory contract
-        const weightedPoolFactoryCode = WeightedPoolFactoryCompileCode.code;
+        const weightedPoolFactoryCode = WeightedPoolFactoryCode.code;
 
         const storage: Storage = {
             admin: tas.address(adminAddress),
-            feeCache: { 0: tas.nat('400000000000000000'), 1: tas.nat('400000000000000000')},
-            isPoolFromFactory: tas.bigMap([]),
-            metadata: tas.bigMap([]),
+            feeCache: { 0: tas.nat(400000000000000000), 1: tas.nat(400000000000000000)},
+            isPoolFromFactory: tas.bigMap([{
+              key: tas.address(adminAddress),
+              value: tas.unit()
+            }]),
+            metadata: tas.bigMap([{
+              key: 'name',
+              value: tas.bytes(''),
+            }]),
+            proposed_admin: undefined,
             protocolFeeProvider: tas.address(protocolFeeProviderAddress),
             vault: tas.address(vaultAddress),
             weightedMathLib: tas.address(weightedMathLibAddress),
@@ -57,10 +64,10 @@ const vaultAddress = '<your_vault_address>';
 const weightedMathLibAddress = '<your_weighted_math_lib_address>';
 const weightedProtocolFeesLibAddress = '<your_weighted_protocol_fees_lib_address>';
 
-deployWeightedPoolFactory(
-    adminAddress,
-    protocolFeeProviderAddress,
-    vaultAddress,
-    weightedMathLibAddress,
-    weightedProtocolFeesLibAddress
-);
+// deployWeightedPoolFactory(
+//     adminAddress,
+//     protocolFeeProviderAddress,
+//     vaultAddress,
+//     weightedMathLibAddress,
+//     weightedProtocolFeesLibAddress
+// );

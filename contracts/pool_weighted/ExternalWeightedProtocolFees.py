@@ -214,3 +214,7 @@ class ExternalWeightedProtocolFees(sp.Contract):
                 ))
 
         return product.value
+
+
+sp.add_compilation_target('ExternalWeightedProtocolFees',
+                          ExternalWeightedProtocolFees())
