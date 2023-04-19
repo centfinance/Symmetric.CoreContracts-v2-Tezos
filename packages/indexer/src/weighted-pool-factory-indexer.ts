@@ -102,12 +102,12 @@ async function createWeightedLikePool(poolAddress: string, indexingContext: Even
 
   dbContext.transaction.save(Pool, pool)
 
-  handleNewPoolTokens(pool, params.tokens, dbContext);
+  await handleNewPoolTokens(pool, params.tokens, dbContext);
 
-  setPriceRateProviders(JSON.stringify(poolStorage.poolId),  params.rateProviders!, pool.tokensList, dbContext);
+  await setPriceRateProviders(JSON.stringify(poolStorage.poolId),  params.rateProviders!, pool.tokensList, dbContext);
 }
 
-async function handleNewPoolTokens(pool: Pool, tokens: MichelsonMap<BigNumber, WeightedPoolFactoryCreateParameterTokensValue>, dbContext:DbContext): void {
+async function handleNewPoolTokens(pool: Pool, tokens: MichelsonMap<BigNumber, WeightedPoolFactoryCreateParameterTokensValue>, dbContext:DbContext): Promise<void> {
   for (let i: number = 0; i < tokens.size; i++) {
     const tokenData = tokens.get(BigNumber(i))!;
     

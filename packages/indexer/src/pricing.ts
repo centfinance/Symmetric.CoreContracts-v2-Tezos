@@ -1,8 +1,10 @@
 import { DbContext } from "@tezos-dappetizer/database";
+import BigNumber from "bignumber.js";
+import { USD_STABLE_ASSETS } from "./helpers/constants";
 import { getToken, ZERO_BD } from "./helpers/misc";
 
-export async function valueInUSD(value: BigDecimal, asset: string, assetId: number, dbContext: DbContext): BigDecimal {
-  let usdValue = ZERO_BD;
+export async function valueInUSD(value: BigNumber, asset: string, assetId: number, dbContext: DbContext): Promise<BigNumber>  {
+  let usdValue = BigNumber(ZERO_BD);
 
   if (isUSDStable(asset)) {
     usdValue = value;
@@ -11,7 +13,7 @@ export async function valueInUSD(value: BigDecimal, asset: string, assetId: numb
     let token = await getToken(asset, assetId, dbContext);
 
     if (token.latestUSDPrice) {
-      const latestUSDPrice = token.latestUSDPrice as BigDecimal;
+      const latestUSDPrice = BigNumber(token.latestUSDPrice);
       usdValue = value.times(latestUSDPrice);
     }
   }
