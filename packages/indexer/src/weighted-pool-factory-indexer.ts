@@ -1,3 +1,4 @@
+import { MichelsonMap } from '@taquito/michelson-encoder';
 import { DbContext } from '@tezos-dappetizer/database';
 import {
     contractFilter,
@@ -6,13 +7,15 @@ import {
 import {
     EventIndexingContext,
 } from '@tezos-dappetizer/indexer';
+import BigNumber from 'bignumber.js';
 import { Pool, Symmetric, Token } from './entities';
-import { getStorage, getTokenMetadata, newPoolEntity, scaleDown } from './helpers/misc';
+import { createPoolTokenEntity, getStorage, getTokenMetadata, newPoolEntity, scaleDown } from './helpers/misc';
 import { setPriceRateProviders } from './helpers/pools';
 import { address, nat } from './types/type-aliases';
 
 import { 
   WeightedPoolFactoryCreateParameter, 
+  WeightedPoolFactoryCreateParameterTokensValue, 
   WeightedPoolFactoryIsPoolFromFactoryKey, 
   WeightedPoolFactoryIsPoolFromFactoryValue 
 } from './weighted-pool-factory-indexer-interfaces.generated';
@@ -93,12 +96,21 @@ async function createWeightedLikePool(poolAddress: string, indexingContext: Even
   pool.poolType = 'Weighted';
   pool.poolTypeVersion = 1;
   pool.owner = poolStorage.admin;
-
+  params.tokens
   pool.tokensList = [...params.tokens.values()].map(t => JSON.stringify(t));
   pool.totalWeight = '100';
 
   dbContext.transaction.save(Pool, pool)
 
+  handleNewPoolTokens(pool, params.tokens, dbContext);
+
   setPriceRateProviders(JSON.stringify(poolStorage.poolId),  params.rateProviders!, pool.tokensList, dbContext);
 }
 
+async function handleNewPoolTokens(pool: Pool, tokens: MichelsonMap<BigNumber, WeightedPoolFactoryCreateParameterTokensValue>, dbContext:DbContext): void {
+  for (let i: number = 0; i < tokens.size; i++) {
+    const tokenData = tokens.get(BigNumber(i))!;
+    
+    await createPoolTokenEntity(pool, tokenData?.[0], tokenData?.[1]?.toNumber(), i, dbContext);
+  }
+}

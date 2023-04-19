@@ -142,13 +142,58 @@ export class PoolToken {
   @PrimaryColumn("varchar", { length: 42 })
   id!: string;
 
-  @ManyToOne(() => Pool, (pool) => pool.tokens)
-  poolId!: Pool;
+  @ManyToOne(() => Pool, (pool) => pool.tokens, { nullable: true })
+  poolId?: Pool;
 
   @ManyToOne(() => Token, (token) => token.poolTokens)
   token!: Token;
 
-  // ... other columns and relations for the PoolToken entity
+  @Column("varchar", { length: 42 })
+  assetManager!: string;
+
+  @Column("varchar")
+  symbol!: string;
+
+  @Column("varchar")
+  name!: string;
+
+  @Column("int")
+  decimals!: number;
+
+  @Column("int", { nullable: true })
+  index?: number;
+
+  @Column("varchar", { length: 42 })
+  address!: string;
+
+  @Column("numeric")
+  tokenId!: string | null;
+
+  @Column("decimal", { precision: 40, scale: 18, nullable: true })
+  oldPriceRate?: string;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  priceRate!: string;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  balance!: string;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  cashBalance!: string;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  managedBalance!: string;
+
+  // @OneToMany(() => ManagementOperation, (managementOperation) => managementOperation.poolTokenId)
+  // managements!: ManagementOperation[];
+
+  // WeightedPool Only
+  @Column("decimal", { precision: 40, scale: 18, nullable: true })
+  weight?: string;
+
+  // // ComposableStablePool Only
+  // @Column("boolean", { nullable: true })
+  // isExemptFromYieldProtocolFee?: boolean;
 }
 
 @Entity()

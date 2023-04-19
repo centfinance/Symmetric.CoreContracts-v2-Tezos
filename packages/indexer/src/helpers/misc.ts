@@ -2,9 +2,10 @@ import { TezosToolkit } from '@taquito/taquito';
 import { Tzip12Module, tzip12 } from '@taquito/tzip12';
 import { DbContext } from '@tezos-dappetizer/database';
 import BigNumber from 'bignumber.js';
-import { Pool, Token } from '../entities';
+import { Pool, PoolToken, Token } from '../entities';
 import { WeightedPoolContractType } from '../types/weighted-pool-types';
 import { WeightedPoolFactoryInitialStorage } from '../weighted-pool-factory-indexer-interfaces.generated';
+import { getPoolTokenId } from './pools';
 
 const tezos = new TezosToolkit('http://localhost:20000');
 tezos.addExtension(new Tzip12Module());
@@ -49,7 +50,7 @@ export async function getToken(tokenAddress: string, tokenId: number, dbContext:
   return token;
 }
 
-export async function createToken(tokenAddress: string, tokenId: number, dbContext: DbContext): Token {
+export async function createToken(tokenAddress: string, tokenId: number, dbContext: DbContext): Promise<Token> {
   let token = new Token();
   token.id = tokenAddress.concat(tokenId.toString());
 
@@ -74,4 +75,40 @@ export async function createToken(tokenAddress: string, tokenId: number, dbConte
   token.tokenId = tokenId;
   dbContext.transaction.save(Token, token);
   return token;
+}
+
+export async function createPoolTokenEntity(
+  pool: Pool,
+  tokenAddress: string,
+  tokenId: number | undefined,
+  tokenIndex: number,
+  dbContext: DbContext,
+): Promise<void> {
+  let poolTokenId = getPoolTokenId(pool.id, tokenAddress);
+
+  let token = await getTokenMetadata(tokenAddress, tokenId ? tokenId : 0);
+  let symbol = token.symbol!;
+  let name = token.name!;
+  let decimals = 18;
+
+  let poolToken = new PoolToken();
+  poolToken.id = poolTokenId;
+  // ensures token entity is created
+  let _token = await getToken(tokenAddress, tokenId ? tokenId : 0, dbContext);
+  
+  poolToken.poolId = pool;
+  poolToken.address = tokenAddress;
+  poolToken.tokenId = tokenId ? tokenId.toString() : null;
+  poolToken.name = name;
+  poolToken.symbol = symbol;
+  poolToken.decimals = decimals;
+  poolToken.balance = ZERO_BD;
+  poolToken.cashBalance = ZERO_BD;
+  poolToken.managedBalance = ZERO_BD;
+  poolToken.priceRate = '1';
+  poolToken.oldPriceRate = '1';
+  poolToken.token = _token;
+  poolToken.index = tokenIndex;
+
+  await dbContext.transaction.save(PoolToken, poolToken);
 }
