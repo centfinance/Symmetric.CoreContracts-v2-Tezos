@@ -23,12 +23,12 @@ export function getPoolTokenId(poolId: string, tokenAddress: string): string {
 }
 
 
-export function setPriceRateProviders(
+export async function setPriceRateProviders(
   poolId: string, 
   rateProviders: MichelsonMap<BigNumber, string | null>, 
   tokensList: string[],
   dbContext: DbContext,
-): void {
+): Promise<void> {
   if (rateProviders.size != tokensList.length) return;
 
   for (let i: number = 0; i < rateProviders.size; i++) {
@@ -39,6 +39,6 @@ export function setPriceRateProviders(
     provider.poolId = poolId;
     provider.token = providerId;
     provider.address = rateProviders.get(BigNumber(i));
-    dbContext.transaction.save(PriceRateProvider, provider);
+    await dbContext.transaction.save(PriceRateProvider, provider);
   }
 }
