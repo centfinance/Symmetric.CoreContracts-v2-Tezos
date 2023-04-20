@@ -2,7 +2,7 @@ import { TezosToolkit } from '@taquito/taquito';
 import { Tzip12Module, tzip12 } from '@taquito/tzip12';
 import { DbContext } from '@tezos-dappetizer/database';
 import BigNumber from 'bignumber.js';
-import { Pool, PoolSnapshot, PoolToken, Token } from '../entities';
+import { Pool, PoolSnapshot, PoolToken, Symmetric, SymmetricSnapshot, Token } from '../entities';
 import { WeightedPoolContractType } from '../types/weighted-pool-types';
 import { WeightedPoolFactoryCreateParameterTokensValue, WeightedPoolFactoryInitialStorage } from '../weighted-pool-factory-indexer-interfaces.generated';
 import { getPoolTokenId } from './pools';
@@ -155,4 +155,30 @@ export async function createPoolSnapshot(pool: Pool, timestamp: number, dbContex
   snapshot.holdersCount = pool.holdersCount;
   snapshot.timestamp = dayTimestamp;
   dbContext.transaction.save(PoolSnapshot, snapshot);
+}
+
+export async function getSymmetricSnapshot(vaultId: string, timestamp: number, dbContext: DbContext): Promise<SymmetricSnapshot> {
+  let dayID = timestamp / 86400;
+  let id = vaultId + '-' + dayID.toString();
+  let snapshot = await dbContext.transaction.findOneBy(SymmetricSnapshot, { id: id });
+
+  if (snapshot == null) {
+    let dayStartTimestamp = dayID * 86400;
+    snapshot = new SymmetricSnapshot();
+    snapshot.id = id;
+    // we know that the vault should be created by this call
+    let vault = await dbContext.transaction.findOneBy(Symmetric, {id: '1'}) as Symmetric;
+
+    snapshot.poolCount = vault.poolCount;
+
+    snapshot.totalLiquidity = vault.totalLiquidity;
+    snapshot.totalSwapFee = vault.totalSwapFee;
+    snapshot.totalSwapVolume = vault.totalSwapVolume;
+    snapshot.totalSwapCount = vault.totalSwapCount;
+    snapshot.vault = vault;
+    snapshot.timestamp = dayStartTimestamp;
+    await dbContext.transaction.save(SymmetricSnapshot, snapshot);
+  }
+
+  return snapshot;
 }
