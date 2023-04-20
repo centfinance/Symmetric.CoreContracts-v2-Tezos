@@ -142,8 +142,8 @@ export class PoolToken {
   @PrimaryColumn("varchar", { length: 42 })
   id!: string;
 
-  @ManyToOne(() => Pool, (pool) => pool.tokens, { nullable: true })
-  poolId?: Pool;
+  @Column("varchar")
+  poolId?: string;
 
   @ManyToOne(() => Token, (token) => token.poolTokens)
   token!: Token;

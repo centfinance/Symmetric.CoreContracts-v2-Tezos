@@ -98,7 +98,7 @@ export async function createPoolTokenEntity(
   // ensures token entity is created
   let _token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
   
-  poolToken.poolId = pool;
+  poolToken.poolId = pool.id;
   poolToken.address = tokenAddress;
   poolToken.tokenId = tokenId ? tokenId.toString() : null;
   poolToken.name = name;
