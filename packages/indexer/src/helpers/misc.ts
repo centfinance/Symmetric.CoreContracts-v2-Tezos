@@ -2,15 +2,17 @@ import { TezosToolkit } from '@taquito/taquito';
 import { Tzip12Module, tzip12 } from '@taquito/tzip12';
 import { DbContext } from '@tezos-dappetizer/database';
 import BigNumber from 'bignumber.js';
-import { Pool, PoolToken, Token } from '../entities';
+import { Pool, PoolSnapshot, PoolToken, Token } from '../entities';
 import { WeightedPoolContractType } from '../types/weighted-pool-types';
-import { WeightedPoolFactoryInitialStorage } from '../weighted-pool-factory-indexer-interfaces.generated';
+import { WeightedPoolFactoryCreateParameterTokensValue, WeightedPoolFactoryInitialStorage } from '../weighted-pool-factory-indexer-interfaces.generated';
 import { getPoolTokenId } from './pools';
 
 const tezos = new TezosToolkit('http://localhost:20000');
 tezos.addExtension(new Tzip12Module());
 
 export const ZERO_BD = '0';
+
+const DAY = 24 * 60 * 60;
 
 export function newPoolEntity(poolId: string): Pool {
   let pool = new Pool();
@@ -80,13 +82,13 @@ export async function createToken(tokenAddress: string, tokenId: number, dbConte
 export async function createPoolTokenEntity(
   pool: Pool,
   tokenAddress: string,
-  tokenId: number | undefined,
+  tokenId: BigNumber | null,
   tokenIndex: number,
   dbContext: DbContext,
 ): Promise<void> {
-  let poolTokenId = getPoolTokenId(pool.id, tokenAddress);
+  let poolTokenId = getPoolTokenId(pool.id, tokenAddress, tokenId ? tokenId : BigNumber(0));
 
-  let token = await getTokenMetadata(tokenAddress, tokenId ? tokenId : 0);
+  let token = await getTokenMetadata(tokenAddress, tokenId ? tokenId.toNumber() : 0);
   let symbol = token.symbol!;
   let name = token.name!;
   let decimals = 18;
@@ -94,7 +96,7 @@ export async function createPoolTokenEntity(
   let poolToken = new PoolToken();
   poolToken.id = poolTokenId;
   // ensures token entity is created
-  let _token = await getToken(tokenAddress, tokenId ? tokenId : 0, dbContext);
+  let _token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
   
   poolToken.poolId = pool;
   poolToken.address = tokenAddress;
@@ -111,4 +113,46 @@ export async function createPoolTokenEntity(
   poolToken.index = tokenIndex;
 
   await dbContext.transaction.save(PoolToken, poolToken);
+}
+
+export async function loadPoolToken(poolId: string, tokenAddress: string, tokenId: BigNumber | null, dbContext: DbContext): Promise<PoolToken | null> {
+  return await dbContext.transaction.findOneBy(PoolToken, {id: getPoolTokenId(poolId, tokenAddress, tokenId ? tokenId : BigNumber(0))});
+}
+
+export async function createPoolSnapshot(pool: Pool, timestamp: number, dbContext: DbContext): Promise<void> {
+  let dayTimestamp = timestamp - (timestamp % DAY); // Todays Timestamp
+
+  let poolId = pool.id;
+  if (pool == null || !pool.tokensList) return;
+
+  let snapshotId = poolId + '-' + dayTimestamp.toString();
+  let snapshot = await dbContext.transaction.findOneBy(PoolSnapshot, { id: snapshotId });
+
+  if (!snapshot) {
+    snapshot = new PoolSnapshot();
+    snapshot.id = snapshotId;
+  }
+
+  let tokens = pool.tokensList;
+  let amounts = new Array<string>(tokens.length);
+  for (let i = 0; i < tokens.length; i++) {
+    let token = JSON.parse(tokens[i]) as WeightedPoolFactoryCreateParameterTokensValue;
+    let tokenAddress = token[0];
+    let tokenId = token[1];
+    let poolToken = await loadPoolToken(poolId, tokenAddress, tokenId ? tokenId : BigNumber(0), dbContext);
+    if (poolToken == null) continue;
+
+    amounts[i] = poolToken.balance;
+  }
+
+  snapshot.pool = pool;
+  snapshot.amounts = amounts;
+  snapshot.totalShares = pool.totalShares;
+  snapshot.swapVolume = pool.totalSwapVolume;
+  snapshot.swapFees = pool.totalSwapFee;
+  snapshot.liquidity = pool.totalLiquidity;
+  snapshot.swapsCount = pool.swapsCount;
+  snapshot.holdersCount = pool.holdersCount;
+  snapshot.timestamp = dayTimestamp;
+  dbContext.transaction.save(PoolSnapshot, snapshot);
 }

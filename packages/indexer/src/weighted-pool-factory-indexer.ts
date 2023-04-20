@@ -111,6 +111,6 @@ async function handleNewPoolTokens(pool: Pool, tokens: MichelsonMap<BigNumber, W
   for (let i: number = 0; i < tokens.size; i++) {
     const tokenData = tokens.get(BigNumber(i))!;
     
-    await createPoolTokenEntity(pool, tokenData?.[0], tokenData?.[1]?.toNumber(), i, dbContext);
+    await createPoolTokenEntity(pool, tokenData?.[0], tokenData?.[1], i, dbContext);
   }
 }
