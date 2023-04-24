@@ -1,7 +1,7 @@
 import { DbContext } from "@tezos-dappetizer/database";
 import BigNumber from "bignumber.js";
 import { LatestPrice, Pool, PoolHistoricalLiquidity, PoolToken, Symmetric, Token } from "./entities";
-import { USD_STABLE_ASSETS } from "./helpers/constants";
+import { PRICING_ASSETS, USD_STABLE_ASSETS } from "./helpers/constants";
 import { createPoolSnapshot, getSymmetricSnapshot, getToken, loadPoolToken, ZERO_BD } from "./helpers/misc";
 import { isComposableStablePool } from "./helpers/pools";
 import { WeightedPoolFactoryCreateParameterTokensValue } from "./weighted-pool-factory-indexer-interfaces.generated";
@@ -183,10 +183,16 @@ export function getLatestPriceId(tokenAddress: string, pricingAsset: string, pri
   return tokenAddress.concat('-').concat(pricingAsset).concat(pricingId ? pricingId.toString() : '');
 }
 
-function getPoolHistoricalLiquidityId(poolId: string, tokenAddress: string, tokenId: BigNumber | null, block: number): string {
+export function getPoolHistoricalLiquidityId(poolId: string, tokenAddress: string, tokenId: BigNumber | null, block: number): string {
   return poolId.concat('-').concat(tokenAddress).concat(tokenId ? tokenId.toString() : '').concat('-').concat(block.toString());
 }
 
+export function isPricingAsset(asset: string): boolean {
+  for (let i: number = 0; i < PRICING_ASSETS.length; i++) {
+    if (PRICING_ASSETS[i] == asset) return true;
+  }
+  return false;
+}
 
 
 // export function setWrappedTokenPrice(pool: Pool, poolId: string, block_number: BigInt, timestamp: BigInt): void {
