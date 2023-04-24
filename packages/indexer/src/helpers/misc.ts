@@ -2,7 +2,7 @@ import { TezosToolkit } from '@taquito/taquito';
 import { Tzip12Module, tzip12 } from '@taquito/tzip12';
 import { DbContext } from '@tezos-dappetizer/database';
 import BigNumber from 'bignumber.js';
-import { Pool, PoolSnapshot, PoolToken, Symmetric, SymmetricSnapshot, Token } from '../entities';
+import { Pool, PoolSnapshot, PoolToken, Symmetric, SymmetricSnapshot, Token, TokenSnapshot } from '../entities';
 import { WeightedPoolContractType } from '../types/weighted-pool-types';
 import { WeightedPoolFactoryCreateParameterTokensValue, WeightedPoolFactoryInitialStorage } from '../weighted-pool-factory-indexer-interfaces.generated';
 import { getPoolTokenId } from './pools';
@@ -98,7 +98,7 @@ export async function createPoolTokenEntity(
   // ensures token entity is created
   let _token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
   
-  poolToken.poolId = pool;
+  poolToken.poolId = pool.id;
   poolToken.address = tokenAddress;
   poolToken.tokenId = tokenId ? tokenId.toString() : null;
   poolToken.name = name;
@@ -181,4 +181,33 @@ export async function getSymmetricSnapshot(vaultId: string, timestamp: number, d
   }
 
   return snapshot;
+}
+
+export async function getTokenSnapshot(tokenAddress: string, tokenId: BigNumber | null, timestamp: number, dbContext: DbContext): Promise<TokenSnapshot> {
+  let dayID = timestamp / 86400;
+  let id = tokenAddress + (tokenId ? tokenId.toString() : '') + '-' + dayID.toString();
+  let dayData = await dbContext.transaction.findOneBy(TokenSnapshot, { id: id });
+
+  if (dayData == null) {
+    let dayStartTimestamp = dayID * 86400;
+    let token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
+    dayData = new TokenSnapshot();
+    dayData.id = id;
+    dayData.timestamp = dayStartTimestamp;
+    dayData.totalSwapCount = token.totalSwapCount;
+    dayData.totalBalanceUSD = token.totalBalanceUSD;
+    dayData.totalBalanceNotional = token.totalBalanceNotional;
+    dayData.totalVolumeUSD = token.totalVolumeUSD;
+    dayData.totalVolumeNotional = token.totalVolumeNotional;
+    dayData.token = token;
+    await dbContext.transaction.save(TokenSnapshot, dayData);
+  }
+
+  return dayData;
+}
+
+export function tokenToDecimal(amount: BigNumber, decimals: number): BigNumber {
+  let scale = BigNumber(10)
+    .pow(decimals)
+  return amount.div(scale);
 }

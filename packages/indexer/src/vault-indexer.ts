@@ -14,7 +14,10 @@ import {
     StorageChangeIndexingContext,
     TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
-import { JoinExit } from './entities';
+import BigNumber from 'bignumber.js';
+import { InvestType, JoinExit, Pool, PoolToken, Token, TokenSnapshot, User } from './entities';
+import { getToken, getTokenSnapshot, loadPoolToken, scaleDown, tokenToDecimal, ZERO_BD } from './helpers/misc';
+import { addHistoricalPoolLiquidityRecord, isPricingAsset, updatePoolLiquidity, valueInUSD } from './pricing';
 
 import {
     VaultAcceptAdminParameter,
@@ -28,6 +31,8 @@ import {
     VaultMetadataKey,
     VaultMetadataValue,
     VaultPoolBalanceChangedPayload,
+    VaultPoolBalanceChangedPayload1,
+    VaultPoolBalanceChangedPayload2,
     VaultPoolRegisteredPayload,
     VaultPoolsBalancesKey,
     VaultPoolsBalancesValue,
@@ -41,6 +46,7 @@ import {
     VaultTokensRegisteredPayload,
     VaultTransferAdminParameter,
 } from './vault-indexer-interfaces.generated';
+import { WeightedPoolFactoryCreateParameterTokensValue } from './weighted-pool-factory-indexer-interfaces.generated';
 
 @contractFilter({ name: 'Vault' })
 export class VaultIndexer {
@@ -273,4 +279,235 @@ export class VaultIndexer {
     ): Promise<void> {
         // Implement your indexing logic here or delete the method if not needed.
     }
+}
+
+
+export async function handlePoolJoined(event: VaultPoolBalanceChangedPayload1, indexingContext: EventIndexingContext, dbContext: DbContext): Promise<void> {
+  let poolId: string = event.poolId;
+  let amounts: BigNumber[] = [...event.amountsInOrOut.values()];
+  let blockTimestamp = indexingContext.block.timestamp.getTime();
+  let logIndex = indexingContext.mainOperation.uid;
+  let transactionHash = indexingContext.operationGroup.hash;
+  let block = indexingContext.block.level
+  let pool = await dbContext.transaction.findOneBy(Pool, {id: poolId});
+  if (pool == null) {
+    return;
+  }
+
+  // if a pool that was paused is joined, it means it's pause has expired
+  // TODO: fix this for when pool.isPaused is null
+  // TODO: handle the case where the pool's actual swapEnabled is false
+  // if (pool.isPaused) {
+  //   pool.isPaused = false;
+  //   pool.swapEnabled = true;
+  // }
+
+  const tokens = pool.tokensList;
+
+  let joinId = transactionHash.concat(logIndex);
+  let join = new JoinExit();
+  join.id = joinId
+  join.sender = event.sender;
+  let joinAmounts = new Array<string>(amounts.length);
+  let valueUSD = BigNumber(ZERO_BD);
+  for (let i: number = 0; i < tokens.length; i++) {
+    const token = JSON.parse(tokens[i]) as WeightedPoolFactoryCreateParameterTokensValue;
+    let tokenAddress = token[0];
+    let tokenId = token[1];
+    let poolToken = await loadPoolToken(poolId, tokenAddress, tokenId, dbContext);
+    if (poolToken == null) {
+      throw new Error('poolToken not found');
+    }
+    let joinAmount = scaleDown(amounts[i], poolToken.decimals);
+    joinAmounts[i] = joinAmount;
+    let tokenJoinAmountInUSD = await valueInUSD(BigNumber(joinAmount), tokenAddress, tokenId, dbContext);
+    valueUSD = valueUSD.plus(tokenJoinAmountInUSD);
+  }
+  join.type = InvestType.Join;
+  join.amounts = joinAmounts;
+  join.pool = pool
+  let user  = await dbContext.transaction.findOneBy(User, {id: event.sender});
+  if (!user) {
+    user  = new User();
+    user.id = event.sender;
+  }
+  join.user = user, 
+  join.timestamp = blockTimestamp;
+  join.tx = transactionHash;
+  join.valueUSD = valueUSD.toString();
+  await dbContext.transaction.save(JoinExit, join);
+
+  for (let i: number = 0; i < tokens.length; i++) {
+    const t = JSON.parse(tokens[i]) as WeightedPoolFactoryCreateParameterTokensValue;
+    let tokenAddress = t[0];
+    let tokenId = t[1];
+    let poolToken = await loadPoolToken(poolId, tokenAddress, tokenId, dbContext);
+
+    // adding initial liquidity
+    if (poolToken == null) {
+      throw new Error('poolToken not found');
+    }
+    let amountIn = amounts[i];
+    let tokenAmountIn = tokenToDecimal(amountIn, poolToken.decimals);
+    let newBalance = BigNumber(poolToken.balance).plus(tokenAmountIn);
+    poolToken.balance = newBalance.toString();
+    await dbContext.transaction.save(PoolToken, poolToken);
+    
+    let token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
+    const tokenTotalBalanceNotional = BigNumber(token.totalBalanceNotional).plus(tokenAmountIn);
+    const tokenTotalBalanceUSD = await valueInUSD(tokenTotalBalanceNotional, tokenAddress, tokenId, dbContext);
+    token.totalBalanceNotional = tokenTotalBalanceNotional.toString();
+    token.totalBalanceUSD = tokenTotalBalanceUSD.toString();
+    await dbContext.transaction.save(Token, token);
+
+    let tokenSnapshot = await getTokenSnapshot(tokenAddress, tokenId, indexingContext.block.timestamp.getTime(), dbContext);
+    tokenSnapshot.totalBalanceNotional = tokenTotalBalanceNotional.toString();
+    tokenSnapshot.totalBalanceUSD = tokenTotalBalanceUSD.toString();
+    await dbContext.transaction.save(TokenSnapshot, tokenSnapshot);
+  }
+
+  for (let i: number = 0; i < tokens.length; i++) {
+    const t = JSON.parse(tokens[i]) as WeightedPoolFactoryCreateParameterTokensValue;
+    let tokenAddress = t[0];
+    let tokenId = t[1];    
+    
+    if (isPricingAsset(tokens[i])) {
+      let success = await addHistoricalPoolLiquidityRecord(poolId, block, tokenAddress, tokenId, dbContext);
+      // Some pricing assets may not have a route back to USD yet
+      // so we keep trying until we find one
+      if (success) {
+        break;
+      }
+    }
+  }
+
+  // StablePhantom and ComposableStable pools only emit the PoolBalanceChanged event
+  // with a non-zero value for the BPT amount when the pool is initialized,
+  // when the amount of BPT informed in the event corresponds to the "excess" BPT that was preminted
+  // and therefore must be subtracted from totalShares
+  // if (pool.poolType == PoolType.StablePhantom || isComposableStablePool(pool)) {
+  //   let preMintedBpt = ZERO_BD;
+  //   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
+  //     if (tokenAddresses[i] == pool.address) {
+  //       preMintedBpt = scaleDown(amounts[i], 18);
+  //     }
+  //   }
+  //   pool.totalShares = pool.totalShares.minus(preMintedBpt);
+  //   pool.save();
+  // }
+
+  await updatePoolLiquidity(poolId, blockTimestamp, dbContext);
+}
+
+export async function handlePoolExited(event: VaultPoolBalanceChangedPayload2, indexingContext: EventIndexingContext, dbContext: DbContext): Promise<void> {
+  let poolId: string = event.poolId;
+  let amounts: BigNumber[] = [...event.amountsInOrOut.values()];
+  let blockTimestamp = indexingContext.block.timestamp.getTime();
+  let logIndex = indexingContext.mainOperation.uid;
+  let transactionHash = indexingContext.operationGroup.hash;
+  let block = indexingContext.block.level
+  let pool = await dbContext.transaction.findOneBy(Pool, {id: poolId});
+  if (pool == null) {
+    return;
+  }
+
+  // if a pool that was paused is joined, it means it's pause has expired
+  // TODO: fix this for when pool.isPaused is null
+  // TODO: handle the case where the pool's actual swapEnabled is false
+  // if (pool.isPaused) {
+  //   pool.isPaused = false;
+  //   pool.swapEnabled = true;
+  // }
+
+  const tokens = pool.tokensList;
+
+  let exitId = transactionHash.concat(logIndex);
+  let exit = new JoinExit();
+  exit.id = exitId
+  exit.sender = event.sender;
+  let exitAmounts = new Array<string>(amounts.length);
+  let valueUSD = BigNumber(ZERO_BD);
+  for (let i: number = 0; i < tokens.length; i++) {
+    const token = JSON.parse(tokens[i]) as WeightedPoolFactoryCreateParameterTokensValue;
+    let tokenAddress = token[0];
+    let tokenId = token[1];
+    let poolToken = await loadPoolToken(poolId, tokenAddress, tokenId, dbContext);
+    if (poolToken == null) {
+      throw new Error('poolToken not found');
+    }
+    let exitAmount = scaleDown(amounts[i].negated(), poolToken.decimals);
+    exitAmounts[i] = exitAmount;
+    let tokenExitAmountInUSD = await valueInUSD(BigNumber(exitAmount), tokenAddress, tokenId, dbContext);
+    valueUSD = valueUSD.plus(tokenExitAmountInUSD);
+  }
+  exit.type = InvestType.Exit;
+  exit.amounts = exitAmounts;
+  exit.pool = pool
+  let user  = await dbContext.transaction.findOneBy(User, {id: event.sender});
+  exit.user = user!, 
+  exit.timestamp = blockTimestamp;
+  exit.tx = transactionHash;
+  exit.valueUSD = valueUSD.toString();
+  await dbContext.transaction.save(JoinExit, exit);
+
+  for (let i: number = 0; i < tokens.length; i++) {
+    const t = JSON.parse(tokens[i]) as WeightedPoolFactoryCreateParameterTokensValue;
+    let tokenAddress = t[0];
+    let tokenId = t[1];
+    let poolToken = await loadPoolToken(poolId, tokenAddress, tokenId, dbContext);
+
+    // adding initial liquidity
+    if (poolToken == null) {
+      throw new Error('poolToken not found');
+    }
+    let amountOut = amounts[i].negated();
+    let tokenAmountOut = tokenToDecimal(amountOut, poolToken.decimals);
+    let newBalance = BigNumber(poolToken.balance).minus(tokenAmountOut);
+    poolToken.balance = newBalance.toString();
+    await dbContext.transaction.save(PoolToken, poolToken);
+    
+    let token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
+    const tokenTotalBalanceNotional = BigNumber(token.totalBalanceNotional).minus(tokenAmountOut);
+    const tokenTotalBalanceUSD = await valueInUSD(tokenTotalBalanceNotional, tokenAddress, tokenId, dbContext);
+    token.totalBalanceNotional = tokenTotalBalanceNotional.toString();
+    token.totalBalanceUSD = tokenTotalBalanceUSD.toString();
+    await dbContext.transaction.save(Token, token);
+
+    let tokenSnapshot = await getTokenSnapshot(tokenAddress, tokenId, indexingContext.block.timestamp.getTime(), dbContext);
+    tokenSnapshot.totalBalanceNotional = tokenTotalBalanceNotional.toString();
+    tokenSnapshot.totalBalanceUSD = tokenTotalBalanceUSD.toString();
+    await dbContext.transaction.save(TokenSnapshot, tokenSnapshot);
+  }
+
+  for (let i: number = 0; i < tokens.length; i++) {
+    const t = JSON.parse(tokens[i]) as WeightedPoolFactoryCreateParameterTokensValue;
+    let tokenAddress = t[0];
+    let tokenId = t[1];    
+    
+    if (isPricingAsset(tokens[i])) {
+      let success = await addHistoricalPoolLiquidityRecord(poolId, block, tokenAddress, tokenId, dbContext);
+      // Some pricing assets may not have a route back to USD yet
+      // so we keep trying until we find one
+      if (success) {
+        break;
+      }
+    }
+  }
+
+  // StablePhantom and ComposableStable pools only emit the PoolBalanceChanged event
+  // with a non-zero value for the BPT amount when the pool is initialized,
+  // when the amount of BPT informed in the event corresponds to the "excess" BPT that was preminted
+  // and therefore must be subtracted from totalShares
+  // if (pool.poolType == PoolType.StablePhantom || isComposableStablePool(pool)) {
+  //   let preMintedBpt = ZERO_BD;
+  //   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
+  //     if (tokenAddresses[i] == pool.address) {
+  //       preMintedBpt = scaleDown(amounts[i], 18);
+  //     }
+  //   }
+  //   pool.totalShares = pool.totalShares.minus(preMintedBpt);
+  //   pool.save();
+  // }
+
+  await updatePoolLiquidity(poolId, blockTimestamp, dbContext);
 }
