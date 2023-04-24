@@ -15,8 +15,8 @@ import {
     TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
 import BigNumber from 'bignumber.js';
-import { InvestType, JoinExit, Pool, PoolToken, Token, TokenSnapshot, User } from './entities';
-import { getToken, getTokenSnapshot, loadPoolToken, scaleDown, tokenToDecimal, ZERO_BD } from './helpers/misc';
+import { InvestType, JoinExit, Pool, PoolToken, Swap, Symmetric, Token, TokenSnapshot, User } from './entities';
+import { getSymmetricSnapshot, getToken, getTokenSnapshot, loadPoolToken, scaleDown, tokenToDecimal, ZERO_BD } from './helpers/misc';
 import { addHistoricalPoolLiquidityRecord, isPricingAsset, updatePoolLiquidity, valueInUSD } from './pricing';
 
 import {
@@ -510,4 +510,248 @@ export async function handlePoolExited(event: VaultPoolBalanceChangedPayload2, i
   // }
 
   await updatePoolLiquidity(poolId, blockTimestamp, dbContext);
+}
+
+export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: EventIndexingContext, dbContext: DbContext): Promise<void> {
+  const params = indexingContext.transactionParameter?.value.convert() as VaultSwapParameter | VaultBatchSwapParameter
+  let user  = await dbContext.transaction.findOneBy(User, {id: params.funds.sender});
+  if (!user) {
+    user  = new User();
+    user.id = params.funds.sender;
+  }
+  
+  let poolId = event.poolId;
+
+  let pool = await dbContext.transaction.findOneBy(Pool, {id: poolId});
+  if (pool == null) {
+    return;
+  }
+
+  // if a swap happens in a pool that was paused, it means it's pause has expired
+  // TODO: fix this for when pool.isPaused is null
+  // TODO: handle the case where the pool's actual swapEnabled is false
+  // if (pool.isPaused) {
+  //   pool.isPaused = false;
+  //   pool.swapEnabled = true;
+  // }
+
+  // if (isVariableWeightPool(pool)) {
+  //   // Some pools' weights update over time so we need to update them after each swap
+  //   updatePoolWeights(poolId.toHexString());
+  // }
+  // } else if (isStableLikePool(pool)) {
+  //   // Stablelike pools' amplification factors update over time so we need to update them after each swap
+  //   updateAmpFactor(pool);
+  // }
+
+  // Update virtual supply
+  // if (hasVirtualSupply(pool)) {
+  //   if (event.params.tokenIn == pool.address) {
+  //     pool.totalShares = pool.totalShares.minus(tokenToDecimal(event.params.amountIn, 18));
+  //   }
+  //   if (event.params.tokenOut == pool.address) {
+  //     pool.totalShares = pool.totalShares.plus(tokenToDecimal(event.params.amountOut, 18));
+  //   }
+  // }
+
+  let poolAddress = pool.address;
+  let tokenInAddress: string = event.tokenIn[3];
+  let tokenInId:BigNumber = event.tokenIn[4];
+  let tokenOutAddress: string = event.tokenOut[5];
+  let tokenOutId:BigNumber = event.tokenOut[6];
+
+  let blockTimestamp = indexingContext.block.timestamp.getTime();
+  let logIndex = indexingContext.mainOperation.uid;
+  let transactionHash = indexingContext.operationGroup.hash;
+  let block = indexingContext.block.level
+
+  let poolTokenIn = await loadPoolToken(poolId, tokenInAddress, tokenInId, dbContext);
+  let poolTokenOut = await loadPoolToken(poolId, tokenOutAddress, tokenOutId, dbContext);
+  if (poolTokenIn == null || poolTokenOut == null) {
+    return;
+  }
+
+  let tokenAmountIn  = scaleDown(event.amountIn, poolTokenIn.decimals);
+  let tokenAmountOut = scaleDown(event.amountOut, poolTokenOut.decimals);
+
+  let swapValueUSD = ZERO_BD;
+  let swapFeesUSD = ZERO_BD;
+
+  // Swap events are emitted when joining/exitting from pools with preminted BPT.
+  // Since we want this type of swap to register tokens prices but not counting as volume
+  // we defined two variables: 1. valueUSD - the value in USD of the transaction;
+  // 2. swapValueUSD - equal to valueUSD if trade, zero otherwise, and used to update metrics.
+  const valueUSD = swapValueInUSD(tokenInAddress, tokenAmountIn, tokenOutAddress, tokenAmountOut);
+
+  if (poolAddress != tokenInAddress && poolAddress != tokenOutAddress) {
+    swapValueUSD = valueUSD;
+    let swapFee = pool.swapFee;
+    swapFeesUSD = swapValueUSD.times(swapFee);
+  }
+
+  let newInAmount = poolTokenIn.balance.plus(tokenAmountIn);
+  poolTokenIn.balance = newInAmount;
+  await dbContext.transaction.save(PoolToken, poolTokenIn);
+
+  let newOutAmount = poolTokenOut.balance.minus(tokenAmountOut);
+  poolTokenOut.balance = newOutAmount;
+  await dbContext.transaction.save(PoolToken, poolTokenOut);
+
+  let swapId = transactionHash.concat(logIndex);
+
+  // if (poolAddress == tokenInAddress || poolAddress == tokenOutAddress) {
+    // if (isComposableStablePool(pool)) {
+    //   let tokenAddresses = pool.tokensList;
+    //   let balances: BigInt[] = [];
+    //   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
+    //     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
+    //     if (tokenAddresses[i] == pool.address) {
+    //       continue;
+    //     }
+    //     let poolToken = loadPoolToken(pool.id, tokenAddress);
+    //     if (poolToken == null) {
+    //       throw new Error('poolToken not found');
+    //     }
+    //     let balance = scaleUp(poolToken.balance.times(poolToken.priceRate), 18);
+    //     balances.push(balance);
+    //   }
+    //   if (pool.amp) {
+    //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    //     let amp = pool.amp!.times(AMP_PRECISION);
+    //     let invariantInt = calculateInvariant(amp, balances, swapId);
+    //     let invariant = scaleDown(invariantInt, 18);
+    //     pool.lastPostJoinExitInvariant = invariant;
+    //   }
+    // }
+  //}
+
+  let swap = new Swap();
+  swap.id = swapId
+  swap.tokenIn = tokenInAddress;
+  swap.tokenInSym = poolTokenIn.symbol;
+  swap.tokenAmountIn = tokenAmountIn;
+
+  swap.tokenOut = tokenOutAddress;
+  swap.tokenOutSym = poolTokenOut.symbol;
+  swap.tokenAmountOut = tokenAmountOut;
+
+  swap.valueUSD = valueUSD;
+
+  swap.caller = indexingContext.mainOperation.sourceAddress;
+  swap.userAddress = user;
+  swap.poolId = pool;
+
+  swap.timestamp = blockTimestamp;
+  swap.tx = transactionHash;
+  await dbContext.transaction.save(Swap, swap);
+
+  // update pool swapsCount
+  // let pool = Pool.load(poolId.toHex());
+  pool.swapsCount = pool.swapsCount.plus(BigInt.fromI32(1));
+  pool.totalSwapVolume = pool.totalSwapVolume.plus(swapValueUSD);
+  pool.totalSwapFee = pool.totalSwapFee.plus(swapFeesUSD);
+
+  await dbContext.transaction.save(Pool, pool);
+
+  // update vault total swap volume
+  let vault = await dbContext.transaction.findOneBy(Symmetric, { id: '1'}) as Symmetric;
+  vault.totalSwapVolume = BigNumber(vault.totalSwapVolume).plus(swapValueUSD).toString();
+  vault.totalSwapFee = BigNumber(vault.totalSwapFee).plus(swapFeesUSD).toString();
+  vault.totalSwapCount = vault.totalSwapCount + BigInt(1);
+  await dbContext.transaction.save(Symmetric, vault);
+
+  let vaultSnapshot = getSymmetricSnapshot(vault.id, blockTimestamp);
+  vaultSnapshot.totalSwapVolume = vault.totalSwapVolume;
+  vaultSnapshot.totalSwapFee = vault.totalSwapFee;
+  vaultSnapshot.totalSwapCount = vault.totalSwapCount;
+  vaultSnapshot.save();
+
+  // update swap counts for token
+  // updates token snapshots as well
+  uptickSwapsForToken(tokenInAddress, event);
+  uptickSwapsForToken(tokenOutAddress, event);
+
+  // update volume and balances for the tokens
+  // updates token snapshots as well
+  updateTokenBalances(tokenInAddress, swapValueUSD, tokenAmountIn, SWAP_IN, event);
+  updateTokenBalances(tokenOutAddress, swapValueUSD, tokenAmountOut, SWAP_OUT, event);
+
+  let tradePair = getTradePair(tokenInAddress, tokenOutAddress);
+  tradePair.totalSwapVolume = tradePair.totalSwapVolume.plus(swapValueUSD);
+  tradePair.totalSwapFee = tradePair.totalSwapFee.plus(swapFeesUSD);
+  tradePair.save();
+
+  let tradePairSnapshot = getTradePairSnapshot(tradePair.id, blockTimestamp);
+  tradePairSnapshot.totalSwapVolume = tradePair.totalSwapVolume.plus(swapValueUSD);
+  tradePairSnapshot.totalSwapFee = tradePair.totalSwapFee.plus(swapFeesUSD);
+  tradePairSnapshot.save();
+
+  if (swap.tokenAmountOut == ZERO_BD || swap.tokenAmountIn == ZERO_BD) {
+    return;
+  }
+
+  // Capture price
+  // TODO: refactor these if statements using a helper function
+  let blockNumber = event.block.number;
+  let tokenInWeight = poolTokenIn.weight;
+  let tokenOutWeight = poolTokenOut.weight;
+  if (isPricingAsset(tokenInAddress) && pool.totalLiquidity.gt(MIN_POOL_LIQUIDITY) && valueUSD.gt(MIN_SWAP_VALUE_USD)) {
+    let tokenPriceId = getTokenPriceId(poolId.toHex(), tokenOutAddress, tokenInAddress, blockNumber);
+    let tokenPrice = new TokenPrice(tokenPriceId);
+    //tokenPrice.poolTokenId = getPoolTokenId(poolId, tokenOutAddress);
+    tokenPrice.poolId = poolId.toHexString();
+    tokenPrice.block = blockNumber;
+    tokenPrice.timestamp = blockTimestamp;
+    tokenPrice.asset = tokenOutAddress;
+    tokenPrice.amount = tokenAmountIn;
+    tokenPrice.pricingAsset = tokenInAddress;
+
+    if (tokenInWeight && tokenOutWeight) {
+      // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
+      // based on the pool's weights and updated balances after the swap.
+      tokenPrice.price = newInAmount.div(tokenInWeight).div(newOutAmount.div(tokenOutWeight));
+    } else {
+      // Otherwise we can get a simple measure of the price from the ratio of amount in vs amount out
+      tokenPrice.price = tokenAmountIn.div(tokenAmountOut);
+    }
+
+    tokenPrice.save();
+
+    updateLatestPrice(tokenPrice, event.block.timestamp);
+  }
+  if (
+    isPricingAsset(tokenOutAddress) &&
+    pool.totalLiquidity.gt(MIN_POOL_LIQUIDITY) &&
+    valueUSD.gt(MIN_SWAP_VALUE_USD)
+  ) {
+    let tokenPriceId = getTokenPriceId(poolId.toHex(), tokenInAddress, tokenOutAddress, blockNumber);
+    let tokenPrice = new TokenPrice(tokenPriceId);
+    //tokenPrice.poolTokenId = getPoolTokenId(poolId, tokenInAddress);
+    tokenPrice.poolId = poolId.toHexString();
+    tokenPrice.block = blockNumber;
+    tokenPrice.timestamp = blockTimestamp;
+    tokenPrice.asset = tokenInAddress;
+    tokenPrice.amount = tokenAmountOut;
+    tokenPrice.pricingAsset = tokenOutAddress;
+
+    if (tokenInWeight && tokenOutWeight) {
+      // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
+      // based on the pool's weights and updated balances after the swap.
+      tokenPrice.price = newOutAmount.div(tokenOutWeight).div(newInAmount.div(tokenInWeight));
+    } else {
+      // Otherwise we can get a simple measure of the price from the ratio of amount out vs amount in
+      tokenPrice.price = tokenAmountOut.div(tokenAmountIn);
+    }
+
+    tokenPrice.save();
+
+    updateLatestPrice(tokenPrice, event.block.timestamp);
+  }
+
+  const preferentialToken = getPreferentialPricingAsset([tokenInAddress, tokenOutAddress]);
+  if (preferentialToken != ZERO_ADDRESS) {
+    await addHistoricalPoolLiquidityRecord(poolId, blockNumber, preferentialToken, preferentialTokenId, dbContext);
+  }
+
+  await updatePoolLiquidity(poolId, blockNumber, dbContext);
 }

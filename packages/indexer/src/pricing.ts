@@ -78,6 +78,49 @@ export async function valueInUSD(value: BigNumber, asset: string, assetId: BigNu
   return usdValue;
 }
 
+export async function swapValueInUSD(
+  tokenInAddress: string,
+  tokenInId: BigNumber | null,
+  tokenAmountIn: BigNumber,
+  tokenOutAddress: string,
+  tokenOutId: BigNumber | null,
+  tokenAmountOut: BigNumber,
+  dbContext: DbContext,
+): Promise<BigNumber> {
+  let swapValueUSD = BigNumber(ZERO_BD);
+
+  if (isUSDStable(tokenOutAddress)) {
+    // if one of the tokens is a stable, it takes precedence
+    swapValueUSD = await valueInUSD(tokenAmountOut, tokenOutAddress, tokenOutId, dbContext);
+    return swapValueUSD;
+  } else if (isUSDStable(tokenInAddress)) {
+    // if one of the tokens is a stable, it takes precedence
+    swapValueUSD = await valueInUSD(tokenAmountIn, tokenInAddress, tokenInId, dbContext);
+    return swapValueUSD;
+  }
+
+  if (isPricingAsset(tokenInAddress) && !isPricingAsset(tokenOutAddress)) {
+    // if only one of the tokens is a pricing asset, it takes precedence
+    swapValueUSD = await valueInUSD(tokenAmountIn, tokenInAddress, tokenInId, dbContext);
+    if (swapValueUSD.gt(ZERO_BD)) return swapValueUSD;
+  }
+
+  if (isPricingAsset(tokenOutAddress) && !isPricingAsset(tokenInAddress)) {
+    // if only one of the tokens is a pricing asset, it takes precedence
+    swapValueUSD = await valueInUSD(tokenAmountOut, tokenOutAddress, tokenOutId, dbContext);
+    if (swapValueUSD.gt(ZERO_BD)) return swapValueUSD;
+  }
+
+  // if none or both tokens are pricing assets, take the average of the known prices
+  let tokenInSwapValueUSD = await valueInUSD(tokenAmountIn, tokenInAddress, tokenInId, dbContext);
+  let tokenOutSwapValueUSD = await valueInUSD(tokenAmountOut, tokenOutAddress, tokenOutId, dbContext);
+  let divisor =
+    tokenInSwapValueUSD.gt(ZERO_BD) && tokenOutSwapValueUSD.gt(ZERO_BD) ? BigNumber('2') : BigNumber('1');
+  swapValueUSD = tokenInSwapValueUSD.plus(tokenOutSwapValueUSD).div(divisor);
+
+  return swapValueUSD;
+}
+
 export function isUSDStable(asset: string): boolean {
   for (let i: number = 0; i < USD_STABLE_ASSETS.length; i++) {
     if (USD_STABLE_ASSETS[i] == asset) return true;
