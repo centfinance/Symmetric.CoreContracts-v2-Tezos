@@ -67,7 +67,7 @@ export async function valueInUSD(value: BigNumber, asset: string, assetId: BigNu
     usdValue = value;
   } else {
     // convert to USD
-    let token = await getToken(asset, assetId ? assetId.toNumber() : 0, dbContext);
+    let token = await getToken(asset, assetId, dbContext);
 
     if (token.latestUSDPrice) {
       const latestUSDPrice = BigNumber(token.latestUSDPrice);
@@ -132,7 +132,7 @@ export async function updateSptPrice(pool: Pool, dbContext: DbContext): Promise<
   if (BigNumber(pool.totalShares).isEqualTo(ZERO_BD)) return;
 
   const sptAddress = pool.address;
-  let sptToken = await getToken(sptAddress, 0, dbContext);
+  let sptToken = await getToken(sptAddress, null, dbContext);
   sptToken.latestUSDPrice = BigNumber(pool.totalLiquidity).div(pool.totalShares).toString();
   dbContext.transaction.save(Token, sptToken);
 }

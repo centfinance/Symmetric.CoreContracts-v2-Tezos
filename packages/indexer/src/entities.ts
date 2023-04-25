@@ -276,6 +276,9 @@ export class Token {
   @Column("numeric")
   tokenId!: number;
 
+  @Column("boolean")
+  FA2!: boolean;
+
   @Column("decimal", { precision: 40, scale: 18 })
   totalBalanceUSD!: string;
 
@@ -314,6 +317,9 @@ export class Token {
 
   @OneToMany(() => TokenSnapshot, (snapshot) => snapshot.token)
   snapshots!: TokenSnapshot[];
+
+  @OneToMany(() => TradePair, (pair) => pair.token0 || pair.token1)
+  tradePairs!: TradePair[];
 }
 
 @Entity()
@@ -514,6 +520,45 @@ export class SymmetricSnapshot {
 
   @Column("bigint")
   totalSwapCount!: bigint;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  totalSwapVolume!: string;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  totalSwapFee!: string;
+}
+
+@Entity()
+export class TradePair {
+  @PrimaryColumn("varchar")
+  id!: string;
+
+  @ManyToOne(() => Token, (token) => token.tradePairs)
+  token0!: Token;
+
+  @ManyToOne(() => Token, (token) => token.tradePairs)
+  token1!: Token;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  totalSwapVolume!: string;
+
+  @Column("decimal", { precision: 40, scale: 18 })
+  totalSwapFee!: string;
+
+  @OneToMany(() => TradePairSnapshot, (snapshot) => snapshot.pair)
+  snapshots!: TradePairSnapshot[];
+}
+
+@Entity()
+export class TradePairSnapshot {
+  @PrimaryColumn("varchar")
+  id!: string;
+
+  @ManyToOne(() => TradePair, (pair) => pair.snapshots)
+  pair!: TradePair;
+
+  @Column("int")
+  timestamp!: number;
 
   @Column("decimal", { precision: 40, scale: 18 })
   totalSwapVolume!: string;

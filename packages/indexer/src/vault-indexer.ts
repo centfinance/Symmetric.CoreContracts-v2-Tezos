@@ -15,9 +15,10 @@ import {
     TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
 import BigNumber from 'bignumber.js';
-import { InvestType, JoinExit, Pool, PoolToken, Swap, Symmetric, Token, TokenSnapshot, User } from './entities';
-import { getSymmetricSnapshot, getToken, getTokenSnapshot, loadPoolToken, scaleDown, tokenToDecimal, ZERO_BD } from './helpers/misc';
-import { addHistoricalPoolLiquidityRecord, isPricingAsset, updatePoolLiquidity, valueInUSD } from './pricing';
+import { Timestamp } from 'typeorm';
+import { InvestType, JoinExit, Pool, PoolToken, Swap, Symmetric, SymmetricSnapshot, Token, TokenSnapshot, TradePair, User } from './entities';
+import { getSymmetricSnapshot, getToken, getTokenSnapshot, getTradePair, loadPoolToken, scaleDown, tokenToDecimal, updateTokenBalances, uptickSwapsForToken, ZERO_BD } from './helpers/misc';
+import { addHistoricalPoolLiquidityRecord, isPricingAsset, swapValueInUSD, updatePoolLiquidity, valueInUSD } from './pricing';
 
 import {
     VaultAcceptAdminParameter,
@@ -353,7 +354,7 @@ export async function handlePoolJoined(event: VaultPoolBalanceChangedPayload1, i
     poolToken.balance = newBalance.toString();
     await dbContext.transaction.save(PoolToken, poolToken);
     
-    let token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
+    let token = await getToken(tokenAddress, tokenId, dbContext);
     const tokenTotalBalanceNotional = BigNumber(token.totalBalanceNotional).plus(tokenAmountIn);
     const tokenTotalBalanceUSD = await valueInUSD(tokenTotalBalanceNotional, tokenAddress, tokenId, dbContext);
     token.totalBalanceNotional = tokenTotalBalanceNotional.toString();
@@ -466,7 +467,7 @@ export async function handlePoolExited(event: VaultPoolBalanceChangedPayload2, i
     poolToken.balance = newBalance.toString();
     await dbContext.transaction.save(PoolToken, poolToken);
     
-    let token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
+    let token = await getToken(tokenAddress, tokenId, dbContext);
     const tokenTotalBalanceNotional = BigNumber(token.totalBalanceNotional).minus(tokenAmountOut);
     const tokenTotalBalanceUSD = await valueInUSD(tokenTotalBalanceNotional, tokenAddress, tokenId, dbContext);
     token.totalBalanceNotional = tokenTotalBalanceNotional.toString();
@@ -563,7 +564,7 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
   let blockTimestamp = indexingContext.block.timestamp.getTime();
   let logIndex = indexingContext.mainOperation.uid;
   let transactionHash = indexingContext.operationGroup.hash;
-  let block = indexingContext.block.level
+  let blockNumber = indexingContext.block.level
 
   let poolTokenIn = await loadPoolToken(poolId, tokenInAddress, tokenInId, dbContext);
   let poolTokenOut = await loadPoolToken(poolId, tokenOutAddress, tokenOutId, dbContext);
@@ -581,19 +582,19 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
   // Since we want this type of swap to register tokens prices but not counting as volume
   // we defined two variables: 1. valueUSD - the value in USD of the transaction;
   // 2. swapValueUSD - equal to valueUSD if trade, zero otherwise, and used to update metrics.
-  const valueUSD = swapValueInUSD(tokenInAddress, tokenAmountIn, tokenOutAddress, tokenAmountOut);
+  const valueUSD = await swapValueInUSD(tokenInAddress, tokenInId, BigNumber(tokenAmountIn), tokenOutAddress, tokenOutId, BigNumber(tokenAmountOut), dbContext);
 
   if (poolAddress != tokenInAddress && poolAddress != tokenOutAddress) {
-    swapValueUSD = valueUSD;
+    swapValueUSD = valueUSD.toString();
     let swapFee = pool.swapFee;
-    swapFeesUSD = swapValueUSD.times(swapFee);
+    swapFeesUSD = valueUSD.times(swapFee).toString();
   }
 
-  let newInAmount = poolTokenIn.balance.plus(tokenAmountIn);
+  let newInAmount = BigNumber(poolTokenIn.balance).plus(tokenAmountIn).toString();
   poolTokenIn.balance = newInAmount;
   await dbContext.transaction.save(PoolToken, poolTokenIn);
 
-  let newOutAmount = poolTokenOut.balance.minus(tokenAmountOut);
+  let newOutAmount = BigNumber(poolTokenOut.balance).minus(tokenAmountOut).toString();
   poolTokenOut.balance = newOutAmount;
   await dbContext.transaction.save(PoolToken, poolTokenOut);
 
@@ -635,7 +636,7 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
   swap.tokenOutSym = poolTokenOut.symbol;
   swap.tokenAmountOut = tokenAmountOut;
 
-  swap.valueUSD = valueUSD;
+  swap.valueUSD = valueUSD.toString();
 
   swap.caller = indexingContext.mainOperation.sourceAddress;
   swap.userAddress = user;
@@ -647,9 +648,9 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
 
   // update pool swapsCount
   // let pool = Pool.load(poolId.toHex());
-  pool.swapsCount = pool.swapsCount.plus(BigInt.fromI32(1));
-  pool.totalSwapVolume = pool.totalSwapVolume.plus(swapValueUSD);
-  pool.totalSwapFee = pool.totalSwapFee.plus(swapFeesUSD);
+  pool.swapsCount = pool.swapsCount + BigInt(1);
+  pool.totalSwapVolume = BigNumber(pool.totalSwapVolume).plus(swapValueUSD).toString();
+  pool.totalSwapFee = BigNumber(pool.totalSwapFee).plus(swapFeesUSD).toString();
 
   await dbContext.transaction.save(Pool, pool);
 
@@ -660,26 +661,25 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
   vault.totalSwapCount = vault.totalSwapCount + BigInt(1);
   await dbContext.transaction.save(Symmetric, vault);
 
-  let vaultSnapshot = getSymmetricSnapshot(vault.id, blockTimestamp);
+  let vaultSnapshot = await getSymmetricSnapshot(vault.id, blockTimestamp, dbContext);
   vaultSnapshot.totalSwapVolume = vault.totalSwapVolume;
   vaultSnapshot.totalSwapFee = vault.totalSwapFee;
   vaultSnapshot.totalSwapCount = vault.totalSwapCount;
-  vaultSnapshot.save();
-
+  await dbContext.transaction.save(SymmetricSnapshot, vaultSnapshot);
+  
   // update swap counts for token
   // updates token snapshots as well
-  uptickSwapsForToken(tokenInAddress, event);
-  uptickSwapsForToken(tokenOutAddress, event);
-
+  await uptickSwapsForToken(tokenInAddress, tokenInId, blockTimestamp, dbContext);
+  await uptickSwapsForToken(tokenOutAddress, tokenOutId, blockTimestamp, dbContext);
   // update volume and balances for the tokens
   // updates token snapshots as well
-  updateTokenBalances(tokenInAddress, swapValueUSD, tokenAmountIn, SWAP_IN, event);
-  updateTokenBalances(tokenOutAddress, swapValueUSD, tokenAmountOut, SWAP_OUT, event);
+  await updateTokenBalances(tokenInAddress, tokenInId, BigNumber(swapValueUSD), BigNumber(tokenAmountIn), 0, dbContext);
+  await updateTokenBalances(tokenOutAddress, tokenOutId, BigNumber(swapValueUSD), BigNumber(tokenAmountOut), 1, dbContext);
 
-  let tradePair = getTradePair(tokenInAddress, tokenOutAddress);
-  tradePair.totalSwapVolume = tradePair.totalSwapVolume.plus(swapValueUSD);
-  tradePair.totalSwapFee = tradePair.totalSwapFee.plus(swapFeesUSD);
-  tradePair.save();
+  let tradePair = await getTradePair(tokenInAddress, tokenInId, tokenOutAddress, tokenOutId, dbContext);
+  tradePair.totalSwapVolume = BigNumber(tradePair.totalSwapVolume).plus(swapValueUSD).toString();
+  tradePair.totalSwapFee = BigNumber(tradePair.totalSwapFee).plus(swapFeesUSD).toString();
+  await dbContext.transaction.save(TradePair, tradePair);
 
   let tradePairSnapshot = getTradePairSnapshot(tradePair.id, blockTimestamp);
   tradePairSnapshot.totalSwapVolume = tradePair.totalSwapVolume.plus(swapValueUSD);
@@ -692,14 +692,13 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
 
   // Capture price
   // TODO: refactor these if statements using a helper function
-  let blockNumber = event.block.number;
   let tokenInWeight = poolTokenIn.weight;
   let tokenOutWeight = poolTokenOut.weight;
   if (isPricingAsset(tokenInAddress) && pool.totalLiquidity.gt(MIN_POOL_LIQUIDITY) && valueUSD.gt(MIN_SWAP_VALUE_USD)) {
     let tokenPriceId = getTokenPriceId(poolId.toHex(), tokenOutAddress, tokenInAddress, blockNumber);
     let tokenPrice = new TokenPrice(tokenPriceId);
     //tokenPrice.poolTokenId = getPoolTokenId(poolId, tokenOutAddress);
-    tokenPrice.poolId = poolId.toHexString();
+    tokenPrice.poolId = poolId;
     tokenPrice.block = blockNumber;
     tokenPrice.timestamp = blockTimestamp;
     tokenPrice.asset = tokenOutAddress;

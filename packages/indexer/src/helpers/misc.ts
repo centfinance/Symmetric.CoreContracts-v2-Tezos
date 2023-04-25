@@ -2,7 +2,8 @@ import { TezosToolkit } from '@taquito/taquito';
 import { Tzip12Module, tzip12 } from '@taquito/tzip12';
 import { DbContext } from '@tezos-dappetizer/database';
 import BigNumber from 'bignumber.js';
-import { Pool, PoolSnapshot, PoolToken, Symmetric, SymmetricSnapshot, Token, TokenSnapshot } from '../entities';
+import { Pool, PoolSnapshot, PoolToken, Symmetric, SymmetricSnapshot, Token, TokenSnapshot, TradePair, TradePairSnapshot } from '../entities';
+import { valueInUSD } from '../pricing';
 import { WeightedPoolContractType } from '../types/weighted-pool-types';
 import { WeightedPoolFactoryCreateParameterTokensValue, WeightedPoolFactoryInitialStorage } from '../weighted-pool-factory-indexer-interfaces.generated';
 import { getPoolTokenId } from './pools';
@@ -44,7 +45,7 @@ export async function getTokenMetadata(tokenAddress: string, tokenId: number) {
   return await contract.tzip12().getTokenMetadata(tokenId);
 }
 
-export async function getToken(tokenAddress: string, tokenId: number, dbContext: DbContext ): Promise<Token> {
+export async function getToken(tokenAddress: string, tokenId: BigNumber | null, dbContext: DbContext ): Promise<Token> {
   let token = await dbContext.transaction.findOneBy(Token,{id: tokenAddress});
   if (token == null) {
     token = await createToken(tokenAddress, tokenId, dbContext);
@@ -52,9 +53,9 @@ export async function getToken(tokenAddress: string, tokenId: number, dbContext:
   return token;
 }
 
-export async function createToken(tokenAddress: string, tokenId: number, dbContext: DbContext): Promise<Token> {
+export async function createToken(tokenAddress: string, tokenId: BigNumber | null, dbContext: DbContext): Promise<Token> {
   let token = new Token();
-  token.id = tokenAddress.concat(tokenId.toString());
+  token.id = tokenAddress.concat(tokenId ? tokenId.toString() : '0');
 
   // let pool = WeightedPool.bind(tokenAddress);
   // let isPoolCall = pool.try_getPoolId();
@@ -63,7 +64,7 @@ export async function createToken(tokenAddress: string, tokenId: number, dbConte
   //   token.poolId = poolId.toHexString();
   // }
 
-  let metadata = await getTokenMetadata(tokenAddress, tokenId);
+  let metadata = await getTokenMetadata(tokenAddress, tokenId ? tokenId.toNumber() : 0);
 
   token.name = metadata.name;
   token.symbol = metadata.symbol;
@@ -74,8 +75,9 @@ export async function createToken(tokenAddress: string, tokenId: number, dbConte
   token.totalVolumeUSD = ZERO_BD;
   token.totalVolumeNotional = ZERO_BD;
   token.address = tokenAddress;
-  token.tokenId = tokenId;
-  dbContext.transaction.save(Token, token);
+  token.tokenId = tokenId ? tokenId.toNumber() : 0;
+  token.FA2 = tokenId ? true : false;
+  await  dbContext.transaction.save(Token, token);
   return token;
 }
 
@@ -96,7 +98,7 @@ export async function createPoolTokenEntity(
   let poolToken = new PoolToken();
   poolToken.id = poolTokenId;
   // ensures token entity is created
-  let _token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
+  let _token = await getToken(tokenAddress, tokenId, dbContext);
   
   poolToken.poolId = pool.id;
   poolToken.address = tokenAddress;
@@ -190,7 +192,7 @@ export async function getTokenSnapshot(tokenAddress: string, tokenId: BigNumber 
 
   if (dayData == null) {
     let dayStartTimestamp = dayID * 86400;
-    let token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
+    let token = await getToken(tokenAddress, tokenId, dbContext);
     dayData = new TokenSnapshot();
     dayData.id = id;
     dayData.timestamp = dayStartTimestamp;
@@ -210,4 +212,78 @@ export function tokenToDecimal(amount: BigNumber, decimals: number): BigNumber {
   let scale = BigNumber(10)
     .pow(decimals)
   return amount.div(scale);
+}
+
+export async function uptickSwapsForToken(tokenAddress: string, tokenId: BigNumber | null, timestamp: number, dbContext: DbContext): Promise<void> {
+  let token = await getToken(tokenAddress, tokenId, dbContext);
+  // update the overall swap count for the token
+  token.totalSwapCount = token.totalSwapCount+ BigInt(1);
+  await dbContext.transaction.save(Token, token);
+
+  // update the snapshots
+  let snapshot = await getTokenSnapshot(tokenAddress, tokenId, timestamp, dbContext);
+  snapshot.totalSwapCount = token.totalSwapCount;
+  await dbContext.transaction.save(TokenSnapshot, snapshot);
+
+}
+
+export async function updateTokenBalances(
+  tokenAddress: string,
+  tokenId: BigNumber | null,
+  usdBalance: BigNumber,
+  notionalBalance: BigNumber,
+  swapDirection: number,
+  dbContext: DbContext
+): Promise<void> {
+  let token = await getToken(tokenAddress, tokenId, dbContext);
+
+  if (swapDirection == 0) {
+    const totalBalanceNotional = BigNumber(token.totalBalanceNotional).plus(notionalBalance);
+    token.totalBalanceNotional = totalBalanceNotional.toString();
+    token.totalBalanceUSD = (await valueInUSD(totalBalanceNotional, tokenAddress, tokenId, dbContext)).toString();
+  } else if (swapDirection == 1) {
+    const totalBalanceNotional = BigNumber(token.totalBalanceNotional).minus(notionalBalance);
+    token.totalBalanceNotional = totalBalanceNotional.toString();
+    token.totalBalanceUSD = (await valueInUSD(totalBalanceNotional, tokenAddress, tokenId, dbContext)).toString();
+  }
+
+  token.totalVolumeUSD = BigNumber(token.totalVolumeUSD).plus(usdBalance).toString();
+  await dbContext.transaction.save(Token, token);
+}
+
+export async function getTradePair(token0Address: string, token0Id: BigNumber | null, token1Address: string, token1Id: BigNumber | null, dbContext: DbContext): Promise<TradePair> {
+  let tradePairId = token0Address.concat(token0Id? token0Id.toString(): '').concat('-').concat(token1Address.concat(token1Id? token1Id.toString(): ''));
+  let tradePair = await dbContext.transaction.findOneBy(TradePair, { id: tradePairId });
+
+  if (tradePair == null) {
+    tradePair = new TradePair();
+    tradePair.id = tradePairId;
+    tradePair.token0 = await dbContext.transaction.findOneBy(Token, { id: token0Address.concat(token0Id ? token0Id.toString() : '0') }) as Token;
+    tradePair.token1 = await dbContext.transaction.findOneBy(Token, { id: token1Address.concat(token1Id ? token1Id.toString() : '0') }) as Token;
+    tradePair.totalSwapFee = ZERO_BD;
+    tradePair.totalSwapVolume = ZERO_BD;
+    await dbContext.transaction.save(TradePair, tradePair);
+  }
+  
+  return tradePair;
+}
+
+export async function getTradePairSnapshot(tradePairId: string, timestamp: number, dbContext: DbContext): Promise<TradePairSnapshot> {
+  let dayID = timestamp / 86400;
+  let id = tradePairId + '-' + dayID.toString();
+
+  let snapshot =  await dbContext.transaction.findOneBy(TradePairSnapshot, { id: id });
+  if (snapshot == null) {
+    let dayStartTimestamp = dayID * 86400;
+    let tradePair = await dbContext.transaction.findOneBy(TradePair, { id: tradePairId }) as TradePair;
+
+    snapshot = new TradePairSnapshot();
+    snapshot.id = id;
+    snapshot.pair = tradePair;
+    snapshot.timestamp = dayStartTimestamp;
+    snapshot.totalSwapVolume = tradePair != null ? tradePair.totalSwapVolume : ZERO_BD;
+    snapshot.totalSwapFee = tradePair != null ? tradePair.totalSwapFee : ZERO_BD;
+    await dbContext.transaction.save(TradePairSnapshot, snapshot);
+  }
+  return snapshot;
 }
