@@ -58,6 +58,16 @@ export class VaultIndexer {
         indexingContext: OriginationIndexingContext,
     ): Promise<void> {
         // Implement your indexing logic here or delete the method if not needed.
+        let vault = new Symmetric();
+        vault.id = '1';
+        vault.poolCount = 0;
+        vault.pools = [];
+        vault.totalLiquidity = '0';
+        vault.totalSwapCount = BigInt('0');
+        vault.totalSwapVolume = '0';
+        vault.totalSwapFee = '0';
+
+        await dbContext.transaction.insert(Symmetric, vault);
     }
 
     @indexEvent('PoolBalanceChanged')
@@ -66,17 +76,17 @@ export class VaultIndexer {
         dbContext: DbContext,
         indexingContext: EventIndexingContext,
     ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
+        let amounts = [...payload.amountsInOrOut.values()]
+        if (amounts.length === 0) {
+          return;
+        }
+        let total: BigNumber = amounts.reduce<BigNumber>((sum, amount) => sum.plus(amount), BigNumber(0));
+        if (total.gt(0)) {
+          await handlePoolJoined(payload, indexingContext, dbContext);
+        } else {
+          await handlePoolExited(payload, indexingContext, dbContext);
+        }
 
-    }
-
-    @indexEvent('PoolRegistered')
-    async indexPoolRegisteredEvent(
-        payload: VaultPoolRegisteredPayload,
-        dbContext: DbContext,
-        indexingContext: EventIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
     }
 
     @indexEvent('Swap')
@@ -85,17 +95,10 @@ export class VaultIndexer {
         dbContext: DbContext,
         indexingContext: EventIndexingContext,
     ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
+        await handleSwapEvent(payload, indexingContext, dbContext);
     }
+    
 
-    @indexEvent('TokensRegistered')
-    async indexTokensRegisteredEvent(
-        payload: VaultTokensRegisteredPayload,
-        dbContext: DbContext,
-        indexingContext: EventIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
 }
 
 
