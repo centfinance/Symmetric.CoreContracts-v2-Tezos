@@ -1,7 +1,8 @@
 import { DbContext } from "@tezos-dappetizer/database";
 import BigNumber from "bignumber.js";
+import { SimpleConsoleLogger } from "typeorm";
 import { LatestPrice, Pool, PoolHistoricalLiquidity, PoolToken, Symmetric, Token, TokenPrice } from "./entities";
-import { PRICING_ASSETS, USD_STABLE_ASSETS } from "./helpers/constants";
+import { MAX_NEG_PRICE_CHANGE, MAX_POS_PRICE_CHANGE, MAX_TIME_DIFF_FOR_PRICING, PRICING_ASSETS, USD_STABLE_ASSETS } from "./helpers/constants";
 import { createPoolSnapshot, getSymmetricSnapshot, getToken, loadPoolToken, ZERO_BD } from "./helpers/misc";
 import { isComposableStablePool } from "./helpers/pools";
 import { WeightedPoolFactoryCreateParameterTokensValue } from "./weighted-pool-factory-indexer-interfaces.generated";
@@ -167,7 +168,9 @@ export async function addHistoricalPoolLiquidityRecord(
     let poolTokenQuantity = BigNumber(poolToken.balance);
 
     let price = BigNumber(ZERO_BD);
-    let latestPriceId = getLatestPriceId(tokenAddress, pricingAsset, pricingAssetId);
+    let tokenAsset = tokenAddress.concat(tokenId ? tokenId.toString() : '0');
+    let pricing = pricingAsset.concat(pricingAssetId ? pricingAssetId.toString() : '0');
+    let latestPriceId = getLatestPriceId(tokenAsset, pricing);
     let latestPrice = await dbContext.transaction.findOneBy(LatestPrice, { id: latestPriceId });
 
     // note that we can only meaningfully report liquidity once assets are traded with
@@ -252,22 +255,23 @@ export async function updateLatestPrice(tokenPrice: TokenPrice, blockTimestamp: 
   }
 
   latestPrice.block = tokenPrice.block;
-  latestPrice.poolId = tokenPrice.poolId;
+  latestPrice.poolId = tokenPrice.pool;
   latestPrice.price = tokenPrice.price;
   await dbContext.transaction.save(LatestPrice, latestPrice);
 
-  let token = getToken(tokenAddress);
-  const pricingAssetAddress = Address.fromString(tokenPrice.pricingAsset.toHexString());
-  const currentUSDPrice = valueInUSD(tokenPrice.price, pricingAssetAddress);
+  let token = await getToken(tokenAsset.slice(0, 36), BigNumber(tokenAsset.slice(36)), dbContext);
+  const pricingAssetAddress = pricingAsset.slice(0, 36);
+  const pricingAssetId = BigNumber(pricingAsset.slice(36))
+  const currentUSDPrice = await valueInUSD(BigNumber(tokenPrice.price), pricingAssetAddress, pricingAssetId, dbContext);
 
-  if (currentUSDPrice == ZERO_BD) return;
+  if (currentUSDPrice == BigNumber(ZERO_BD)) return;
 
-  let oldUSDPrice = token.latestUSDPrice;
-  if (!oldUSDPrice || oldUSDPrice.equals(ZERO_BD)) {
+  let oldUSDPrice = BigNumber(token.latestUSDPrice!);
+  if (!oldUSDPrice || oldUSDPrice.isEqualTo(ZERO_BD)) {
     token.latestUSDPriceTimestamp = blockTimestamp;
-    token.latestUSDPrice = currentUSDPrice;
-    token.latestPrice = latestPrice.id;
-    token.save();
+    token.latestUSDPrice = currentUSDPrice.toString();
+    token.latestPrice = latestPrice
+    await dbContext.transaction.save(Token, token);
     return;
   }
 
@@ -276,13 +280,21 @@ export async function updateLatestPrice(tokenPrice: TokenPrice, blockTimestamp: 
     !token.latestUSDPriceTimestamp ||
     (change.lt(MAX_POS_PRICE_CHANGE) && change.gt(MAX_NEG_PRICE_CHANGE)) ||
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    blockTimestamp.minus(token.latestUSDPriceTimestamp!).gt(MAX_TIME_DIFF_FOR_PRICING)
+    BigNumber(blockTimestamp).minus(token.latestUSDPriceTimestamp!).gt(MAX_TIME_DIFF_FOR_PRICING)
   ) {
     token.latestUSDPriceTimestamp = blockTimestamp;
-    token.latestUSDPrice = currentUSDPrice;
-    token.latestPrice = latestPrice.id;
-    token.save();
+    token.latestUSDPrice = currentUSDPrice.toString();
+    token.latestPrice = latestPrice;
+    await dbContext.transaction.save(Token, token);
   }
+}
+
+export function getPreferentialPricingAsset(assets: string[]): string {
+  // Assumes PRICING_ASSETS are sorted by order of preference
+  for (let i: number = 0; i < PRICING_ASSETS.length; i++) {
+    if (assets.includes(PRICING_ASSETS[i])) return PRICING_ASSETS[i];
+  }
+  return '0';
 }
 
 

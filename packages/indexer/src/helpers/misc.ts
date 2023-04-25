@@ -46,7 +46,7 @@ export async function getTokenMetadata(tokenAddress: string, tokenId: number) {
 }
 
 export async function getToken(tokenAddress: string, tokenId: BigNumber | null, dbContext: DbContext ): Promise<Token> {
-  let token = await dbContext.transaction.findOneBy(Token,{id: tokenAddress});
+  let token = await dbContext.transaction.findOneBy(Token, {id: tokenAddress.concat(tokenId ? tokenId.toString() : '0')});
   if (token == null) {
     token = await createToken(tokenAddress, tokenId, dbContext);
   }

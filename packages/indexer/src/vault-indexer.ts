@@ -15,10 +15,10 @@ import {
     TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
 import BigNumber from 'bignumber.js';
-import { Timestamp } from 'typeorm';
 import { InvestType, JoinExit, Pool, PoolToken, Swap, Symmetric, SymmetricSnapshot, Token, TokenPrice, TokenSnapshot, TradePair, TradePairSnapshot, User } from './entities';
+import { MIN_POOL_LIQUIDITY, MIN_SWAP_VALUE_USD } from './helpers/constants';
 import { getSymmetricSnapshot, getToken, getTokenPriceId, getTokenSnapshot, getTradePair, getTradePairSnapshot, loadPoolToken, scaleDown, tokenToDecimal, updateTokenBalances, uptickSwapsForToken, ZERO_BD } from './helpers/misc';
-import { addHistoricalPoolLiquidityRecord, isPricingAsset, swapValueInUSD, updatePoolLiquidity, valueInUSD } from './pricing';
+import { addHistoricalPoolLiquidityRecord, getPreferentialPricingAsset, isPricingAsset, swapValueInUSD, updateLatestPrice, updatePoolLiquidity, valueInUSD } from './pricing';
 
 import {
     VaultAcceptAdminParameter,
@@ -720,11 +720,11 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
 
     await dbContext.transaction.save(TokenPrice, tokenPrice);
 
-    updateLatestPrice(tokenPrice, event.block.timestamp);
+    await updateLatestPrice(tokenPrice, blockTimestamp, dbContext);
   }
   if (
     isPricingAsset(tokenOutAddress) &&
-    pool.totalLiquidity.gt(MIN_POOL_LIQUIDITY) &&
+    BigNumber(pool.totalLiquidity).gt(MIN_POOL_LIQUIDITY) &&
     valueUSD.gt(MIN_SWAP_VALUE_USD)
   ) {
     let tokenPriceId = getTokenPriceId(poolId, tokenIn.id, tokenOut.id, blockNumber);
@@ -750,12 +750,12 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
     await dbContext.transaction.save(TokenPrice, tokenPrice);
 
 
-    updateLatestPrice(tokenPrice, event.block.timestamp);
+    await updateLatestPrice(tokenPrice, blockTimestamp, dbContext);
   }
 
-  const preferentialToken = getPreferentialPricingAsset([tokenInAddress, tokenOutAddress]);
-  if (preferentialToken != ZERO_ADDRESS) {
-    await addHistoricalPoolLiquidityRecord(poolId, blockNumber, preferentialToken, preferentialTokenId, dbContext);
+  const preferentialToken = getPreferentialPricingAsset([tokenIn.id, tokenOut.id]);
+  if (preferentialToken != '0') {
+    await addHistoricalPoolLiquidityRecord(poolId, blockNumber, preferentialToken.slice(0, 36), BigNumber(preferentialToken.slice(36)), dbContext);
   }
 
   await updatePoolLiquidity(poolId, blockNumber, dbContext);

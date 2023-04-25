@@ -331,8 +331,8 @@ export class Token {
   @Column("decimal", { precision: 40, scale: 18, nullable: true })
   latestUSDPrice?: string;
 
-  @Column("bigint", { nullable: true })
-  latestUSDPriceTimestamp?: bigint;
+  @Column("numeric", { nullable: true })
+  latestUSDPriceTimestamp?: number;
 
   @Column("decimal", { precision: 40, scale: 18, nullable: true })
   latestFXPrice?: string;
@@ -526,8 +526,8 @@ export class LatestPrice {
   @Column('decimal')
   price!: string;
 
-  @Column('bigint')
-  block!: BigInt;
+  @Column('numeric')
+  block!: number;
 }
 
 // ... other TypeORM entities for the remaining schema
