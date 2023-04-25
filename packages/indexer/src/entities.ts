@@ -121,6 +121,10 @@ export class Pool {
 
   @OneToMany(() => PoolHistoricalLiquidity, (poolHistoricalLiquidity) => poolHistoricalLiquidity.poolId)
   historicalValues!: PoolHistoricalLiquidity[];
+  
+  @OneToMany(() => TokenPrice, (tokenPrice) => tokenPrice.pool)
+  tokenPrices!: TokenPrice[];
+
   priceRateProviders: any;
 
   // ... other columns and relations for the Pool entity
@@ -253,6 +257,33 @@ export class PoolHistoricalLiquidity {
 
   @Column('bigint')
   block!: BigInt;
+}
+
+@Entity()
+export class TokenPrice {
+  @PrimaryColumn('varchar')
+  id!: string;
+
+  @ManyToOne(() => Pool, (pool) => pool.tokenPrices)
+  pool!: Pool;
+
+  @Column('varchar')
+  asset!: string;
+  
+  @Column('decimal')
+  amount!: string;
+
+  @Column('varchar')
+  pricingAsset!: string;
+  
+  @Column('decimal')
+  price!: string;
+  
+  @Column('numeric')
+  block!: number;
+  
+  @Column('numeric')
+  timestamp!: number
 }
 
 // Token

@@ -264,7 +264,7 @@ export async function getTradePair(token0Address: string, token0Id: BigNumber | 
     tradePair.totalSwapVolume = ZERO_BD;
     await dbContext.transaction.save(TradePair, tradePair);
   }
-  
+
   return tradePair;
 }
 
@@ -286,4 +286,19 @@ export async function getTradePairSnapshot(tradePairId: string, timestamp: numbe
     await dbContext.transaction.save(TradePairSnapshot, snapshot);
   }
   return snapshot;
+}
+
+export function getTokenPriceId(
+  poolId: string,
+  tokenId: string,
+  stableTokenId: string,
+  block: number,
+): string {
+  return poolId
+    .concat('-')
+    .concat(tokenId)
+    .concat('-')
+    .concat(stableTokenId)
+    .concat('-')
+    .concat(block.toString());
 }

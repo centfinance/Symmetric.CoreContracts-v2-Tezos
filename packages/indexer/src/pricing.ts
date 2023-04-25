@@ -1,6 +1,6 @@
 import { DbContext } from "@tezos-dappetizer/database";
 import BigNumber from "bignumber.js";
-import { LatestPrice, Pool, PoolHistoricalLiquidity, PoolToken, Symmetric, Token } from "./entities";
+import { LatestPrice, Pool, PoolHistoricalLiquidity, PoolToken, Symmetric, Token, TokenPrice } from "./entities";
 import { PRICING_ASSETS, USD_STABLE_ASSETS } from "./helpers/constants";
 import { createPoolSnapshot, getSymmetricSnapshot, getToken, loadPoolToken, ZERO_BD } from "./helpers/misc";
 import { isComposableStablePool } from "./helpers/pools";
@@ -222,8 +222,8 @@ export async function addHistoricalPoolLiquidityRecord(
   return true;
 }
 
-export function getLatestPriceId(tokenAddress: string, pricingAsset: string, pricingId: BigNumber | null): string {
-  return tokenAddress.concat('-').concat(pricingAsset).concat(pricingId ? pricingId.toString() : '');
+export function getLatestPriceId(tokenAsset: string, pricingAsset: string): string {
+  return tokenAsset.concat('-').concat(pricingAsset);
 }
 
 export function getPoolHistoricalLiquidityId(poolId: string, tokenAddress: string, tokenId: BigNumber | null, block: number): string {
@@ -235,6 +235,54 @@ export function isPricingAsset(asset: string): boolean {
     if (PRICING_ASSETS[i] == asset) return true;
   }
   return false;
+}
+
+export async function updateLatestPrice(tokenPrice: TokenPrice, blockTimestamp: number, dbContext: DbContext): Promise<void> {
+  let tokenAsset = tokenPrice.asset
+  let pricingAsset = tokenPrice.pricingAsset
+
+  let latestPriceId = getLatestPriceId(tokenAsset, pricingAsset);
+  let latestPrice = await dbContext.transaction.findOneBy(LatestPrice, { id: latestPriceId }) as LatestPrice;
+
+  if (latestPrice == null) {
+    latestPrice = new LatestPrice();
+    latestPrice.id = latestPriceId;
+    latestPrice.asset = tokenPrice.asset;
+    latestPrice.pricingAsset = tokenPrice.pricingAsset;
+  }
+
+  latestPrice.block = tokenPrice.block;
+  latestPrice.poolId = tokenPrice.poolId;
+  latestPrice.price = tokenPrice.price;
+  await dbContext.transaction.save(LatestPrice, latestPrice);
+
+  let token = getToken(tokenAddress);
+  const pricingAssetAddress = Address.fromString(tokenPrice.pricingAsset.toHexString());
+  const currentUSDPrice = valueInUSD(tokenPrice.price, pricingAssetAddress);
+
+  if (currentUSDPrice == ZERO_BD) return;
+
+  let oldUSDPrice = token.latestUSDPrice;
+  if (!oldUSDPrice || oldUSDPrice.equals(ZERO_BD)) {
+    token.latestUSDPriceTimestamp = blockTimestamp;
+    token.latestUSDPrice = currentUSDPrice;
+    token.latestPrice = latestPrice.id;
+    token.save();
+    return;
+  }
+
+  let change = currentUSDPrice.minus(oldUSDPrice).div(oldUSDPrice);
+  if (
+    !token.latestUSDPriceTimestamp ||
+    (change.lt(MAX_POS_PRICE_CHANGE) && change.gt(MAX_NEG_PRICE_CHANGE)) ||
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    blockTimestamp.minus(token.latestUSDPriceTimestamp!).gt(MAX_TIME_DIFF_FOR_PRICING)
+  ) {
+    token.latestUSDPriceTimestamp = blockTimestamp;
+    token.latestUSDPrice = currentUSDPrice;
+    token.latestPrice = latestPrice.id;
+    token.save();
+  }
 }
 
 

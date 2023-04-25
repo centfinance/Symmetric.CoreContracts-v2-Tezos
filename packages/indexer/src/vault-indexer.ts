@@ -16,8 +16,8 @@ import {
 } from '@tezos-dappetizer/indexer';
 import BigNumber from 'bignumber.js';
 import { Timestamp } from 'typeorm';
-import { InvestType, JoinExit, Pool, PoolToken, Swap, Symmetric, SymmetricSnapshot, Token, TokenSnapshot, TradePair, User } from './entities';
-import { getSymmetricSnapshot, getToken, getTokenSnapshot, getTradePair, loadPoolToken, scaleDown, tokenToDecimal, updateTokenBalances, uptickSwapsForToken, ZERO_BD } from './helpers/misc';
+import { InvestType, JoinExit, Pool, PoolToken, Swap, Symmetric, SymmetricSnapshot, Token, TokenPrice, TokenSnapshot, TradePair, TradePairSnapshot, User } from './entities';
+import { getSymmetricSnapshot, getToken, getTokenPriceId, getTokenSnapshot, getTradePair, getTradePairSnapshot, loadPoolToken, scaleDown, tokenToDecimal, updateTokenBalances, uptickSwapsForToken, ZERO_BD } from './helpers/misc';
 import { addHistoricalPoolLiquidityRecord, isPricingAsset, swapValueInUSD, updatePoolLiquidity, valueInUSD } from './pricing';
 
 import {
@@ -561,6 +561,9 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
   let tokenOutAddress: string = event.tokenOut[5];
   let tokenOutId:BigNumber = event.tokenOut[6];
 
+  let tokenIn = await dbContext.transaction.findOneBy(Token, {address: tokenInAddress, tokenId: tokenInId ? tokenInId.toNumber() : 0}) as Token;
+  let tokenOut = await dbContext.transaction.findOneBy(Token, {address: tokenOutAddress, tokenId: tokenOutId ? tokenOutId.toNumber() : 0}) as Token;
+  
   let blockTimestamp = indexingContext.block.timestamp.getTime();
   let logIndex = indexingContext.mainOperation.uid;
   let transactionHash = indexingContext.operationGroup.hash;
@@ -681,10 +684,10 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
   tradePair.totalSwapFee = BigNumber(tradePair.totalSwapFee).plus(swapFeesUSD).toString();
   await dbContext.transaction.save(TradePair, tradePair);
 
-  let tradePairSnapshot = getTradePairSnapshot(tradePair.id, blockTimestamp);
-  tradePairSnapshot.totalSwapVolume = tradePair.totalSwapVolume.plus(swapValueUSD);
-  tradePairSnapshot.totalSwapFee = tradePair.totalSwapFee.plus(swapFeesUSD);
-  tradePairSnapshot.save();
+  let tradePairSnapshot = await getTradePairSnapshot(tradePair.id, blockTimestamp, dbContext);
+  tradePairSnapshot.totalSwapVolume = BigNumber(tradePair.totalSwapVolume).plus(swapValueUSD).toString();
+  tradePairSnapshot.totalSwapFee = BigNumber(tradePair.totalSwapFee).plus(swapFeesUSD).toString();
+  await dbContext.transaction.save(TradePairSnapshot, tradePairSnapshot);
 
   if (swap.tokenAmountOut == ZERO_BD || swap.tokenAmountIn == ZERO_BD) {
     return;
@@ -694,11 +697,12 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
   // TODO: refactor these if statements using a helper function
   let tokenInWeight = poolTokenIn.weight;
   let tokenOutWeight = poolTokenOut.weight;
-  if (isPricingAsset(tokenInAddress) && pool.totalLiquidity.gt(MIN_POOL_LIQUIDITY) && valueUSD.gt(MIN_SWAP_VALUE_USD)) {
-    let tokenPriceId = getTokenPriceId(poolId.toHex(), tokenOutAddress, tokenInAddress, blockNumber);
-    let tokenPrice = new TokenPrice(tokenPriceId);
+  if (isPricingAsset(tokenInAddress) && BigNumber(pool.totalLiquidity).gt(MIN_POOL_LIQUIDITY) && valueUSD.gt(MIN_SWAP_VALUE_USD)) {
+    let tokenPriceId = getTokenPriceId(poolId, tokenOut.id, tokenIn.id, blockNumber);
+    let tokenPrice = new TokenPrice();
+    tokenPrice.id = tokenPriceId;
     //tokenPrice.poolTokenId = getPoolTokenId(poolId, tokenOutAddress);
-    tokenPrice.poolId = poolId;
+    tokenPrice.pool = pool;
     tokenPrice.block = blockNumber;
     tokenPrice.timestamp = blockTimestamp;
     tokenPrice.asset = tokenOutAddress;
@@ -708,13 +712,13 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
     if (tokenInWeight && tokenOutWeight) {
       // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
       // based on the pool's weights and updated balances after the swap.
-      tokenPrice.price = newInAmount.div(tokenInWeight).div(newOutAmount.div(tokenOutWeight));
+      tokenPrice.price = BigNumber(newInAmount).div(tokenInWeight).div(BigNumber(newOutAmount).div(tokenOutWeight)).toString();
     } else {
       // Otherwise we can get a simple measure of the price from the ratio of amount in vs amount out
-      tokenPrice.price = tokenAmountIn.div(tokenAmountOut);
+      tokenPrice.price = BigNumber(tokenAmountIn).div(tokenAmountOut).toString();
     }
 
-    tokenPrice.save();
+    await dbContext.transaction.save(TokenPrice, tokenPrice);
 
     updateLatestPrice(tokenPrice, event.block.timestamp);
   }
@@ -723,10 +727,11 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
     pool.totalLiquidity.gt(MIN_POOL_LIQUIDITY) &&
     valueUSD.gt(MIN_SWAP_VALUE_USD)
   ) {
-    let tokenPriceId = getTokenPriceId(poolId.toHex(), tokenInAddress, tokenOutAddress, blockNumber);
-    let tokenPrice = new TokenPrice(tokenPriceId);
+    let tokenPriceId = getTokenPriceId(poolId, tokenIn.id, tokenOut.id, blockNumber);
+    let tokenPrice = new TokenPrice();
+    tokenPrice.id = tokenPriceId;
     //tokenPrice.poolTokenId = getPoolTokenId(poolId, tokenInAddress);
-    tokenPrice.poolId = poolId.toHexString();
+    tokenPrice.pool = pool;
     tokenPrice.block = blockNumber;
     tokenPrice.timestamp = blockTimestamp;
     tokenPrice.asset = tokenInAddress;
@@ -736,13 +741,14 @@ export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: 
     if (tokenInWeight && tokenOutWeight) {
       // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
       // based on the pool's weights and updated balances after the swap.
-      tokenPrice.price = newOutAmount.div(tokenOutWeight).div(newInAmount.div(tokenInWeight));
+      tokenPrice.price = BigNumber(newOutAmount).div(tokenOutWeight).div(BigNumber(newInAmount).div(tokenInWeight)).toString();
     } else {
       // Otherwise we can get a simple measure of the price from the ratio of amount out vs amount in
-      tokenPrice.price = tokenAmountOut.div(tokenAmountIn);
+      tokenPrice.price = BigNumber(tokenAmountOut).div(tokenAmountIn).toString();
     }
 
-    tokenPrice.save();
+    await dbContext.transaction.save(TokenPrice, tokenPrice);
+
 
     updateLatestPrice(tokenPrice, event.block.timestamp);
   }
