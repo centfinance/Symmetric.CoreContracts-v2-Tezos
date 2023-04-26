@@ -1,7 +1,8 @@
 import { DbContext } from "@tezos-dappetizer/database";
 import BigNumber from "bignumber.js";
-import { LatestPrice, Pool, PoolHistoricalLiquidity, PoolToken, Symmetric, Token } from "./entities";
-import { PRICING_ASSETS, USD_STABLE_ASSETS } from "./helpers/constants";
+import { SimpleConsoleLogger } from "typeorm";
+import { LatestPrice, Pool, PoolHistoricalLiquidity, PoolToken, Symmetric, Token, TokenPrice } from "./entities";
+import { MAX_NEG_PRICE_CHANGE, MAX_POS_PRICE_CHANGE, MAX_TIME_DIFF_FOR_PRICING, PRICING_ASSETS, USD_STABLE_ASSETS } from "./helpers/constants";
 import { createPoolSnapshot, getSymmetricSnapshot, getToken, loadPoolToken, ZERO_BD } from "./helpers/misc";
 import { isComposableStablePool } from "./helpers/pools";
 import { WeightedPoolFactoryCreateParameterTokensValue } from "./weighted-pool-factory-indexer-interfaces.generated";
@@ -67,7 +68,7 @@ export async function valueInUSD(value: BigNumber, asset: string, assetId: BigNu
     usdValue = value;
   } else {
     // convert to USD
-    let token = await getToken(asset, assetId ? assetId.toNumber() : 0, dbContext);
+    let token = await getToken(asset, assetId, dbContext);
 
     if (token.latestUSDPrice) {
       const latestUSDPrice = BigNumber(token.latestUSDPrice);
@@ -76,6 +77,49 @@ export async function valueInUSD(value: BigNumber, asset: string, assetId: BigNu
   }
 
   return usdValue;
+}
+
+export async function swapValueInUSD(
+  tokenInAddress: string,
+  tokenInId: BigNumber | null,
+  tokenAmountIn: BigNumber,
+  tokenOutAddress: string,
+  tokenOutId: BigNumber | null,
+  tokenAmountOut: BigNumber,
+  dbContext: DbContext,
+): Promise<BigNumber> {
+  let swapValueUSD = BigNumber(ZERO_BD);
+
+  if (isUSDStable(tokenOutAddress)) {
+    // if one of the tokens is a stable, it takes precedence
+    swapValueUSD = await valueInUSD(tokenAmountOut, tokenOutAddress, tokenOutId, dbContext);
+    return swapValueUSD;
+  } else if (isUSDStable(tokenInAddress)) {
+    // if one of the tokens is a stable, it takes precedence
+    swapValueUSD = await valueInUSD(tokenAmountIn, tokenInAddress, tokenInId, dbContext);
+    return swapValueUSD;
+  }
+
+  if (isPricingAsset(tokenInAddress) && !isPricingAsset(tokenOutAddress)) {
+    // if only one of the tokens is a pricing asset, it takes precedence
+    swapValueUSD = await valueInUSD(tokenAmountIn, tokenInAddress, tokenInId, dbContext);
+    if (swapValueUSD.gt(ZERO_BD)) return swapValueUSD;
+  }
+
+  if (isPricingAsset(tokenOutAddress) && !isPricingAsset(tokenInAddress)) {
+    // if only one of the tokens is a pricing asset, it takes precedence
+    swapValueUSD = await valueInUSD(tokenAmountOut, tokenOutAddress, tokenOutId, dbContext);
+    if (swapValueUSD.gt(ZERO_BD)) return swapValueUSD;
+  }
+
+  // if none or both tokens are pricing assets, take the average of the known prices
+  let tokenInSwapValueUSD = await valueInUSD(tokenAmountIn, tokenInAddress, tokenInId, dbContext);
+  let tokenOutSwapValueUSD = await valueInUSD(tokenAmountOut, tokenOutAddress, tokenOutId, dbContext);
+  let divisor =
+    tokenInSwapValueUSD.gt(ZERO_BD) && tokenOutSwapValueUSD.gt(ZERO_BD) ? BigNumber('2') : BigNumber('1');
+  swapValueUSD = tokenInSwapValueUSD.plus(tokenOutSwapValueUSD).div(divisor);
+
+  return swapValueUSD;
 }
 
 export function isUSDStable(asset: string): boolean {
@@ -89,7 +133,7 @@ export async function updateSptPrice(pool: Pool, dbContext: DbContext): Promise<
   if (BigNumber(pool.totalShares).isEqualTo(ZERO_BD)) return;
 
   const sptAddress = pool.address;
-  let sptToken = await getToken(sptAddress, 0, dbContext);
+  let sptToken = await getToken(sptAddress, null, dbContext);
   sptToken.latestUSDPrice = BigNumber(pool.totalLiquidity).div(pool.totalShares).toString();
   dbContext.transaction.save(Token, sptToken);
 }
@@ -124,7 +168,9 @@ export async function addHistoricalPoolLiquidityRecord(
     let poolTokenQuantity = BigNumber(poolToken.balance);
 
     let price = BigNumber(ZERO_BD);
-    let latestPriceId = getLatestPriceId(tokenAddress, pricingAsset, pricingAssetId);
+    let tokenAsset = tokenAddress.concat(tokenId ? tokenId.toString() : '0');
+    let pricing = pricingAsset.concat(pricingAssetId ? pricingAssetId.toString() : '0');
+    let latestPriceId = getLatestPriceId(tokenAsset, pricing);
     let latestPrice = await dbContext.transaction.findOneBy(LatestPrice, { id: latestPriceId });
 
     // note that we can only meaningfully report liquidity once assets are traded with
@@ -179,8 +225,8 @@ export async function addHistoricalPoolLiquidityRecord(
   return true;
 }
 
-export function getLatestPriceId(tokenAddress: string, pricingAsset: string, pricingId: BigNumber | null): string {
-  return tokenAddress.concat('-').concat(pricingAsset).concat(pricingId ? pricingId.toString() : '');
+export function getLatestPriceId(tokenAsset: string, pricingAsset: string): string {
+  return tokenAsset.concat('-').concat(pricingAsset);
 }
 
 export function getPoolHistoricalLiquidityId(poolId: string, tokenAddress: string, tokenId: BigNumber | null, block: number): string {
@@ -192,6 +238,63 @@ export function isPricingAsset(asset: string): boolean {
     if (PRICING_ASSETS[i] == asset) return true;
   }
   return false;
+}
+
+export async function updateLatestPrice(tokenPrice: TokenPrice, blockTimestamp: number, dbContext: DbContext): Promise<void> {
+  let tokenAsset = tokenPrice.asset
+  let pricingAsset = tokenPrice.pricingAsset
+
+  let latestPriceId = getLatestPriceId(tokenAsset, pricingAsset);
+  let latestPrice = await dbContext.transaction.findOneBy(LatestPrice, { id: latestPriceId }) as LatestPrice;
+
+  if (latestPrice == null) {
+    latestPrice = new LatestPrice();
+    latestPrice.id = latestPriceId;
+    latestPrice.asset = tokenPrice.asset;
+    latestPrice.pricingAsset = tokenPrice.pricingAsset;
+  }
+
+  latestPrice.block = tokenPrice.block;
+  latestPrice.poolId = tokenPrice.pool;
+  latestPrice.price = tokenPrice.price;
+  await dbContext.transaction.save(LatestPrice, latestPrice);
+
+  let token = await getToken(tokenAsset.slice(0, 36), BigNumber(tokenAsset.slice(36)), dbContext);
+  const pricingAssetAddress = pricingAsset.slice(0, 36);
+  const pricingAssetId = BigNumber(pricingAsset.slice(36))
+  const currentUSDPrice = await valueInUSD(BigNumber(tokenPrice.price), pricingAssetAddress, pricingAssetId, dbContext);
+
+  if (currentUSDPrice == BigNumber(ZERO_BD)) return;
+
+  let oldUSDPrice = BigNumber(token.latestUSDPrice!);
+  if (!oldUSDPrice || oldUSDPrice.isEqualTo(ZERO_BD)) {
+    token.latestUSDPriceTimestamp = blockTimestamp;
+    token.latestUSDPrice = currentUSDPrice.toString();
+    token.latestPrice = latestPrice
+    await dbContext.transaction.save(Token, token);
+    return;
+  }
+
+  let change = currentUSDPrice.minus(oldUSDPrice).div(oldUSDPrice);
+  if (
+    !token.latestUSDPriceTimestamp ||
+    (change.lt(MAX_POS_PRICE_CHANGE) && change.gt(MAX_NEG_PRICE_CHANGE)) ||
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    BigNumber(blockTimestamp).minus(token.latestUSDPriceTimestamp!).gt(MAX_TIME_DIFF_FOR_PRICING)
+  ) {
+    token.latestUSDPriceTimestamp = blockTimestamp;
+    token.latestUSDPrice = currentUSDPrice.toString();
+    token.latestPrice = latestPrice;
+    await dbContext.transaction.save(Token, token);
+  }
+}
+
+export function getPreferentialPricingAsset(assets: string[]): string {
+  // Assumes PRICING_ASSETS are sorted by order of preference
+  for (let i: number = 0; i < PRICING_ASSETS.length; i++) {
+    if (assets.includes(PRICING_ASSETS[i])) return PRICING_ASSETS[i];
+  }
+  return '0';
 }
 
 

@@ -7,6 +7,7 @@
     "compile": "PYTHONPATH=\"./\" taq compile ${npm_config_file}",
     "compile:json": "PYTHONPATH=\"./\" taq compile ${npm_config_file} --json",
     "deploy:all": "ts-node deploy.ts",
+    "sandbox": "taq start sandbox",
     "types": "taq generate types",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

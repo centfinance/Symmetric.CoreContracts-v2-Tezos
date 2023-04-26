@@ -15,9 +15,10 @@ import {
     TransactionIndexingContext,
 } from '@tezos-dappetizer/indexer';
 import BigNumber from 'bignumber.js';
-import { InvestType, JoinExit, Pool, PoolToken, Token, TokenSnapshot, User } from './entities';
-import { getToken, getTokenSnapshot, loadPoolToken, scaleDown, tokenToDecimal, ZERO_BD } from './helpers/misc';
-import { addHistoricalPoolLiquidityRecord, isPricingAsset, updatePoolLiquidity, valueInUSD } from './pricing';
+import { InvestType, JoinExit, Pool, PoolToken, Swap, Symmetric, SymmetricSnapshot, Token, TokenPrice, TokenSnapshot, TradePair, TradePairSnapshot, User } from './entities';
+import { MIN_POOL_LIQUIDITY, MIN_SWAP_VALUE_USD } from './helpers/constants';
+import { getSymmetricSnapshot, getToken, getTokenPriceId, getTokenSnapshot, getTradePair, getTradePairSnapshot, loadPoolToken, scaleDown, tokenToDecimal, updateTokenBalances, uptickSwapsForToken, ZERO_BD } from './helpers/misc';
+import { addHistoricalPoolLiquidityRecord, getPreferentialPricingAsset, isPricingAsset, swapValueInUSD, updateLatestPrice, updatePoolLiquidity, valueInUSD } from './pricing';
 
 import {
     VaultAcceptAdminParameter,
@@ -57,191 +58,17 @@ export class VaultIndexer {
         indexingContext: OriginationIndexingContext,
     ): Promise<void> {
         // Implement your indexing logic here or delete the method if not needed.
+        let vault = new Symmetric();
+        vault.id = '1';
+        vault.poolCount = 0;
+        vault.pools = [];
+        vault.totalLiquidity = '0';
+        vault.totalSwapCount = BigInt('0');
+        vault.totalSwapVolume = '0';
+        vault.totalSwapFee = '0';
+
+        await dbContext.transaction.insert(Symmetric, vault);
     }
-
-    @indexEntrypoint('accept_admin')
-    async indexAcceptAdmin(
-        parameter: VaultAcceptAdminParameter,
-        dbContext: DbContext,
-        indexingContext: TransactionIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexEntrypoint('batchSwap')
-    async indexBatchSwap(
-        parameter: VaultBatchSwapParameter,
-        dbContext: DbContext,
-        indexingContext: TransactionIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexEntrypoint('exitPool')
-    async indexExitPool(
-        parameter: VaultExitPoolParameter,
-        dbContext: DbContext,
-        indexingContext: TransactionIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexEntrypoint('joinPool')
-    async indexJoinPool(
-      parameter: VaultJoinPoolParameter,
-      dbContext: DbContext,
-      indexingContext: TransactionIndexingContext,
-    ): Promise<void> {
-      // const poolId: string = parameter.poolId;
-      // const amounts = parameter.request.assets.map((_, key) => parameter.request.limits.get(key));
-      // const blockTimestamp = indexingContext.timestamp.toI32();
-      // const logIndex = indexingContext.logIndex;
-      // const transactionHash = indexingContext.transaction.hash;
-  
-      // const pool = await dbContext.poolRepository.findOne(poolId);
-      // if (pool === undefined) {
-      //   console.warn('Pool not found in indexJoinPool: {} {}', [poolId, transactionHash.toHexString()]);
-      //   return;
-      // }
-  
-      // const tokenAddresses = pool.tokensList;
-  
-      // const joinId = transactionHash.toHexString().concat(logIndex.toString());
-
-      // const joinAmounts: string[] = [];
-      // let valueUSD = '0';
-  
-      // for (let i = 0; i < tokenAddresses.length; i++) {
-      //   const tokenAddress = tokenAddresses[i];
-      //   const poolToken = await dbContext.poolTokenRepository.findOne({ pool: pool, token: tokenAddress });
-      //   if (poolToken === undefined) {
-      //     throw new Error('poolToken not found');
-      //   }
-  
-      //   // You'll need to implement the scaleDown function
-      //   const joinAmount = scaleDown(amounts[i], poolToken.decimals);
-      //   joinAmounts[i] = joinAmount.toString();
-      //   const tokenJoinAmountInUSD = valueInUSD(joinAmount, tokenAddress); // You'll need to implement the valueInUSD function
-      //   valueUSD = (parseFloat(valueUSD) + parseFloat(tokenJoinAmountInUSD)).toString();
-      // }
-      // const join = {
-      //   id: joinId,
-      //   sender: parameter.sender,
-      //   type: 'Join',
-      //   amounts: joinAmounts,
-      //   pool: pool,
-      //   user: await dbContext.userRepository.findOne(parameter.sender) ?? new User(parameter.sender), // Assuming that User has a constructor taking the user address as the only argument
-      //   timestamp: blockTimestamp,
-      //   tx: transactionHash,
-      //   valueUSD: valueUSD,
-      // }
-
-
-      // await dbContext.transaction.insert(JoinExit, join);
-  
-      // The rest of the function depends on functions and data structures that are specific to the Balancer v2 subgraph
-      // You may need to adjust or implement these functions and data structures accordingly
-      // Also, note that some of the entity updates should be adjusted to work with your dbContext and TypeORM
-  
-      // ...
-  
-    }
-
-    @indexEntrypoint('registerPool')
-    async indexRegisterPool(
-        parameter: VaultRegisterPoolParameter,
-        dbContext: DbContext,
-        indexingContext: TransactionIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-        
-    }
-
-    @indexEntrypoint('registerTokens')
-    async indexRegisterTokens(
-        parameter: VaultRegisterTokensParameter,
-        dbContext: DbContext,
-        indexingContext: TransactionIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexEntrypoint('set_paused')
-    async indexSetPaused(
-        parameter: VaultSetPausedParameter,
-        dbContext: DbContext,
-        indexingContext: TransactionIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexEntrypoint('swap')
-    async indexSwap(
-        parameter: VaultSwapParameter,
-        dbContext: DbContext,
-        indexingContext: TransactionIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexEntrypoint('transfer_admin')
-    async indexTransferAdmin(
-        parameter: VaultTransferAdminParameter,
-        dbContext: DbContext,
-        indexingContext: TransactionIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexStorageChange()
-    async indexStorageChange(
-        newStorage: VaultChangedStorage,
-        dbContext: DbContext,
-        indexingContext: StorageChangeIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexBigMapUpdate({ path: ['isPoolRegistered'] })
-    async indexIsPoolRegisteredUpdate(
-        key: VaultIsPoolRegisteredKey,
-        value: VaultIsPoolRegisteredValue | undefined, // Undefined represents a removal.
-        dbContext: DbContext,
-        indexingContext: BigMapUpdateIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexBigMapUpdate({ path: ['metadata'] })
-    async indexMetadataUpdate(
-        key: VaultMetadataKey,
-        value: VaultMetadataValue | undefined, // Undefined represents a removal.
-        dbContext: DbContext,
-        indexingContext: BigMapUpdateIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexBigMapUpdate({ path: ['poolsBalances'] })
-    async indexPoolsBalancesUpdate(
-        key: VaultPoolsBalancesKey,
-        value: VaultPoolsBalancesValue | undefined, // Undefined represents a removal.
-        dbContext: DbContext,
-        indexingContext: BigMapUpdateIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
-    @indexBigMapUpdate({ path: ['poolsTokens'] })
-    async indexPoolsTokensUpdate(
-        key: VaultPoolsTokensKey,
-        value: VaultPoolsTokensValue | undefined, // Undefined represents a removal.
-        dbContext: DbContext,
-        indexingContext: BigMapUpdateIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
-
 
     @indexEvent('PoolBalanceChanged')
     async indexPoolBalanceChangedEvent(
@@ -249,17 +76,17 @@ export class VaultIndexer {
         dbContext: DbContext,
         indexingContext: EventIndexingContext,
     ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
+        let amounts = [...payload.amountsInOrOut.values()]
+        if (amounts.length === 0) {
+          return;
+        }
+        let total: BigNumber = amounts.reduce<BigNumber>((sum, amount) => sum.plus(amount), BigNumber(0));
+        if (total.gt(0)) {
+          await handlePoolJoined(payload, indexingContext, dbContext);
+        } else {
+          await handlePoolExited(payload, indexingContext, dbContext);
+        }
 
-    }
-
-    @indexEvent('PoolRegistered')
-    async indexPoolRegisteredEvent(
-        payload: VaultPoolRegisteredPayload,
-        dbContext: DbContext,
-        indexingContext: EventIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
     }
 
     @indexEvent('Swap')
@@ -268,17 +95,10 @@ export class VaultIndexer {
         dbContext: DbContext,
         indexingContext: EventIndexingContext,
     ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
+        await handleSwapEvent(payload, indexingContext, dbContext);
     }
+    
 
-    @indexEvent('TokensRegistered')
-    async indexTokensRegisteredEvent(
-        payload: VaultTokensRegisteredPayload,
-        dbContext: DbContext,
-        indexingContext: EventIndexingContext,
-    ): Promise<void> {
-        // Implement your indexing logic here or delete the method if not needed.
-    }
 }
 
 
@@ -353,7 +173,7 @@ export async function handlePoolJoined(event: VaultPoolBalanceChangedPayload1, i
     poolToken.balance = newBalance.toString();
     await dbContext.transaction.save(PoolToken, poolToken);
     
-    let token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
+    let token = await getToken(tokenAddress, tokenId, dbContext);
     const tokenTotalBalanceNotional = BigNumber(token.totalBalanceNotional).plus(tokenAmountIn);
     const tokenTotalBalanceUSD = await valueInUSD(tokenTotalBalanceNotional, tokenAddress, tokenId, dbContext);
     token.totalBalanceNotional = tokenTotalBalanceNotional.toString();
@@ -466,7 +286,7 @@ export async function handlePoolExited(event: VaultPoolBalanceChangedPayload2, i
     poolToken.balance = newBalance.toString();
     await dbContext.transaction.save(PoolToken, poolToken);
     
-    let token = await getToken(tokenAddress, tokenId ? tokenId.toNumber() : 0, dbContext);
+    let token = await getToken(tokenAddress, tokenId, dbContext);
     const tokenTotalBalanceNotional = BigNumber(token.totalBalanceNotional).minus(tokenAmountOut);
     const tokenTotalBalanceUSD = await valueInUSD(tokenTotalBalanceNotional, tokenAddress, tokenId, dbContext);
     token.totalBalanceNotional = tokenTotalBalanceNotional.toString();
@@ -510,4 +330,252 @@ export async function handlePoolExited(event: VaultPoolBalanceChangedPayload2, i
   // }
 
   await updatePoolLiquidity(poolId, blockTimestamp, dbContext);
+}
+
+export async function handleSwapEvent(event: VaultSwapPayload, indexingContext: EventIndexingContext, dbContext: DbContext): Promise<void> {
+  const params = indexingContext.transactionParameter?.value.convert() as VaultSwapParameter | VaultBatchSwapParameter
+  let user  = await dbContext.transaction.findOneBy(User, {id: params.funds.sender});
+  if (!user) {
+    user  = new User();
+    user.id = params.funds.sender;
+  }
+  
+  let poolId = event.poolId;
+
+  let pool = await dbContext.transaction.findOneBy(Pool, {id: poolId});
+  if (pool == null) {
+    return;
+  }
+
+  // if a swap happens in a pool that was paused, it means it's pause has expired
+  // TODO: fix this for when pool.isPaused is null
+  // TODO: handle the case where the pool's actual swapEnabled is false
+  // if (pool.isPaused) {
+  //   pool.isPaused = false;
+  //   pool.swapEnabled = true;
+  // }
+
+  // if (isVariableWeightPool(pool)) {
+  //   // Some pools' weights update over time so we need to update them after each swap
+  //   updatePoolWeights(poolId.toHexString());
+  // }
+  // } else if (isStableLikePool(pool)) {
+  //   // Stablelike pools' amplification factors update over time so we need to update them after each swap
+  //   updateAmpFactor(pool);
+  // }
+
+  // Update virtual supply
+  // if (hasVirtualSupply(pool)) {
+  //   if (event.params.tokenIn == pool.address) {
+  //     pool.totalShares = pool.totalShares.minus(tokenToDecimal(event.params.amountIn, 18));
+  //   }
+  //   if (event.params.tokenOut == pool.address) {
+  //     pool.totalShares = pool.totalShares.plus(tokenToDecimal(event.params.amountOut, 18));
+  //   }
+  // }
+
+  let poolAddress = pool.address;
+  let tokenInAddress: string = event.tokenIn[3];
+  let tokenInId:BigNumber = event.tokenIn[4];
+  let tokenOutAddress: string = event.tokenOut[5];
+  let tokenOutId:BigNumber = event.tokenOut[6];
+
+  let tokenIn = await dbContext.transaction.findOneBy(Token, {address: tokenInAddress, tokenId: tokenInId ? tokenInId.toNumber() : 0}) as Token;
+  let tokenOut = await dbContext.transaction.findOneBy(Token, {address: tokenOutAddress, tokenId: tokenOutId ? tokenOutId.toNumber() : 0}) as Token;
+  
+  let blockTimestamp = indexingContext.block.timestamp.getTime();
+  let logIndex = indexingContext.mainOperation.uid;
+  let transactionHash = indexingContext.operationGroup.hash;
+  let blockNumber = indexingContext.block.level
+
+  let poolTokenIn = await loadPoolToken(poolId, tokenInAddress, tokenInId, dbContext);
+  let poolTokenOut = await loadPoolToken(poolId, tokenOutAddress, tokenOutId, dbContext);
+  if (poolTokenIn == null || poolTokenOut == null) {
+    return;
+  }
+
+  let tokenAmountIn  = scaleDown(event.amountIn, poolTokenIn.decimals);
+  let tokenAmountOut = scaleDown(event.amountOut, poolTokenOut.decimals);
+
+  let swapValueUSD = ZERO_BD;
+  let swapFeesUSD = ZERO_BD;
+
+  // Swap events are emitted when joining/exitting from pools with preminted BPT.
+  // Since we want this type of swap to register tokens prices but not counting as volume
+  // we defined two variables: 1. valueUSD - the value in USD of the transaction;
+  // 2. swapValueUSD - equal to valueUSD if trade, zero otherwise, and used to update metrics.
+  const valueUSD = await swapValueInUSD(tokenInAddress, tokenInId, BigNumber(tokenAmountIn), tokenOutAddress, tokenOutId, BigNumber(tokenAmountOut), dbContext);
+
+  if (poolAddress != tokenInAddress && poolAddress != tokenOutAddress) {
+    swapValueUSD = valueUSD.toString();
+    let swapFee = pool.swapFee;
+    swapFeesUSD = valueUSD.times(swapFee).toString();
+  }
+
+  let newInAmount = BigNumber(poolTokenIn.balance).plus(tokenAmountIn).toString();
+  poolTokenIn.balance = newInAmount;
+  await dbContext.transaction.save(PoolToken, poolTokenIn);
+
+  let newOutAmount = BigNumber(poolTokenOut.balance).minus(tokenAmountOut).toString();
+  poolTokenOut.balance = newOutAmount;
+  await dbContext.transaction.save(PoolToken, poolTokenOut);
+
+  let swapId = transactionHash.concat(logIndex);
+
+  // if (poolAddress == tokenInAddress || poolAddress == tokenOutAddress) {
+    // if (isComposableStablePool(pool)) {
+    //   let tokenAddresses = pool.tokensList;
+    //   let balances: BigInt[] = [];
+    //   for (let i: i32 = 0; i < tokenAddresses.length; i++) {
+    //     let tokenAddress: Address = Address.fromString(tokenAddresses[i].toHexString());
+    //     if (tokenAddresses[i] == pool.address) {
+    //       continue;
+    //     }
+    //     let poolToken = loadPoolToken(pool.id, tokenAddress);
+    //     if (poolToken == null) {
+    //       throw new Error('poolToken not found');
+    //     }
+    //     let balance = scaleUp(poolToken.balance.times(poolToken.priceRate), 18);
+    //     balances.push(balance);
+    //   }
+    //   if (pool.amp) {
+    //     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    //     let amp = pool.amp!.times(AMP_PRECISION);
+    //     let invariantInt = calculateInvariant(amp, balances, swapId);
+    //     let invariant = scaleDown(invariantInt, 18);
+    //     pool.lastPostJoinExitInvariant = invariant;
+    //   }
+    // }
+  //}
+
+  let swap = new Swap();
+  swap.id = swapId
+  swap.tokenIn = tokenInAddress;
+  swap.tokenInSym = poolTokenIn.symbol;
+  swap.tokenAmountIn = tokenAmountIn;
+
+  swap.tokenOut = tokenOutAddress;
+  swap.tokenOutSym = poolTokenOut.symbol;
+  swap.tokenAmountOut = tokenAmountOut;
+
+  swap.valueUSD = valueUSD.toString();
+
+  swap.caller = indexingContext.mainOperation.sourceAddress;
+  swap.userAddress = user;
+  swap.poolId = pool;
+
+  swap.timestamp = blockTimestamp;
+  swap.tx = transactionHash;
+  await dbContext.transaction.save(Swap, swap);
+
+  // update pool swapsCount
+  // let pool = Pool.load(poolId.toHex());
+  pool.swapsCount = pool.swapsCount + BigInt(1);
+  pool.totalSwapVolume = BigNumber(pool.totalSwapVolume).plus(swapValueUSD).toString();
+  pool.totalSwapFee = BigNumber(pool.totalSwapFee).plus(swapFeesUSD).toString();
+
+  await dbContext.transaction.save(Pool, pool);
+
+  // update vault total swap volume
+  let vault = await dbContext.transaction.findOneBy(Symmetric, { id: '1'}) as Symmetric;
+  vault.totalSwapVolume = BigNumber(vault.totalSwapVolume).plus(swapValueUSD).toString();
+  vault.totalSwapFee = BigNumber(vault.totalSwapFee).plus(swapFeesUSD).toString();
+  vault.totalSwapCount = vault.totalSwapCount + BigInt(1);
+  await dbContext.transaction.save(Symmetric, vault);
+
+  let vaultSnapshot = await getSymmetricSnapshot(vault.id, blockTimestamp, dbContext);
+  vaultSnapshot.totalSwapVolume = vault.totalSwapVolume;
+  vaultSnapshot.totalSwapFee = vault.totalSwapFee;
+  vaultSnapshot.totalSwapCount = vault.totalSwapCount;
+  await dbContext.transaction.save(SymmetricSnapshot, vaultSnapshot);
+  
+  // update swap counts for token
+  // updates token snapshots as well
+  await uptickSwapsForToken(tokenInAddress, tokenInId, blockTimestamp, dbContext);
+  await uptickSwapsForToken(tokenOutAddress, tokenOutId, blockTimestamp, dbContext);
+  // update volume and balances for the tokens
+  // updates token snapshots as well
+  await updateTokenBalances(tokenInAddress, tokenInId, BigNumber(swapValueUSD), BigNumber(tokenAmountIn), 0, dbContext);
+  await updateTokenBalances(tokenOutAddress, tokenOutId, BigNumber(swapValueUSD), BigNumber(tokenAmountOut), 1, dbContext);
+
+  let tradePair = await getTradePair(tokenInAddress, tokenInId, tokenOutAddress, tokenOutId, dbContext);
+  tradePair.totalSwapVolume = BigNumber(tradePair.totalSwapVolume).plus(swapValueUSD).toString();
+  tradePair.totalSwapFee = BigNumber(tradePair.totalSwapFee).plus(swapFeesUSD).toString();
+  await dbContext.transaction.save(TradePair, tradePair);
+
+  let tradePairSnapshot = await getTradePairSnapshot(tradePair.id, blockTimestamp, dbContext);
+  tradePairSnapshot.totalSwapVolume = BigNumber(tradePair.totalSwapVolume).plus(swapValueUSD).toString();
+  tradePairSnapshot.totalSwapFee = BigNumber(tradePair.totalSwapFee).plus(swapFeesUSD).toString();
+  await dbContext.transaction.save(TradePairSnapshot, tradePairSnapshot);
+
+  if (swap.tokenAmountOut == ZERO_BD || swap.tokenAmountIn == ZERO_BD) {
+    return;
+  }
+
+  // Capture price
+  // TODO: refactor these if statements using a helper function
+  let tokenInWeight = poolTokenIn.weight;
+  let tokenOutWeight = poolTokenOut.weight;
+  if (isPricingAsset(tokenInAddress) && BigNumber(pool.totalLiquidity).gt(MIN_POOL_LIQUIDITY) && valueUSD.gt(MIN_SWAP_VALUE_USD)) {
+    let tokenPriceId = getTokenPriceId(poolId, tokenOut.id, tokenIn.id, blockNumber);
+    let tokenPrice = new TokenPrice();
+    tokenPrice.id = tokenPriceId;
+    //tokenPrice.poolTokenId = getPoolTokenId(poolId, tokenOutAddress);
+    tokenPrice.pool = pool;
+    tokenPrice.block = blockNumber;
+    tokenPrice.timestamp = blockTimestamp;
+    tokenPrice.asset = tokenOutAddress;
+    tokenPrice.amount = tokenAmountIn;
+    tokenPrice.pricingAsset = tokenInAddress;
+
+    if (tokenInWeight && tokenOutWeight) {
+      // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
+      // based on the pool's weights and updated balances after the swap.
+      tokenPrice.price = BigNumber(newInAmount).div(tokenInWeight).div(BigNumber(newOutAmount).div(tokenOutWeight)).toString();
+    } else {
+      // Otherwise we can get a simple measure of the price from the ratio of amount in vs amount out
+      tokenPrice.price = BigNumber(tokenAmountIn).div(tokenAmountOut).toString();
+    }
+
+    await dbContext.transaction.save(TokenPrice, tokenPrice);
+
+    await updateLatestPrice(tokenPrice, blockTimestamp, dbContext);
+  }
+  if (
+    isPricingAsset(tokenOutAddress) &&
+    BigNumber(pool.totalLiquidity).gt(MIN_POOL_LIQUIDITY) &&
+    valueUSD.gt(MIN_SWAP_VALUE_USD)
+  ) {
+    let tokenPriceId = getTokenPriceId(poolId, tokenIn.id, tokenOut.id, blockNumber);
+    let tokenPrice = new TokenPrice();
+    tokenPrice.id = tokenPriceId;
+    //tokenPrice.poolTokenId = getPoolTokenId(poolId, tokenInAddress);
+    tokenPrice.pool = pool;
+    tokenPrice.block = blockNumber;
+    tokenPrice.timestamp = blockTimestamp;
+    tokenPrice.asset = tokenInAddress;
+    tokenPrice.amount = tokenAmountOut;
+    tokenPrice.pricingAsset = tokenOutAddress;
+
+    if (tokenInWeight && tokenOutWeight) {
+      // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
+      // based on the pool's weights and updated balances after the swap.
+      tokenPrice.price = BigNumber(newOutAmount).div(tokenOutWeight).div(BigNumber(newInAmount).div(tokenInWeight)).toString();
+    } else {
+      // Otherwise we can get a simple measure of the price from the ratio of amount out vs amount in
+      tokenPrice.price = BigNumber(tokenAmountOut).div(tokenAmountIn).toString();
+    }
+
+    await dbContext.transaction.save(TokenPrice, tokenPrice);
+
+
+    await updateLatestPrice(tokenPrice, blockTimestamp, dbContext);
+  }
+
+  const preferentialToken = getPreferentialPricingAsset([tokenIn.id, tokenOut.id]);
+  if (preferentialToken != '0') {
+    await addHistoricalPoolLiquidityRecord(poolId, blockNumber, preferentialToken.slice(0, 36), BigNumber(preferentialToken.slice(36)), dbContext);
+  }
+
+  await updatePoolLiquidity(poolId, blockNumber, dbContext);
 }
