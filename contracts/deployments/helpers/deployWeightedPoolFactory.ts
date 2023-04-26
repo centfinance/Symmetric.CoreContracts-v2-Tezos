@@ -26,14 +26,14 @@ export async function deployWeightedPoolFactory(
 
         const storage: Storage = {
             admin: tas.address(adminAddress),
-            feeCache: { 0: tas.nat(400000000000000000), 1: tas.nat(400000000000000000)},
+            feeCache: { 0: tas.nat('400000000000000000'), 1: tas.nat('400000000000000000')},
             isPoolFromFactory: tas.bigMap([{
               key: tas.address(adminAddress),
               value: tas.unit()
             }]),
             metadata: tas.bigMap([{
-              key: 'name',
-              value: tas.bytes(''),
+              key: "",
+              value: tas.bytes('0x68747470733a2f2f7261772e67697468756275736572636f6e74656e742e636f6d2f63656e7466696e616e63652f53796d6d65747269632e436f7265436f6e7472616374732d76322d54657a6f732f6d61696e2f6d657461646174612f746573746e65742f5765696768746564506f6f6c466163746f72792e6a736f6e'),
             }]),
             proposed_admin: undefined,
             protocolFeeProvider: tas.address(protocolFeeProviderAddress),
@@ -56,18 +56,3 @@ export async function deployWeightedPoolFactory(
         console.error('Error deploying WeightedPoolFactory contract:', error);
     }
 }
-
-// Replace with the appropriate addresses for each parameter
-const adminAddress = '<your_admin_address>';
-const protocolFeeProviderAddress = '<your_protocol_fee_provider_address>';
-const vaultAddress = '<your_vault_address>';
-const weightedMathLibAddress = '<your_weighted_math_lib_address>';
-const weightedProtocolFeesLibAddress = '<your_weighted_protocol_fees_lib_address>';
-
-// deployWeightedPoolFactory(
-//     adminAddress,
-//     protocolFeeProviderAddress,
-//     vaultAddress,
-//     weightedMathLibAddress,
-//     weightedProtocolFeesLibAddress
-// );
