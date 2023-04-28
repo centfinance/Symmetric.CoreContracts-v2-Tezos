@@ -1,25 +1,25 @@
 {
-    "indexing": {
-        "fromBlockLevel": 851969,
-        "contractBoost": {
-            "type": "tzkt"
-        },
-        "contracts": [
-            {
-                "name": "Vault",
-                "addresses": [
-                    "KT1DSsMYr3n7C1ecYSgZimtFkDXdEQbxULFw"
-                ]
-            },
-            {
-                "name": "WeightedPoolFactory",
-                "addresses": [
-                    "KT1QmzwyMArWDrEkhHDHBtM4sh39xfVinqoE"
-                ]
-            }
-        ]
+  "indexing": {
+    "fromBlockLevel": 0,
+    "contractBoost": {
+      "type": "tzkt"
     },
-    "tezosNode": {
-        "url": "http://localhost:20000"
-    }
+    "contracts": [
+      {
+        "name": "Vault",
+        "addresses": [
+          "KT1MsK55ErWFHxX7Y5ae4ayksNRhg6mw1WnU"
+        ]
+      },
+      {
+        "name": "WeightedPoolFactory",
+        "addresses": [
+          "KT1QmzwyMArWDrEkhHDHBtM4sh39xfVinqoE"
+        ]
+      }
+    ]
+  },
+  "tezosNode": {
+    "url": "http://localhost:20000"
+  }
 }

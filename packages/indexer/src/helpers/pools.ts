@@ -5,7 +5,9 @@
 import { MichelsonMap } from "@taquito/michelson-encoder";
 import { DbContext } from "@tezos-dappetizer/database";
 import BigNumber from "bignumber.js";
-import { Pool, PoolToken, PriceRateProvider } from "../entities";
+import { Pool } from "../entities/Pool";
+import { PriceRateProvider } from "../entities/PriceRateProvider";
+// import { Pool, PoolToken, PriceRateProvider } from "../entities";
 import { WeightedPoolFactoryCreateParameterTokensValue } from "../weighted-pool-factory-indexer-interfaces.generated";
 
 export namespace PoolType {

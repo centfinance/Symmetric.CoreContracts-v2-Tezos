@@ -3,12 +3,15 @@ import { DbContext } from '@tezos-dappetizer/database';
 import {
     contractFilter,
     indexEvent,
+    indexOrigination,
 } from '@tezos-dappetizer/decorators';
 import {
-    EventIndexingContext,
+    EventIndexingContext, OriginationIndexingContext,
 } from '@tezos-dappetizer/indexer';
 import BigNumber from 'bignumber.js';
-import { Pool, Symmetric, Token } from './entities';
+import { Pool } from './entities/Pool';
+import { Symmetric } from './entities/Symmetric';
+// import { Pool, Symmetric, Token } from './entities';
 import { createPoolTokenEntity, getStorage, getTokenMetadata, newPoolEntity, scaleDown } from './helpers/misc';
 import { setPriceRateProviders } from './helpers/pools';
 import { address, nat } from './types/type-aliases';
@@ -16,6 +19,7 @@ import { address, nat } from './types/type-aliases';
 import { 
   WeightedPoolFactoryCreateParameter, 
   WeightedPoolFactoryCreateParameterTokensValue, 
+  WeightedPoolFactoryInitialStorage, 
   WeightedPoolFactoryIsPoolFromFactoryKey, 
   WeightedPoolFactoryIsPoolFromFactoryValue 
 } from './weighted-pool-factory-indexer-interfaces.generated';
@@ -27,6 +31,15 @@ import {
 
 @contractFilter({ name: 'WeightedPoolFactory' })
 export class WeightedPoolFactoryIndexer {
+  @indexOrigination()
+  async indexOrigination(
+    initialStorage: WeightedPoolFactoryInitialStorage,
+    dbContext: DbContext,
+    indexingContext: OriginationIndexingContext,
+  ): Promise<void> {
+    console.log(indexingContext.contract.address);
+  }
+
   @indexEvent('PoolCreated')
   async indexCreate(
       key: WeightedPoolFactoryIsPoolFromFactoryKey,
@@ -35,7 +48,7 @@ export class WeightedPoolFactoryIndexer {
       indexingContext: EventIndexingContext,
   ): Promise<void> {
       // Implement your indexing logic here or delete the method if not needed.
-      createWeightedLikePool(key, indexingContext, dbContext);
+      await createWeightedLikePool(key, indexingContext, dbContext);
 
   }
 }
@@ -50,7 +63,7 @@ async function handleNewPool(
   indexingContext: EventIndexingContext, 
   dbContext: DbContext
 ) {
-  const pool = newPoolEntity(JSON.stringify(poolId))
+  const pool = await newPoolEntity(JSON.stringify(poolId), dbContext)
   pool.swapFee = scaleDown(params.swapFeePercentage, 18);
   pool.createTime = indexingContext.block.timestamp.getTime();
   pool.address = poolAddress;
@@ -75,7 +88,7 @@ async function handleNewPool(
   vault.poolCount += 1;
   dbContext.transaction.save(Symmetric, vault)
 
-  // let vaultSnapshot = getBalancerSnapshot(vault.id, event.block.timestamp.toI32());
+  // let vaultSnapshot = getSymmetricSnapshot(vault.id, event.block.timestamp.toI32());
   // vaultSnapshot.poolCount += 1;
   // vaultSnapshot.save();
 

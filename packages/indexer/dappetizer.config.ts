@@ -7,17 +7,17 @@ const config: DappetizerConfigUsingDb = {
     }],
     networks: loadDappetizerNetworkConfigs(__dirname),
     database: {
-        type: 'sqlite',
-        database: 'database.sqlite',
+        // type: 'sqlite',
+        // database: 'database.sqlite',
 
         // If you want to use PostgreSQL:
-        // type: 'postgres',
-        // host: 'localhost',
-        // port: 5432,
-        // username: 'postgres',
-        // password: 'postgrespassword',
-        // database: 'postgres',
-        // schema: 'indexer',
+        type: 'postgres',
+        host: 'localhost',
+        port: 5432,
+        username: 'tzkt',
+        password: 'local',
+        database: 'sandbox_data',
+        schema: 'indexer',
     },
     usageStatistics: {
         enabled: true,
