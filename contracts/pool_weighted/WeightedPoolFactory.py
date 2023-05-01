@@ -78,12 +78,12 @@ class WeightedPoolFactory(
 
     def __init__(
         self,
-        admin=sp.address('tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb'),
-        vault=sp.address('KT19vqRahNHjLQUSwK6hotc5sgdnnngyHbAK'),
-        weightedMathLib=sp.address('KT1C6tChcwy7YAqg9SCJWHPdHUp4fK5pJGXF'),
+        admin=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
+        vault=sp.address('KT1GQ1ZkB6CFfyjrfWddvfJA5VRwEYnR26Xu'),
+        weightedMathLib=sp.address('KT1JMQp8iSxkSdRe4X1ouatxFi2XRMUz1AhG'),
         weightedProtocolFeesLib=sp.address(
-            'KT1Hzg8h1VQ7ftnJ4kdtZdxNvhgz8wuBFPDB'),
-        protocolFeeProvider=sp.address('KT1HB23EeQ3dv2GqLniUrRhKDd5YJG9RKC23'),
+            'KT1DuR65Q2mA5yAyJvUXc4a8tZduTDJpYG5g'),
+        protocolFeeProvider=sp.address('KT1Kw8yrrNQozaubVESrGeAcwMFqppwkVafM'),
         feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
         metadata=CONTRACT_METADATA,
     ):
@@ -200,9 +200,9 @@ class WeightedPoolFactory(
             weightedMathLib=self.data.weightedMathLib,
             weightedProtocolFeesLib=self.data.weightedProtocolFeesLib,
         )
-        pool = self._create(self, STORAGE)
+        self._create(self, STORAGE)
 
-        IBasePool.initialize(pool)
+        # IBasePool.initialize(self, pool)
 
     def _computeScalingFactor(self, decimals):
         sp.set_type(decimals, sp.TNat)

@@ -69,9 +69,9 @@ class IBasePool:
         userData=EXIT_USER_DATA,
     )
 
-    def initialize(pool):
+    def initialize(self, pool):
         initialize = sp.contract(sp.TUnit, pool, "initialize").open_some(
-            "INTERFACE_MISMATCH")
+            "INITIALIZE_FAIL")
         sp.transfer(sp.unit, sp.tez(0), initialize)
 
     def afterJoinPool(pool, params):

@@ -18,7 +18,7 @@ class ProtocolFeesCollector(
 ):
     def __init__(
             self,
-            vault=sp.address('KT1DSsMYr3n7C1ecYSgZimtFkDXdEQbxULFw'),
+            vault=sp.address('KT1GQ1ZkB6CFfyjrfWddvfJA5VRwEYnR26Xu'),
             admin=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
     ):
         self.init(

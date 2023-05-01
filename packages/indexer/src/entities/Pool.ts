@@ -64,7 +64,7 @@ export class Pool {
   @Column("numeric")
   totalShares!: string;
 
-  @Column("int")
+  @Column("numeric")
   createTime!: number;
 
   @Column("bigint")

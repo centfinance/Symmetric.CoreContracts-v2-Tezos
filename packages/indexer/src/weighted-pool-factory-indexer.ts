@@ -21,7 +21,8 @@ import {
   WeightedPoolFactoryCreateParameterTokensValue, 
   WeightedPoolFactoryInitialStorage, 
   WeightedPoolFactoryIsPoolFromFactoryKey, 
-  WeightedPoolFactoryIsPoolFromFactoryValue 
+  WeightedPoolFactoryIsPoolFromFactoryValue, 
+  WeightedPoolFactoryPoolCreatedPayload
 } from './weighted-pool-factory-indexer-interfaces.generated';
 
 
@@ -38,17 +39,35 @@ export class WeightedPoolFactoryIndexer {
     indexingContext: OriginationIndexingContext,
   ): Promise<void> {
     console.log(indexingContext.contract.address);
+    console.log(initialStorage);
+    const vault = new Symmetric();
+    vault.id = '1';
+    vault.poolCount = 0;
+    vault.pools = [];
+    vault.totalLiquidity = '0';
+    vault.totalSwapCount = BigInt('0');
+    vault.totalSwapVolume = '0';
+    vault.totalSwapFee = '0';
+    await dbContext.transaction.insert(Symmetric, vault);
   }
 
   @indexEvent('PoolCreated')
-  async indexCreate(
-      key: WeightedPoolFactoryIsPoolFromFactoryKey,
-      parameter: WeightedPoolFactoryIsPoolFromFactoryValue,
+  async indexPoolCreatedEvent(
+      payload: WeightedPoolFactoryPoolCreatedPayload,
       dbContext: DbContext,
       indexingContext: EventIndexingContext,
   ): Promise<void> {
       // Implement your indexing logic here or delete the method if not needed.
-      await createWeightedLikePool(key, indexingContext, dbContext);
+      const vault = new Symmetric();
+      vault.id = '1';
+      vault.poolCount = 0;
+      vault.pools = [];
+      vault.totalLiquidity = '0';
+      vault.totalSwapCount = BigInt('0');
+      vault.totalSwapVolume = '0';
+      vault.totalSwapFee = '0';
+      await dbContext.transaction.save(Symmetric, vault);
+      await createWeightedLikePool(payload, indexingContext, dbContext);
 
   }
 }
@@ -65,6 +84,8 @@ async function handleNewPool(
 ) {
   const pool = await newPoolEntity(JSON.stringify(poolId), dbContext)
   pool.swapFee = scaleDown(params.swapFeePercentage, 18);
+  console.log('time:', indexingContext.block.timestamp.getTime());
+
   pool.createTime = indexingContext.block.timestamp.getTime();
   pool.address = poolAddress;
   pool.factory = indexingContext.contract.address;
@@ -73,20 +94,23 @@ async function handleNewPool(
   pool.swapEnabled = true;
   pool.isPaused = false;
 
-  const metadata = await getTokenMetadata(poolAddress, 0)
-  pool.name = metadata.name!;
-  pool.symbol = metadata.symbol!;
+  // const metadata = await getTokenMetadata(poolAddress, 0)
+  // pool.name = metadata.name!;
+  // pool.symbol = metadata.symbol!;
 
-  dbContext.transaction.save(Pool, pool)
+  pool.name = 'Symm LP Token';
+  pool.symbol = 'SYMMLP';
+
+  // await dbContext.transaction.save(Pool, pool)
   
-  const vault = await dbContext.transaction.findOneOrFail(Symmetric, {
-    where: {
-      id: '1',
-    }
-  })
+  // const vault = await dbContext.transaction.findOneOrFail(Symmetric, {
+  //   where: {
+  //     id: '1',
+  //   }
+  // })
 
-  vault.poolCount += 1;
-  dbContext.transaction.save(Symmetric, vault)
+  // vault.poolCount += 1;
+  // dbContext.transaction.save(Symmetric, vault)
 
   // let vaultSnapshot = getSymmetricSnapshot(vault.id, event.block.timestamp.toI32());
   // vaultSnapshot.poolCount += 1;
@@ -104,20 +128,21 @@ async function handleNewPool(
 async function createWeightedLikePool(poolAddress: string, indexingContext: EventIndexingContext, dbContext: DbContext): Promise<void> {
   const params = indexingContext.transactionParameter?.value.convert() as WeightedPoolFactoryCreateParameter
   const poolStorage = await getStorage(poolAddress);
-
+  console.log(poolStorage);
+  console.log('poolId:', poolStorage.poolId);
   let pool = await handleNewPool(poolAddress, poolStorage.poolId, params, indexingContext, dbContext);
   pool.poolType = 'Weighted';
   pool.poolTypeVersion = 1;
   pool.owner = poolStorage.admin;
-  params.tokens
   pool.tokensList = [...params.tokens.values()].map(t => JSON.stringify(t));
   pool.totalWeight = '100';
+  pool.holdersCount = BigInt(0);
 
-  dbContext.transaction.save(Pool, pool)
+  await dbContext.transaction.save(Pool, pool)
 
-  await handleNewPoolTokens(pool, params.tokens, dbContext);
+  // await handleNewPoolTokens(pool, params.tokens, dbContext);
 
-  await setPriceRateProviders(JSON.stringify(poolStorage.poolId),  params.rateProviders!, pool.tokensList, dbContext);
+  // await setPriceRateProviders(JSON.stringify(poolStorage.poolId),  params.rateProviders!, pool.tokensList, dbContext);
 }
 
 async function handleNewPoolTokens(pool: Pool, tokens: MichelsonMap<BigNumber, WeightedPoolFactoryCreateParameterTokensValue>, dbContext:DbContext): Promise<void> {

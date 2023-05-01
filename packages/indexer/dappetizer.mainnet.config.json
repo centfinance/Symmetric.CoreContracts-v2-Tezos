@@ -8,18 +8,18 @@
       {
         "name": "Vault",
         "addresses": [
-          "KT1MsK55ErWFHxX7Y5ae4ayksNRhg6mw1WnU"
+          "KT1GQ1ZkB6CFfyjrfWddvfJA5VRwEYnR26Xu"
         ]
       },
       {
         "name": "WeightedPoolFactory",
         "addresses": [
-          "KT1QmzwyMArWDrEkhHDHBtM4sh39xfVinqoE"
+          "KT1MqpGzQfM6v5NTxrewMgP6HDX3PakP6qiL"
         ]
       }
     ]
   },
   "tezosNode": {
-    "url": "http://localhost:20000"
+    "url": "https://ghostnet.ecadinfra.com"
   }
 }

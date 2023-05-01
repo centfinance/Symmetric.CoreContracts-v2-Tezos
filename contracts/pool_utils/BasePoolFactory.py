@@ -1,3 +1,4 @@
+from contracts.pool_utils.BasePool import IBasePool
 import smartpy as sp
 
 
@@ -21,10 +22,9 @@ class BasePoolFactory:
         def _create(self, params):
             pool = sp.create_contract(
                 contract=self._creationCode, storage=params)
-
+            IBasePool.initialize(self, pool)
             self.data.isPoolFromFactory[pool] = sp.unit
 
             sp.emit(pool, with_type=True, tag='PoolCreated')
-            return pool
 
         self._create = _create

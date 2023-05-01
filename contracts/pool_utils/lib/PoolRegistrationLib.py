@@ -20,10 +20,10 @@ def registerPool(vault, tokens, assetManagers):
     poolId = (sp.self_address, nonce)
 
     registerPool = sp.contract(sp.TUnit, vault, "registerPool").open_some(
-        "INTERFACE_MISMATCH")
+        "registerPoolFail")
 
     registerTokens = sp.contract(Types.REGISTER_TOKENS_PARAMS, vault, "registerTokens").open_some(
-        "INTERFACE_MISMATCH")
+        "registerTokensFail")
     registerTokensParams = sp.record(
         poolId=poolId,
         tokens=tokens,

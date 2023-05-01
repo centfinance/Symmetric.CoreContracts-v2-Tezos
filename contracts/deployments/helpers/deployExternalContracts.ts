@@ -10,10 +10,10 @@ const config = require('../../../.taq/config.local.development.json');
 
 const tezos = new TezosToolkit('http://localhost:20000');
 
-export async function deployExternalContracts() {
+export async function deployExternalContracts(tezos: TezosToolkit) {
   try {
-    const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
-    tezos.setProvider({ signer });
+    // const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
+    // tezos.setProvider({ signer });
   
     const externalWeightedMathCode = ExternalWeightedMathCode.code;
     const externalWeightedProtocolFeesCode = ExternalWeightedProtocolFeesCode.code;
@@ -51,4 +51,4 @@ export async function deployExternalContracts() {
 }
 
 
-deployExternalContracts();
+// deployExternalContracts();

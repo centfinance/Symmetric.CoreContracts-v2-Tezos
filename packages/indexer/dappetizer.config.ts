@@ -3,9 +3,26 @@ import { loadDappetizerNetworkConfigs } from '@tezos-dappetizer/indexer';
 
 const config: DappetizerConfigUsingDb = {
     modules: [{
-        id: '.', // This project is the indexer module itself.
+        id: './src/index.ts', // This project is the indexer module itself.
     }],
-    networks: loadDappetizerNetworkConfigs(__dirname),
+    networks: {
+      mainnet: {
+        "indexing": {
+          "fromBlockLevel": 127988,
+          "contracts": [
+            {
+              "name": "WeightedPoolFactory",
+              "addresses": [
+                "KT1TNgC7MXvZ7PD65dyo61t1BkwzcrGuGppq"
+              ]
+            }
+          ]
+        },
+        "tezosNode": {
+          "url": "http://localhost:20000"
+        }
+      },
+    }, 
     database: {
         // type: 'sqlite',
         // database: 'database.sqlite',
@@ -16,7 +33,7 @@ const config: DappetizerConfigUsingDb = {
         port: 5432,
         username: 'tzkt',
         password: 'local',
-        database: 'sandbox_data',
+        database: 'postgres',
         schema: 'indexer',
     },
     usageStatistics: {

@@ -32,10 +32,4 @@ export const indexerModule: IndexerModuleUsingDb = {
         // Create your contract indexers here:
         createContractIndexerFromDecorators(new WeightedPoolFactoryIndexer()),
     ],
-    blockDataIndexers: [
-        // Create your block data indexers here:
-        // new MyBlockDataIndexer(),
-    ],
-    // Create your indexing cycle handler here:
-    // indexingCycleHandler: new MyIndexingCycleHandler(),
 };
