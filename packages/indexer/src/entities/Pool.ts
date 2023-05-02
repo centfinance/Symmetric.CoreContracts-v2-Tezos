@@ -7,6 +7,7 @@ import {
 } from "typeorm";
 import { PoolToken } from "./PoolToken";
 import { Symmetric } from "./Symmetric";
+import { PoolSnapshot } from "./PoolSnapshot";
 
 @Entity()
 export class Pool {
@@ -88,8 +89,8 @@ export class Pool {
   // @OneToMany(() => PoolShare, (poolShare) => poolShare.poolId)
   // shares!: PoolShare[];
 
-  // @OneToMany(() => PoolSnapshot, (poolSnapshot) => poolSnapshot.pool)
-  // snapshots!: PoolSnapshot[];
+  @OneToMany(() => PoolSnapshot, (poolSnapshot) => poolSnapshot.pool)
+  snapshots!: PoolSnapshot[];
 
   // @OneToMany(() => PoolHistoricalLiquidity, (poolHistoricalLiquidity) => poolHistoricalLiquidity.poolId)
   // historicalValues!: PoolHistoricalLiquidity[];

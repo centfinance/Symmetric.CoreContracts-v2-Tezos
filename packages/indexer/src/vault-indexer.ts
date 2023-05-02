@@ -103,7 +103,7 @@ export class VaultIndexer {
 
 
 export async function handlePoolJoined(event: VaultPoolBalanceChangedPayload1, indexingContext: EventIndexingContext, dbContext: DbContext): Promise<void> {
-  let poolId: string = event.poolId;
+  let poolId: string = event.poolId[1];
   let amounts: BigNumber[] = [...event.amountsInOrOut.values()];
   let blockTimestamp = indexingContext.block.timestamp.getTime();
   let logIndex = indexingContext.mainOperation.uid;
