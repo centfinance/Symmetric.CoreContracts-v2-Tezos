@@ -13,7 +13,7 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
     Tezos.setProvider({ signer: theSigner });
   })
   .then( async () => {
-    const contract = await Tezos.contract.at<ContractType>('KT1TNgC7MXvZ7PD65dyo61t1BkwzcrGuGppq');
+    const contract = await Tezos.contract.at<ContractType>(config.contracts.WeightedPoolFactory.address);
     const createRequest = await contract.methodsObject.create({
       metadata: tas.bytes(
         char2Bytes('SYMMLP')),
@@ -144,5 +144,6 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
         ]),
   }).send();
     await createRequest.confirmation(1);
+    console.log('called');
   })
   .catch((error) => console.table(`Error: ${JSON.stringify(error, null, 2)}`));

@@ -13,7 +13,7 @@ const config: DappetizerConfigUsingDb = {
             {
               "name": "WeightedPoolFactory",
               "addresses": [
-                "KT1TNgC7MXvZ7PD65dyo61t1BkwzcrGuGppq"
+                "KT19oE9Va1mU57gipENohDzHPcTj5MbKrhdb"
               ]
             }
           ]

@@ -48,7 +48,7 @@ export class WeightedPoolFactoryIndexer {
     vault.totalSwapCount = BigInt('0');
     vault.totalSwapVolume = '0';
     vault.totalSwapFee = '0';
-    await dbContext.transaction.insert(Symmetric, vault);
+    await dbContext.transaction.save(Symmetric, vault);
   }
 
   @indexEvent('PoolCreated')
@@ -58,15 +58,6 @@ export class WeightedPoolFactoryIndexer {
       indexingContext: EventIndexingContext,
   ): Promise<void> {
       // Implement your indexing logic here or delete the method if not needed.
-      const vault = new Symmetric();
-      vault.id = '1';
-      vault.poolCount = 0;
-      vault.pools = [];
-      vault.totalLiquidity = '0';
-      vault.totalSwapCount = BigInt('0');
-      vault.totalSwapVolume = '0';
-      vault.totalSwapFee = '0';
-      await dbContext.transaction.save(Symmetric, vault);
       await createWeightedLikePool(payload, indexingContext, dbContext);
 
   }

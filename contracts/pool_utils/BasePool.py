@@ -69,10 +69,10 @@ class IBasePool:
         userData=EXIT_USER_DATA,
     )
 
-    def initialize(self, pool):
-        initialize = sp.contract(sp.TUnit, pool, "initialize").open_some(
+    def initializePool(self, pool):
+        initializePool = sp.contract(sp.TUnit, pool, "initializePool").open_some(
             "INITIALIZE_FAIL")
-        sp.transfer(sp.unit, sp.tez(0), initialize)
+        sp.transfer(sp.unit, sp.tez(0), initializePool)
 
     def afterJoinPool(pool, params):
         entry_point = sp.contract(
@@ -137,7 +137,7 @@ class BasePool(
         SymmetricPoolToken.__init__(self, name, symbol, vault)
 
     @sp.entry_point(lazify=False)
-    def initialize(self):
+    def initializePool(self):
         sp.verify(self.data.initialized == False)
         # tokensAmount = sp.len(self.data.tokens)
         # sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)

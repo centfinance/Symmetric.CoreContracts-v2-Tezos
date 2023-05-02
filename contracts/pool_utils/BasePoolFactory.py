@@ -22,9 +22,19 @@ class BasePoolFactory:
         def _create(self, params):
             pool = sp.create_contract(
                 contract=self._creationCode, storage=params)
-            IBasePool.initialize(self, pool)
+
             self.data.isPoolFromFactory[pool] = sp.unit
+
+            # initializePool = sp.contract(sp.TUnit, pool, "initializePool").open_some(
+            #     "INITIALIZE_FAIL")
+            # sp.transfer(sp.unit, sp.tez(0), initializePool)
 
             sp.emit(pool, with_type=True, tag='PoolCreated')
 
         self._create = _create
+
+    # @sp.entry_point
+    # def initialize(self, pool):
+    #     self.onlyAdministrator()
+    #     IBasePool.initialize(self, pool)
+    #     sp.emit(pool, with_type=True, tag='PoolCreated')
