@@ -60,8 +60,16 @@ export async function getStorage(poolAddress: string) {
 }
 
 export async function getTokenMetadata(tokenAddress: string, tokenId: number) {
-  const contract = await tezos.contract.at(tokenAddress, tzip12);
-  return await contract.tzip12().getTokenMetadata(tokenId);
+  try {
+    const contract = await tezos.contract.at(tokenAddress, tzip12);
+    return await contract.tzip12().getTokenMetadata(tokenId);
+  } catch(e) {
+    return {
+      name: 'Symm LP Token',
+      symbol: 'SYMMLP',
+      decimals: 18,
+    };
+  }
 }
 
 export async function getToken(tokenAddress: string, tokenId: BigNumber | null, dbContext: DbContext ): Promise<Token> {
@@ -107,11 +115,11 @@ export async function createPoolTokenEntity(
   tokenIndex: number,
   dbContext: DbContext,
 ): Promise<void> {
-  let poolTokenId = getPoolTokenId(pool.id, tokenAddress, tokenId ? tokenId : BigNumber(0));
+  let poolTokenId = getPoolTokenId(pool.id, tokenAddress, BigNumber(0));
 
-  let token = await getTokenMetadata(tokenAddress, tokenId ? tokenId.toNumber() : 0);
-  let symbol = token.symbol!;
-  let name = token.name!;
+  let token = await getTokenMetadata(tokenAddress, 0);
+  let symbol = token.symbol || 'SYMMLP';
+  let name = token.name || 'Symmetric Pool Token';
   let decimals = 18;
 
   let poolToken = new PoolToken();

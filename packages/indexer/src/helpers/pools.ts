@@ -40,7 +40,8 @@ export async function setPriceRateProviders(
   tokensList: string[],
   dbContext: DbContext,
 ): Promise<void> {
-  if (rateProviders.size != tokensList.length) return;
+  
+  if (!rateProviders || rateProviders.size != tokensList.length) return;
 
   for (let i: number = 0; i < rateProviders.size; i++) {
     let token = JSON.parse(tokensList[i]) as WeightedPoolFactoryCreateParameterTokensValue;

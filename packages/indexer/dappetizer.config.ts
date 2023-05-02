@@ -1,6 +1,8 @@
 import { DappetizerConfigUsingDb } from '@tezos-dappetizer/database';
 import { loadDappetizerNetworkConfigs } from '@tezos-dappetizer/indexer';
 
+const network = require('../../.taq/config.local.development.json');
+
 const config: DappetizerConfigUsingDb = {
     modules: [{
         id: './src/index.ts', // This project is the indexer module itself.
@@ -8,12 +10,12 @@ const config: DappetizerConfigUsingDb = {
     networks: {
       mainnet: {
         "indexing": {
-          "fromBlockLevel": 127988,
+          "fromBlockLevel": 129929,
           "contracts": [
             {
               "name": "WeightedPoolFactory",
               "addresses": [
-                "KT19oE9Va1mU57gipENohDzHPcTj5MbKrhdb"
+                network.contracts.WeightedPoolFactory.address,
               ]
             }
           ]

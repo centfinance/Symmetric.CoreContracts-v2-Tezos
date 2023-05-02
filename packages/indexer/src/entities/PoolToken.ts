@@ -19,7 +19,7 @@ export class PoolToken {
   @ManyToOne(() => Token, (token) => token.poolTokens)
   token!: Token;
 
-  @Column("varchar", { length: 36 })
+  @Column("varchar", { length: 36, nullable: true })
   assetManager!: string;
 
   @Column("varchar")

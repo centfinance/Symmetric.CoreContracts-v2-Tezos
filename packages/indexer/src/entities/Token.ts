@@ -59,7 +59,7 @@ export class Token {
   @OneToMany(() => PoolToken, (poolToken) => poolToken.token)
   poolTokens!: PoolToken[];
 
-  @Column("varchar")
+  @Column("varchar", { nullable: true })
   poolId!: string;
 
   // @ManyToOne(() => Pool, (pool) => pool.tokensList)
