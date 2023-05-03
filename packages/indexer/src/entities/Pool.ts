@@ -8,6 +8,7 @@ import {
 import { PoolToken } from "./PoolToken";
 import { Symmetric } from "./Symmetric";
 import { PoolSnapshot } from "./PoolSnapshot";
+import { JoinExit } from "./JoinExit";
 
 @Entity()
 export class Pool {
@@ -88,6 +89,8 @@ export class Pool {
 
   // @OneToMany(() => PoolShare, (poolShare) => poolShare.poolId)
   // shares!: PoolShare[];
+  @OneToMany(() => JoinExit, (joinExit) => joinExit.pool)
+  joinExits!: JoinExit[];
 
   @OneToMany(() => PoolSnapshot, (poolSnapshot) => poolSnapshot.pool)
   snapshots!: PoolSnapshot[];

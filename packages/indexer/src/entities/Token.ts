@@ -5,6 +5,8 @@ import {
   OneToMany,
 } from "typeorm";
 import { PoolToken } from "./PoolToken";
+import { TokenSnapshot } from "./TokenSnapshot";
+import { TradePair } from "./TradePair";
 
 @Entity()
 export class Token {
@@ -65,9 +67,9 @@ export class Token {
   // @ManyToOne(() => Pool, (pool) => pool.tokensList)
   // pool!: Pool;
 
-  // @OneToMany(() => TokenSnapshot, (snapshot) => snapshot.token)
-  // snapshots!: TokenSnapshot[];
+  @OneToMany(() => TokenSnapshot, (snapshot) => snapshot.token)
+  snapshots!: TokenSnapshot[];
 
-  // @OneToMany(() => TradePair, (pair) => pair.token0 || pair.token1)
-  // tradePairs!: TradePair[];
+  @OneToMany(() => TradePair, (pair) => pair.token0 || pair.token1)
+  tradePairs!: TradePair[];
 }

@@ -19,6 +19,11 @@ import { valueInUSD } from '../pricing';
 import { WeightedPoolContractType } from '../types/weighted-pool-types';
 import { WeightedPoolFactoryCreateParameterTokensValue, WeightedPoolFactoryInitialStorage } from '../weighted-pool-factory-indexer-interfaces.generated';
 import { getPoolTokenId } from './pools';
+import { PoolSnapshot } from '../entities/PoolSnapshot';
+import { SymmetricSnapshot } from '../entities/SymmetricSnapshot';
+import { TokenSnapshot } from '../entities/TokenSnapshot';
+import { TradePair } from '../entities/TradePair';
+import { TradePairSnapshot } from '../entities/TradePairSnapshot';
 
 const tezos = new TezosToolkit('http://localhost:20000');
 tezos.addExtension(new Tzip12Module());
