@@ -18,7 +18,7 @@ import BigNumber from 'bignumber.js';
 // import { InvestType, JoinExit, Pool, PoolToken, Swap, Symmetric, SymmetricSnapshot, Token, TokenPrice, TokenSnapshot, TradePair, TradePairSnapshot, User } from './entities';
 import { MIN_POOL_LIQUIDITY, MIN_SWAP_VALUE_USD } from './helpers/constants';
 import { getSymmetricSnapshot, getToken, getTokenPriceId, getTokenSnapshot, getTradePair, getTradePairSnapshot, loadPoolToken, scaleDown, tokenToDecimal, updateTokenBalances, uptickSwapsForToken, ZERO_BD } from './helpers/misc';
-import { addHistoricalPoolLiquidityRecord, getPreferentialPricingAsset, isPricingAsset, swapValueInUSD, updateLatestPrice, updatePoolLiquidity, valueInUSD } from './pricing';
+import { addHistoricalPoolLiquidityRecord, isPricingAsset, valueInUSD } from './pricing';
 
 import {
     VaultAcceptAdminParameter,

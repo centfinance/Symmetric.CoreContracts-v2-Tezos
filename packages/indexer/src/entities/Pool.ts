@@ -9,6 +9,7 @@ import { PoolToken } from "./PoolToken";
 import { Symmetric } from "./Symmetric";
 import { PoolSnapshot } from "./PoolSnapshot";
 import { JoinExit } from "./JoinExit";
+import { PoolHistoricalLiquidity } from "./PoolHistoricalLiquidity";
 
 @Entity()
 export class Pool {
@@ -95,8 +96,8 @@ export class Pool {
   @OneToMany(() => PoolSnapshot, (poolSnapshot) => poolSnapshot.pool)
   snapshots!: PoolSnapshot[];
 
-  // @OneToMany(() => PoolHistoricalLiquidity, (poolHistoricalLiquidity) => poolHistoricalLiquidity.poolId)
-  // historicalValues!: PoolHistoricalLiquidity[];
+  @OneToMany(() => PoolHistoricalLiquidity, (poolHistoricalLiquidity) => poolHistoricalLiquidity.poolId)
+  historicalValues!: PoolHistoricalLiquidity[];
   
   // @OneToMany(() => TokenPrice, (tokenPrice) => tokenPrice.pool)
   // tokenPrices!: TokenPrice[];

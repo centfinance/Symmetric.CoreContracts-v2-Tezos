@@ -8,6 +8,14 @@ import { PoolToken } from './entities/PoolToken';
 import { Token } from './entities/Token';
 import { Symmetric } from './entities/Symmetric';
 import { PriceRateProvider } from './entities/PriceRateProvider';
+import { TradePairSnapshot } from './entities/TradePairSnapshot';
+import { TradePair } from './entities/TradePair';
+import { TokenSnapshot } from './entities/TokenSnapshot';
+import { SymmetricSnapshot } from './entities/SymmetricSnapshot';
+import { PoolSnapshot } from './entities/PoolSnapshot';
+import { JoinExit } from './entities/JoinExit';
+import { User } from './entities/User';
+import { PoolHistoricalLiquidity } from './entities/PoolHistoricalLiquidity';
 
 export const indexerModule: IndexerModuleUsingDb = {
     name: 'Indexer',
@@ -15,16 +23,18 @@ export const indexerModule: IndexerModuleUsingDb = {
         // Register your DB entity classes to TypeORM here:
         // MyDbEntity,
         Pool,
-        // PoolSnapshot,
-        // Token,  
+        PoolSnapshot,
         PoolToken,
         Token, 
         Symmetric,
         PriceRateProvider,
-        // SymmetricSnapshot, 
-        // TokenSnapshot, 
-        // TradePair, 
-        // TradePairSnapshot,
+        PoolHistoricalLiquidity,
+        SymmetricSnapshot, 
+        TokenSnapshot, 
+        TradePair, 
+        TradePairSnapshot,
+        JoinExit,
+        User,
         // PriceRateProvider,
 
     ],

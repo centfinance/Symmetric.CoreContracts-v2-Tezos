@@ -30,6 +30,7 @@
     "@taquito/taquito": "^15.1.0"
   },
   "workspaces": [
-    "packages/indexer"
+    "packages/indexer",
+    "packages/sdk"
   ]
 }
