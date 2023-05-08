@@ -79,7 +79,7 @@ class WeightedPoolFactory(
     def __init__(
         self,
         admin=sp.address('tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6'),
-        vault=sp.address('KT1LtCrpC2g8RsBwv2FMSMDdJPZbokpxhfoz'),
+        vault=sp.address('KT1H2SaqZyCmmHxbsTfwx12YeUzugzj8eN2t'),
         weightedMathLib=sp.address('KT1HoaXZRMw6e8BnTACNrTrnGb1KQeFaPgad'),
         weightedProtocolFeesLib=sp.address(
             'KT1MMfYdf8H4VuqtNDpat28KUBQKiThonx15'),

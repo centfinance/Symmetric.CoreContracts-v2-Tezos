@@ -1,40 +1,40 @@
 import { InMemorySigner } from "@taquito/signer";
 import { TezosToolkit } from "@taquito/taquito";
-import { tas } from "../../../../types/type-aliases";
-import { VaultContractType as ContractType } from "../../../../types/Vault.types";
+import { tas } from "../../../types/type-aliases";
+import { VaultContractType as ContractType } from "../../../types/Vault.types";
 
-const Tezos = new TezosToolkit("https://rpc.tzkt.io/ghostnet");
+const config = require("../../../.taq/config.local.development.json");
 
-const config = require("../../../../.taq/config.local.testing.json");
+const Tezos = new TezosToolkit(config.rpcUrl);
 
-InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
+InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
   .then((theSigner) => {
     Tezos.setProvider({ signer: theSigner });
   })
   .then(async () => {
     const contract = await Tezos.contract.at<ContractType>(
-      "KT1XV3C2twmrgVaHv2jNtUpymQZ39C6mM7Kp"
+      config.contracts.Vault.address
     );
     const joinPoolRequest = contract.methodsObject
       .joinPool({
         poolId: {
-          0: tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
-          1: tas.nat(1),
+          0: tas.address("KT1EHBAZxvw5FsPvnQpiFCcbNPh5NXNx1Zrd"),
+          1: tas.nat(7),
         },
-        recipient: tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
+        recipient: tas.address("tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6"),
         request: {
           assets: tas.map([
             {
               key: tas.nat("0"),
               value: {
-                0: tas.address("KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr"),
+                0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
                 1: tas.nat("0"),
               },
             },
             {
               key: tas.nat("1"),
               value: {
-                0: tas.address("KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr"),
+                0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
                 1: tas.nat("1"),
               },
             },
@@ -68,7 +68,7 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
             tokenIndex: undefined,
           },
         },
-        sender: tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
+        sender: tas.address("tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6"),
       })
       .toTransferParams();
     const estimate = await Tezos.estimate.transfer(joinPoolRequest);

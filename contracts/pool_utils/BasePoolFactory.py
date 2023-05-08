@@ -17,15 +17,17 @@ class BasePoolFactory:
                 tkey=sp.TAddress,
                 tvalue=sp.TUnit,
             ),
+            lastPool=sp.address('KT1H2SaqZyCmmHxbsTfwx12YeUzugzj8eN2t'),
         )
 
         def _create(self, params):
             pool = sp.create_contract(
                 contract=self._creationCode, storage=params)
 
+            self.data.lastPool = pool
             self.data.isPoolFromFactory[pool] = sp.unit
 
-            # initializePool = sp.contract(sp.TUnit, pool, "initializePool").open_some(
+            # initializePool = sp.contract(sp.TUnit, self.data.lastPool, "initializePool").open_some(
             #     "INITIALIZE_FAIL")
             # sp.transfer(sp.unit, sp.tez(0), initializePool)
 
@@ -33,8 +35,8 @@ class BasePoolFactory:
 
         self._create = _create
 
-    # @sp.entry_point
-    # def initialize(self, pool):
-    #     self.onlyAdministrator()
-    #     IBasePool.initialize(self, pool)
-    #     sp.emit(pool, with_type=True, tag='PoolCreated')
+        def initialize(self):
+            self.onlyAdministrator()
+            IBasePool.initializePool(self, self.data.lastPool)
+
+        self.initialize = sp.entry_point(initialize)
