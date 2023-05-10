@@ -1,10 +1,4 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  OneToMany,
-  ManyToOne,
-} from "typeorm";
+import { Entity, Column, PrimaryColumn, OneToMany, ManyToOne } from "typeorm";
 import { Pool } from "./Pool";
 import { Token } from "./Token";
 
@@ -12,6 +6,9 @@ import { Token } from "./Token";
 export class PoolToken {
   @PrimaryColumn("varchar")
   id!: string;
+
+  @Column("varchar")
+  poolId!: string;
 
   @ManyToOne(() => Pool, (pool) => pool.tokens)
   pool?: Pool;

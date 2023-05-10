@@ -7,7 +7,9 @@ import { WeightedPoolFactoryContractType as ContractType } from "../../../types/
 
 const Tezos = new TezosToolkit("http://localhost:20000");
 
-const config = require("../../../../.taq/config.local.development.json");
+const config = require("../../../.taq/config.local.development.json");
+
+const tokenAddress = "KT1TFoy7ikLHYQqhYyvsBjDFTGukPm2jLs9f";
 
 InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
   .then((theSigner) => {
@@ -103,57 +105,57 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
           {
             key: tas.nat("0"),
             value: {
-              0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-              1: tas.nat("0"),
+              0: tas.address(tokenAddress),
+              1: tas.nat("1"),
             },
           },
           {
             key: tas.nat("1"),
             value: {
-              0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-              1: tas.nat("1"),
+              0: tas.address(tokenAddress),
+              1: tas.nat("2"),
             },
           },
           {
             key: tas.nat("2"),
             value: {
-              0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-              1: tas.nat("2"),
+              0: tas.address(tokenAddress),
+              1: tas.nat("3"),
             },
           },
           {
             key: tas.nat("3"),
             value: {
-              0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-              1: tas.nat("3"),
+              0: tas.address(tokenAddress),
+              1: tas.nat("4"),
             },
           },
           {
             key: tas.nat("4"),
             value: {
-              0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-              1: tas.nat("4"),
+              0: tas.address(tokenAddress),
+              1: tas.nat("5"),
             },
           },
           {
             key: tas.nat("5"),
             value: {
-              0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-              1: tas.nat("5"),
+              0: tas.address(tokenAddress),
+              1: tas.nat("6"),
             },
           },
           {
             key: tas.nat("6"),
             value: {
-              0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-              1: tas.nat("6"),
+              0: tas.address(tokenAddress),
+              1: tas.nat("7"),
             },
           },
           {
             key: tas.nat("7"),
             value: {
-              0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-              1: tas.nat("7"),
+              0: tas.address(tokenAddress),
+              1: tas.nat("8"),
             },
           },
         ]),

@@ -11,11 +11,11 @@ import { PriceRateProvider } from "../entities/PriceRateProvider";
 import { WeightedPoolFactoryCreateParameterTokensValue } from "../weighted-pool-factory-indexer-interfaces.generated";
 
 export namespace PoolType {
-  export const Weighted = 'Weighted';
-  export const Stable = 'Stable';
-  export const MetaStable = 'MetaStable';
-  export const ComposableStable = 'ComposableStable';
-  export const HighAmpComposableStable = 'HighAmpComposableStable';
+  export const Weighted = "Weighted";
+  export const Stable = "Stable";
+  export const MetaStable = "MetaStable";
+  export const ComposableStable = "ComposableStable";
+  export const HighAmpComposableStable = "HighAmpComposableStable";
 }
 
 //   if (tokensCall.reverted) {
@@ -29,25 +29,30 @@ export namespace PoolType {
 //   return tokens;
 // }
 
-export function getPoolTokenId(poolId: string, tokenAddress: string, tokenId: BigNumber): string {
-  return poolId.concat('-').concat(tokenAddress).concat('-').concat(tokenId.toString());
+export function getPoolTokenId(
+  poolId: string,
+  tokenAddress: string,
+  tokenId: BigNumber
+): string {
+  return poolId
+    .concat("-")
+    .concat(tokenAddress)
+    .concat("-")
+    .concat(tokenId.toString());
 }
 
-
 export async function setPriceRateProviders(
-  poolId: string, 
-  rateProviders: MichelsonMap<BigNumber, string | null>, 
+  poolId: string,
+  rateProviders: MichelsonMap<BigNumber, string | null>,
   tokensList: string[],
-  dbContext: DbContext,
+  dbContext: DbContext
 ): Promise<void> {
-  
   if (!rateProviders || rateProviders.size != tokensList.length) return;
 
   for (let i: number = 0; i < rateProviders.size; i++) {
-    let token = JSON.parse(tokensList[i]) as WeightedPoolFactoryCreateParameterTokensValue;
-    let tokenAddress = token[0];
-    let tokenId = token[1];
-    let providerId = getPoolTokenId(poolId, tokenAddress, tokenId ? tokenId : BigNumber(0));
+    const tokenAddress = tokensList[i].slice(0, 36);
+    const tokenId = BigNumber(tokensList[i].slice(36));
+    let providerId = getPoolTokenId(poolId, tokenAddress, tokenId);
     let provider = new PriceRateProvider();
     provider.id = providerId;
     provider.poolId = poolId;
@@ -58,5 +63,8 @@ export async function setPriceRateProviders(
 }
 
 export function isComposableStablePool(pool: Pool): boolean {
-  return pool.poolType == PoolType.ComposableStable || pool.poolType == PoolType.HighAmpComposableStable;
+  return (
+    pool.poolType == PoolType.ComposableStable ||
+    pool.poolType == PoolType.HighAmpComposableStable
+  );
 }

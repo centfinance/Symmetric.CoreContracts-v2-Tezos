@@ -1,23 +1,18 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  ManyToOne,
-} from "typeorm";
+import { Entity, Column, PrimaryColumn, ManyToOne } from "typeorm";
 import { Symmetric } from "./Symmetric";
 
 @Entity()
 export class SymmetricSnapshot {
-  @PrimaryColumn("varchar", { length: 42 })
+  @PrimaryColumn("varchar")
   id!: string;
 
   @ManyToOne(() => Symmetric, (symmetric) => symmetric)
   vault!: Symmetric;
 
-  @Column("int")
+  @Column("numeric")
   timestamp!: number;
 
-  @Column("int")
+  @Column("numeric")
   poolCount!: number;
 
   @Column("decimal", { precision: 40, scale: 18 })

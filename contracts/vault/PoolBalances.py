@@ -223,7 +223,7 @@ class PoolBalances(
 
         return exitBalances
 
-    @ sp.private_lambda(with_storage='read-only', wrap_call=True)
+    @sp.private_lambda(with_storage='read-only', wrap_call=True)
     def _validateTokensAndGetBalances(self, params):
         sp.verify(sp.len(params.expectedTokens) == sp.len(params.limits))
 
@@ -237,7 +237,7 @@ class PoolBalances(
 
         sp.result(balances)
 
-    @ sp.private_lambda()
+    @sp.private_lambda()
     def _castToInt(self, params):
         signedValues = sp.compute(sp.map({}))
         with sp.for_('i', sp.range(0, sp.len(params.amounts))) as i:

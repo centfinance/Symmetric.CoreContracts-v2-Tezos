@@ -7,6 +7,8 @@ const config = require("../../../.taq/config.local.development.json");
 
 const Tezos = new TezosToolkit(config.rpcUrl);
 
+const tokenAddress = "KT1TFoy7ikLHYQqhYyvsBjDFTGukPm2jLs9f";
+
 InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
   .then((theSigner) => {
     Tezos.setProvider({ signer: theSigner });
@@ -15,11 +17,11 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
     const contract = await Tezos.contract.at<ContractType>(
       config.contracts.Vault.address
     );
-    const joinPoolRequest = contract.methodsObject
+    const joinPoolRequest = await contract.methodsObject
       .joinPool({
         poolId: {
-          0: tas.address("KT1EHBAZxvw5FsPvnQpiFCcbNPh5NXNx1Zrd"),
-          1: tas.nat(7),
+          0: tas.address("KT1Wio8FdY7pWg7KQuAUQxyd9qWV4zBxszHB"),
+          1: tas.nat("4"),
         },
         recipient: tas.address("tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6"),
         request: {
@@ -27,26 +29,92 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
             {
               key: tas.nat("0"),
               value: {
-                0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-                1: tas.nat("0"),
+                0: tas.address(tokenAddress),
+                1: tas.nat("1"),
               },
             },
             {
               key: tas.nat("1"),
               value: {
-                0: tas.address("KT1SLJQqS6Qk6FJ4qUq8eyney7Q5VU31zktB"),
-                1: tas.nat("1"),
+                0: tas.address(tokenAddress),
+                1: tas.nat("2"),
+              },
+            },
+            {
+              key: tas.nat("2"),
+              value: {
+                0: tas.address(tokenAddress),
+                1: tas.nat("3"),
+              },
+            },
+            {
+              key: tas.nat("3"),
+              value: {
+                0: tas.address(tokenAddress),
+                1: tas.nat("4"),
+              },
+            },
+            {
+              key: tas.nat("4"),
+              value: {
+                0: tas.address(tokenAddress),
+                1: tas.nat("5"),
+              },
+            },
+            {
+              key: tas.nat("5"),
+              value: {
+                0: tas.address(tokenAddress),
+                1: tas.nat("6"),
+              },
+            },
+            {
+              key: tas.nat("6"),
+              value: {
+                0: tas.address(tokenAddress),
+                1: tas.nat("7"),
+              },
+            },
+            {
+              key: tas.nat("7"),
+              value: {
+                0: tas.address(tokenAddress),
+                1: tas.nat("8"),
               },
             },
           ]),
           limits: tas.map([
             {
               key: tas.nat("0"),
-              value: tas.nat("100000000000000000000"),
+              value: tas.nat(200 * 10 ** 18),
             },
             {
               key: tas.nat("1"),
-              value: tas.nat("100000000000000000000"),
+              value: tas.nat(200 * 10 ** 18),
+            },
+            {
+              key: tas.nat("2"),
+              value: tas.nat(200 * 10 ** 18),
+            },
+            {
+              key: tas.nat("3"),
+              value: tas.nat(200 * 10 ** 18),
+            },
+            {
+              key: tas.nat("4"),
+              value: tas.nat(200 * 10 ** 18),
+            },
+            {
+              key: tas.nat("5"),
+              value: tas.nat(200 * 10 ** 18),
+            },
+            {
+              key: tas.nat("6"),
+              value: tas.nat(200 * 10 ** 18),
+            },
+            {
+              key: tas.nat("7"),
+              value: tas.nat(200 * 10 ** 18),
             },
           ]),
           useInternalBalance: false,
@@ -55,11 +123,35 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
             amountsIn: tas.map([
               {
                 key: tas.nat("0"),
-                value: tas.nat("100000000000000000000"),
+                value: tas.nat(200 * 10 ** 18),
               },
               {
                 key: tas.nat("1"),
-                value: tas.nat("100000000000000000000"),
+                value: tas.nat(200 * 10 ** 18),
+              },
+              {
+                key: tas.nat("2"),
+                value: tas.nat(200 * 10 ** 18),
+              },
+              {
+                key: tas.nat("3"),
+                value: tas.nat(200 * 10 ** 18),
+              },
+              {
+                key: tas.nat("4"),
+                value: tas.nat(200 * 10 ** 18),
+              },
+              {
+                key: tas.nat("5"),
+                value: tas.nat(200 * 10 ** 18),
+              },
+              {
+                key: tas.nat("6"),
+                value: tas.nat(200 * 10 ** 18),
+              },
+              {
+                key: tas.nat("7"),
+                value: tas.nat(200 * 10 ** 18),
               },
             ]),
             kind: "INIT",
@@ -70,9 +162,24 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
         },
         sender: tas.address("tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6"),
       })
-      .toTransferParams();
-    const estimate = await Tezos.estimate.transfer(joinPoolRequest);
-    console.log(estimate);
-    // await joinPoolRequest.confirmation(0);
+      .send();
+    await joinPoolRequest.confirmation(1);
   })
   .catch((error) => console.table(`Error: ${JSON.stringify(error, null, 2)}`));
+
+try {
+  const sub = Tezos.stream.subscribeEvent({
+    tag: "PoolBalanceChanged",
+    address: config.contracts.Vault.address,
+  });
+
+  // rome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // function getAddressFromEvent(data: any) {
+  //   console.log("pool address: ", encodePubKey(data.payload.bytes));
+  //   sub.close();
+  // }
+
+  sub.on("data", console.log);
+} catch (e) {
+  console.log(e);
+}

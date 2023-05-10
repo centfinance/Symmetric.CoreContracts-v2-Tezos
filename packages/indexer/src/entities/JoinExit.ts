@@ -1,44 +1,38 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  ManyToOne,
-  OneToMany,
-} from "typeorm";
+import { Entity, Column, PrimaryColumn, ManyToOne, OneToMany } from "typeorm";
 import { Pool } from "./Pool";
 import { User } from "./User";
 
 export enum InvestType {
-  Join = 'Join',
-  Exit = 'Exit',
+  Join = "Join",
+  Exit = "Exit",
 }
 
 @Entity()
 export class JoinExit {
-  @PrimaryColumn('varchar')
+  @PrimaryColumn("varchar")
   id!: string;
 
-  @Column({ type: 'enum', enum: InvestType })
+  @Column({ type: "enum", enum: InvestType })
   type!: InvestType;
 
-  @Column('varchar')
+  @Column("varchar")
   sender!: string;
 
-  @Column('simple-array')
+  @Column("simple-array")
   amounts!: string[];
 
-  @Column('decimal', { nullable: true })
+  @Column("decimal", { nullable: true })
   valueUSD?: string;
 
   @ManyToOne(() => Pool)
   pool!: Pool;
 
-  @ManyToOne(() => User)
-  user!: User;
+  @Column("varchar")
+  userId!: string;
 
-  @Column('int')
+  @Column("numeric")
   timestamp!: number;
 
-  @Column('varchar')
+  @Column("varchar")
   tx!: string;
 }

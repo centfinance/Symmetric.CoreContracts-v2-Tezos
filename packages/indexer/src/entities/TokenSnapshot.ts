@@ -1,20 +1,15 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  ManyToOne,
-} from "typeorm";
+import { Entity, Column, PrimaryColumn, ManyToOne } from "typeorm";
 import { Token } from "./Token";
 
 @Entity()
 export class TokenSnapshot {
-  @PrimaryColumn("varchar", { length: 42 })
+  @PrimaryColumn("varchar")
   id!: string;
 
   @ManyToOne(() => Token, (token) => token.snapshots)
   token!: Token;
 
-  @Column("int")
+  @Column("numeric")
   timestamp!: number;
 
   @Column("decimal", { precision: 40, scale: 18 })

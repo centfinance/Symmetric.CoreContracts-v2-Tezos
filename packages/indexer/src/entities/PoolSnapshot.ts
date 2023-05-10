@@ -1,42 +1,36 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  ManyToOne,
-  JoinColumn,
-} from "typeorm";
+import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from "typeorm";
 import { Pool } from "./Pool";
 
 @Entity()
 export class PoolSnapshot {
-  @PrimaryColumn('varchar', { length: 255 })
+  @PrimaryColumn("varchar", { length: 255 })
   id!: string;
 
-  @ManyToOne(() => Pool, (pool) => pool.snapshots, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'poolId' })
+  @ManyToOne(() => Pool, (pool) => pool.snapshots, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "poolId" })
   pool!: Pool;
 
-  @Column('decimal', { array: true })
+  @Column("decimal", { array: true })
   amounts!: string[];
 
-  @Column('decimal')
+  @Column("decimal")
   totalShares!: string;
 
-  @Column('decimal')
+  @Column("decimal")
   swapVolume!: string;
 
-  @Column('decimal')
+  @Column("decimal")
   swapFees!: string;
 
-  @Column('decimal')
+  @Column("decimal")
   liquidity!: string;
 
-  @Column('bigint')
+  @Column("bigint")
   swapsCount!: BigInt;
 
-  @Column('bigint')
+  @Column("bigint")
   holdersCount!: BigInt;
 
-  @Column('int')
+  @Column("numeric")
   timestamp!: number;
 }

@@ -27,7 +27,7 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
 try {
   const sub = tezos.stream.subscribeEvent({
     tag: "PoolRegistered",
-    address: "KT1H2SaqZyCmmHxbsTfwx12YeUzugzj8eN2t",
+    address: config.contracts.Vault.address,
   });
 
   // rome-ignore lint/suspicious/noExplicitAny: <explanation>
