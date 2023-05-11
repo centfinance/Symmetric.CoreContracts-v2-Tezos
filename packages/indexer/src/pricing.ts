@@ -24,6 +24,7 @@ import { PoolHistoricalLiquidity } from "./entities/PoolHistoricalLiquidity";
 import { PoolToken } from "./entities/PoolToken";
 import { Symmetric } from "./entities/Symmetric";
 import { Token } from "./entities/Token";
+import { TokenPrice } from "./entities/TokenPrice";
 
 export async function updatePoolLiquidity(
   poolId: string,
@@ -120,48 +121,80 @@ export async function valueInUSD(
   return usdValue;
 }
 
-// export async function swapValueInUSD(
-//   tokenInAddress: string,
-//   tokenInId: BigNumber | null,
-//   tokenAmountIn: BigNumber,
-//   tokenOutAddress: string,
-//   tokenOutId: BigNumber | null,
-//   tokenAmountOut: BigNumber,
-//   dbContext: DbContext,
-// ): Promise<BigNumber> {
-//   let swapValueUSD = BigNumber(ZERO_BD);
+export async function swapValueInUSD(
+  tokenInAddress: string,
+  tokenInId: BigNumber | null,
+  tokenAmountIn: BigNumber,
+  tokenOutAddress: string,
+  tokenOutId: BigNumber | null,
+  tokenAmountOut: BigNumber,
+  dbContext: DbContext
+): Promise<BigNumber> {
+  let swapValueUSD = BigNumber(ZERO_BD);
 
-//   if (isUSDStable(tokenOutAddress)) {
-//     // if one of the tokens is a stable, it takes precedence
-//     swapValueUSD = await valueInUSD(tokenAmountOut, tokenOutAddress, tokenOutId, dbContext);
-//     return swapValueUSD;
-//   } else if (isUSDStable(tokenInAddress)) {
-//     // if one of the tokens is a stable, it takes precedence
-//     swapValueUSD = await valueInUSD(tokenAmountIn, tokenInAddress, tokenInId, dbContext);
-//     return swapValueUSD;
-//   }
+  if (isUSDStable(tokenOutAddress)) {
+    // if one of the tokens is a stable, it takes precedence
+    swapValueUSD = await valueInUSD(
+      tokenAmountOut,
+      tokenOutAddress,
+      tokenOutId,
+      dbContext
+    );
+    return swapValueUSD;
+  } else if (isUSDStable(tokenInAddress)) {
+    // if one of the tokens is a stable, it takes precedence
+    swapValueUSD = await valueInUSD(
+      tokenAmountIn,
+      tokenInAddress,
+      tokenInId,
+      dbContext
+    );
+    return swapValueUSD;
+  }
 
-//   if (isPricingAsset(tokenInAddress) && !isPricingAsset(tokenOutAddress)) {
-//     // if only one of the tokens is a pricing asset, it takes precedence
-//     swapValueUSD = await valueInUSD(tokenAmountIn, tokenInAddress, tokenInId, dbContext);
-//     if (swapValueUSD.gt(ZERO_BD)) return swapValueUSD;
-//   }
+  if (isPricingAsset(tokenInAddress) && !isPricingAsset(tokenOutAddress)) {
+    // if only one of the tokens is a pricing asset, it takes precedence
+    swapValueUSD = await valueInUSD(
+      tokenAmountIn,
+      tokenInAddress,
+      tokenInId,
+      dbContext
+    );
+    if (swapValueUSD.gt(ZERO_BD)) return swapValueUSD;
+  }
 
-//   if (isPricingAsset(tokenOutAddress) && !isPricingAsset(tokenInAddress)) {
-//     // if only one of the tokens is a pricing asset, it takes precedence
-//     swapValueUSD = await valueInUSD(tokenAmountOut, tokenOutAddress, tokenOutId, dbContext);
-//     if (swapValueUSD.gt(ZERO_BD)) return swapValueUSD;
-//   }
+  if (isPricingAsset(tokenOutAddress) && !isPricingAsset(tokenInAddress)) {
+    // if only one of the tokens is a pricing asset, it takes precedence
+    swapValueUSD = await valueInUSD(
+      tokenAmountOut,
+      tokenOutAddress,
+      tokenOutId,
+      dbContext
+    );
+    if (swapValueUSD.gt(ZERO_BD)) return swapValueUSD;
+  }
 
-//   // if none or both tokens are pricing assets, take the average of the known prices
-//   let tokenInSwapValueUSD = await valueInUSD(tokenAmountIn, tokenInAddress, tokenInId, dbContext);
-//   let tokenOutSwapValueUSD = await valueInUSD(tokenAmountOut, tokenOutAddress, tokenOutId, dbContext);
-//   let divisor =
-//     tokenInSwapValueUSD.gt(ZERO_BD) && tokenOutSwapValueUSD.gt(ZERO_BD) ? BigNumber('2') : BigNumber('1');
-//   swapValueUSD = tokenInSwapValueUSD.plus(tokenOutSwapValueUSD).div(divisor);
+  // if none or both tokens are pricing assets, take the average of the known prices
+  let tokenInSwapValueUSD = await valueInUSD(
+    tokenAmountIn,
+    tokenInAddress,
+    tokenInId,
+    dbContext
+  );
+  let tokenOutSwapValueUSD = await valueInUSD(
+    tokenAmountOut,
+    tokenOutAddress,
+    tokenOutId,
+    dbContext
+  );
+  let divisor =
+    tokenInSwapValueUSD.gt(ZERO_BD) && tokenOutSwapValueUSD.gt(ZERO_BD)
+      ? BigNumber("2")
+      : BigNumber("1");
+  swapValueUSD = tokenInSwapValueUSD.plus(tokenOutSwapValueUSD).div(divisor);
 
-//   return swapValueUSD;
-// }
+  return swapValueUSD;
+}
 
 export function isUSDStable(asset: string): boolean {
   for (let i: number = 0; i < USD_STABLE_ASSETS.length; i++) {
@@ -319,62 +352,79 @@ export function isPricingAsset(asset: string): boolean {
   return false;
 }
 
-// export async function updateLatestPrice(tokenPrice: TokenPrice, blockTimestamp: number, dbContext: DbContext): Promise<void> {
-//   let tokenAsset = tokenPrice.asset
-//   let pricingAsset = tokenPrice.pricingAsset
+export async function updateLatestPrice(
+  tokenPrice: TokenPrice,
+  blockTimestamp: number,
+  dbContext: DbContext
+): Promise<void> {
+  let tokenAsset = tokenPrice.asset;
+  let pricingAsset = tokenPrice.pricingAsset;
 
-//   let latestPriceId = getLatestPriceId(tokenAsset, pricingAsset);
-//   let latestPrice = await dbContext.transaction.findOneBy(LatestPrice, { id: latestPriceId }) as LatestPrice;
+  let latestPriceId = getLatestPriceId(tokenAsset, pricingAsset);
+  let latestPrice = (await dbContext.transaction.findOneBy(LatestPrice, {
+    id: latestPriceId,
+  })) as LatestPrice;
 
-//   if (latestPrice == null) {
-//     latestPrice = new LatestPrice();
-//     latestPrice.id = latestPriceId;
-//     latestPrice.asset = tokenPrice.asset;
-//     latestPrice.pricingAsset = tokenPrice.pricingAsset;
-//   }
+  if (latestPrice == null) {
+    latestPrice = new LatestPrice();
+    latestPrice.id = latestPriceId;
+    latestPrice.asset = tokenPrice.asset;
+    latestPrice.pricingAsset = tokenPrice.pricingAsset;
+  }
 
-//   latestPrice.block = tokenPrice.block;
-//   latestPrice.poolId = tokenPrice.pool;
-//   latestPrice.price = tokenPrice.price;
-//   await dbContext.transaction.save(LatestPrice, latestPrice);
+  latestPrice.block = tokenPrice.block;
+  latestPrice.poolId = tokenPrice.pool;
+  latestPrice.price = tokenPrice.price;
+  await dbContext.transaction.save(LatestPrice, latestPrice);
 
-//   let token = await getToken(tokenAsset.slice(0, 36), BigNumber(tokenAsset.slice(36)), dbContext);
-//   const pricingAssetAddress = pricingAsset.slice(0, 36);
-//   const pricingAssetId = BigNumber(pricingAsset.slice(36))
-//   const currentUSDPrice = await valueInUSD(BigNumber(tokenPrice.price), pricingAssetAddress, pricingAssetId, dbContext);
+  let token = await getToken(
+    tokenAsset.slice(0, 36),
+    BigNumber(tokenAsset.slice(36)),
+    dbContext
+  );
+  const pricingAssetAddress = pricingAsset.slice(0, 36);
+  const pricingAssetId = BigNumber(pricingAsset.slice(36));
+  const currentUSDPrice = await valueInUSD(
+    BigNumber(tokenPrice.price),
+    pricingAssetAddress,
+    pricingAssetId,
+    dbContext
+  );
 
-//   if (currentUSDPrice == BigNumber(ZERO_BD)) return;
+  if (currentUSDPrice == BigNumber(ZERO_BD)) return;
 
-//   let oldUSDPrice = BigNumber(token.latestUSDPrice!);
-//   if (!oldUSDPrice || oldUSDPrice.isEqualTo(ZERO_BD)) {
-//     token.latestUSDPriceTimestamp = blockTimestamp;
-//     token.latestUSDPrice = currentUSDPrice.toString();
-//     token.latestPrice = latestPrice
-//     await dbContext.transaction.save(Token, token);
-//     return;
-//   }
+  let oldUSDPrice = BigNumber(token.latestUSDPrice!);
+  if (!oldUSDPrice || oldUSDPrice.isEqualTo(ZERO_BD)) {
+    token.latestUSDPriceTimestamp = blockTimestamp;
+    token.latestUSDPrice = currentUSDPrice.toString();
+    token.latestPrice = latestPrice;
+    await dbContext.transaction.save(Token, token);
+    return;
+  }
 
-//   let change = currentUSDPrice.minus(oldUSDPrice).div(oldUSDPrice);
-//   if (
-//     !token.latestUSDPriceTimestamp ||
-//     (change.lt(MAX_POS_PRICE_CHANGE) && change.gt(MAX_NEG_PRICE_CHANGE)) ||
-//     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-//     BigNumber(blockTimestamp).minus(token.latestUSDPriceTimestamp!).gt(MAX_TIME_DIFF_FOR_PRICING)
-//   ) {
-//     token.latestUSDPriceTimestamp = blockTimestamp;
-//     token.latestUSDPrice = currentUSDPrice.toString();
-//     token.latestPrice = latestPrice;
-//     await dbContext.transaction.save(Token, token);
-//   }
-// }
+  let change = currentUSDPrice.minus(oldUSDPrice).div(oldUSDPrice);
+  if (
+    !token.latestUSDPriceTimestamp ||
+    (change.lt(MAX_POS_PRICE_CHANGE) && change.gt(MAX_NEG_PRICE_CHANGE)) ||
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    BigNumber(blockTimestamp)
+      .minus(token.latestUSDPriceTimestamp!)
+      .gt(MAX_TIME_DIFF_FOR_PRICING)
+  ) {
+    token.latestUSDPriceTimestamp = blockTimestamp;
+    token.latestUSDPrice = currentUSDPrice.toString();
+    token.latestPrice = latestPrice;
+    await dbContext.transaction.save(Token, token);
+  }
+}
 
-// export function getPreferentialPricingAsset(assets: string[]): string {
-//   // Assumes PRICING_ASSETS are sorted by order of preference
-//   for (let i: number = 0; i < PRICING_ASSETS.length; i++) {
-//     if (assets.includes(PRICING_ASSETS[i])) return PRICING_ASSETS[i];
-//   }
-//   return '0';
-// }
+export function getPreferentialPricingAsset(assets: string[]): string {
+  // Assumes PRICING_ASSETS are sorted by order of preference
+  for (let i: number = 0; i < PRICING_ASSETS.length; i++) {
+    if (assets.includes(PRICING_ASSETS[i])) return PRICING_ASSETS[i];
+  }
+  return "0";
+}
 
 // // export function setWrappedTokenPrice(pool: Pool, poolId: string, block_number: BigInt, timestamp: BigInt): void {
 // //   if (isLinearPool(pool)) {

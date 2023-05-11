@@ -10,45 +10,60 @@ const config = require("../../../.taq/config.local.development.json");
 
 const tokenAddress = "KT1TFoy7ikLHYQqhYyvsBjDFTGukPm2jLs9f";
 
+function addMinutes(date: Date, minutes: number) {
+  return new Date(date.getTime() + minutes * 60000);
+}
+
 InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
   .then((theSigner) => {
     Tezos.setProvider({ signer: theSigner });
   })
   .then(async () => {
-    const contract = await Tezos.contract.at<VaultContractType>(
-      config.contracts.Vault.address
-    );
+    const contract = await Tezos.contract.at(config.contracts.Vault.address);
+    const funds = {
+      fromInternalBalance: false,
+      recipient: tas.address(config.accounts.bob.publicKeyHash),
+      sender: tas.address(config.accounts.bob.publicKeyHash),
+      toInternalBalance: false,
+    };
 
-    const swapRequest = await contract.methodsObject
-      .swap({
-        deadline: tas.timestamp(new Date().toISOString()),
-        funds: {
-          fromInternalBalance: false,
-          recipient: tas.address("tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6"),
-          sender: tas.address("tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6"),
-          toInternalBalance: false,
-        },
-        limit: tas.nat("0"),
-        singleSwap: {
-          amount: tas.nat(1 * 10 ** 18),
-          assetIn: {
-            0: tas.address(tokenAddress),
-            1: tas.nat("1"),
-          },
-          assetOut: {
-            0: tas.address(tokenAddress),
-            1: tas.nat("2"),
-          },
-          kind: "GIVEN_IN",
-          poolId: {
-            0: tas.address("KT1Wio8FdY7pWg7KQuAUQxyd9qWV4zBxszHB"),
-            1: tas.nat("4"),
-          },
-        },
-      })
-      .toTransferParams();
-    const estimate = await Tezos.estimate.transfer(swapRequest);
-    console.log(estimate);
-    // await swapRequest.confirmation(1);
+    const singleSwap = {
+      amount: tas.nat(1 * 10 ** 18),
+      assetIn: {
+        0: tas.address("KT1HV453GKwd6M2PKkxHy7Tnajdorisv268q"),
+        1: tas.nat("1"),
+      },
+      assetOut: {
+        0: tas.address("KT1HV453GKwd6M2PKkxHy7Tnajdorisv268q"),
+        1: tas.nat("2"),
+      },
+      kind: "GIVEN_OUT",
+      poolId: {
+        0: tas.address("KT1ELPXpfFSpk1AJVQ9m8t5uudGvVrvCgVHU"),
+        1: tas.nat("1"),
+      },
+    };
+
+    const swapRequest = await contract.methods
+      .swap(
+        tas.timestamp(addMinutes(new Date(), 30).toISOString()),
+        false,
+        tas.address(config.accounts.bob.publicKeyHash),
+        tas.address(config.accounts.bob.publicKeyHash),
+        false,
+        tas.nat(2 * 10 ** 18),
+        singleSwap.amount,
+        singleSwap.assetIn[0],
+        singleSwap.assetIn[1],
+        singleSwap.assetOut[0],
+        singleSwap.assetOut[1],
+        singleSwap.kind,
+        singleSwap.poolId[0],
+        singleSwap.poolId[1]
+      )
+      .send();
+    // const estimate = await Tezos.estimate.transfer(swapRequest);
+    // console.log(estimate);
+    await swapRequest.confirmation(1);
   })
   .catch((error) => console.table(`Error: ${JSON.stringify(error, null, 2)}`));

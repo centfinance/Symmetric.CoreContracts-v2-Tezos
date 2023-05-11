@@ -9,7 +9,7 @@ const Tezos = new TezosToolkit("http://localhost:20000");
 
 const config = require("../../../.taq/config.local.development.json");
 
-const tokenAddress = "KT1TFoy7ikLHYQqhYyvsBjDFTGukPm2jLs9f";
+const tokenAddress = "KT1HV453GKwd6M2PKkxHy7Tnajdorisv268q";
 
 InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
   .then((theSigner) => {

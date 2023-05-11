@@ -1,15 +1,11 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  OneToMany,
-  ManyToOne,
-} from "typeorm";
+import { Entity, Column, PrimaryColumn, OneToMany, ManyToOne } from "typeorm";
 import { PoolToken } from "./PoolToken";
 import { Symmetric } from "./Symmetric";
 import { PoolSnapshot } from "./PoolSnapshot";
 import { JoinExit } from "./JoinExit";
 import { PoolHistoricalLiquidity } from "./PoolHistoricalLiquidity";
+import { Swap } from "./Swap";
+import { TokenPrice } from "./TokenPrice";
 
 @Entity()
 export class Pool {
@@ -85,8 +81,8 @@ export class Pool {
   @OneToMany(() => PoolToken, (poolToken) => poolToken.pool)
   tokens!: PoolToken[];
 
-  // @OneToMany(() => Swap, (swap) => swap.poolId)
-  // swaps!: Swap[];
+  @OneToMany(() => Swap, (swap) => swap.poolId)
+  swaps!: Swap[];
 
   // @OneToMany(() => PoolShare, (poolShare) => poolShare.poolId)
   // shares!: PoolShare[];
@@ -96,11 +92,14 @@ export class Pool {
   @OneToMany(() => PoolSnapshot, (poolSnapshot) => poolSnapshot.pool)
   snapshots!: PoolSnapshot[];
 
-  @OneToMany(() => PoolHistoricalLiquidity, (poolHistoricalLiquidity) => poolHistoricalLiquidity.poolId)
+  @OneToMany(
+    () => PoolHistoricalLiquidity,
+    (poolHistoricalLiquidity) => poolHistoricalLiquidity.poolId
+  )
   historicalValues!: PoolHistoricalLiquidity[];
-  
-  // @OneToMany(() => TokenPrice, (tokenPrice) => tokenPrice.pool)
-  // tokenPrices!: TokenPrice[];
+
+  @OneToMany(() => TokenPrice, (tokenPrice) => tokenPrice.pool)
+  tokenPrices!: TokenPrice[];
 
   priceRateProviders: any;
 

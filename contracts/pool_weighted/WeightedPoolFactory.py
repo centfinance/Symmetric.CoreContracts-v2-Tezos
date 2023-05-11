@@ -1,3 +1,4 @@
+import json
 import smartpy as sp
 
 from contracts.pool_weighted.WeightedPool import WeightedPool
@@ -79,11 +80,11 @@ class WeightedPoolFactory(
     def __init__(
         self,
         admin=sp.address('tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6'),
-        vault=sp.address('KT1QNCnLs6F6gUNEVY8AUs5Pw4p6jd3H62si'),
-        weightedMathLib=sp.address('KT1SPxe2VmhryAZcFPy4BmCLNuMxoFUCKG7D'),
+        vault=sp.address('KT1Ufmbob3d2Q1LZWAJaY3gYA1EuE9pUo3QW'),
+        weightedMathLib=sp.address('KT1D2h84KBEhLBkLgdupqpCo1TQqR3A5SqjR'),
         weightedProtocolFeesLib=sp.address(
-            'KT1QZFPZgoiMLuaXYA6JtLkj9SHUzQSxwVo3'),
-        protocolFeeProvider=sp.address('KT1TwL3ZFnnNXh8chrUF37EEC7FyrQNocASi'),
+            'KT1DVScqtitYEgGXE8MmFq7jhHhQdY6xh13s'),
+        protocolFeeProvider=sp.address('KT1KkvjFWJCjHot6h36x73P5frFXcoPDnJhe'),
         feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
         metadata=CONTRACT_METADATA,
     ):

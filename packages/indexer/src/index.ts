@@ -17,12 +17,16 @@ import { PoolSnapshot } from "./entities/PoolSnapshot";
 import { JoinExit } from "./entities/JoinExit";
 import { User } from "./entities/User";
 import { PoolHistoricalLiquidity } from "./entities/PoolHistoricalLiquidity";
+import { TokenPrice } from "./entities/TokenPrice";
+import { LatestPrice } from "./entities/LatestPrice";
+import { Swap } from "./entities/Swap";
 
 export const indexerModule: IndexerModuleUsingDb = {
   name: "Indexer",
   dbEntities: [
     // Register your DB entity classes to TypeORM here:
     // MyDbEntity,
+    LatestPrice,
     Pool,
     PoolSnapshot,
     PoolToken,
@@ -30,10 +34,12 @@ export const indexerModule: IndexerModuleUsingDb = {
     Symmetric,
     PriceRateProvider,
     PoolHistoricalLiquidity,
+    Swap,
     SymmetricSnapshot,
     TokenSnapshot,
     TradePair,
     TradePairSnapshot,
+    TokenPrice,
     JoinExit,
     User,
     // PriceRateProvider,

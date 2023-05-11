@@ -3,10 +3,13 @@ import {
   Column,
   PrimaryColumn,
   OneToMany,
+  OneToOne,
+  JoinColumn,
 } from "typeorm";
 import { PoolToken } from "./PoolToken";
 import { TokenSnapshot } from "./TokenSnapshot";
 import { TradePair } from "./TradePair";
+import { LatestPrice } from "./LatestPrice";
 
 @Entity()
 export class Token {
@@ -46,17 +49,15 @@ export class Token {
   @Column("bigint")
   totalSwapCount!: bigint;
 
-  // @OneToOne(() => LatestPrice, { nullable: true })
-  // latestPrice?: LatestPrice;
+  @OneToOne(() => LatestPrice, { nullable: true })
+  @JoinColumn()
+  latestPrice?: LatestPrice;
 
   @Column("decimal", { precision: 40, scale: 18, nullable: true })
   latestUSDPrice?: string;
 
   @Column("numeric", { nullable: true })
   latestUSDPriceTimestamp?: number;
-
-  @Column("decimal", { precision: 40, scale: 18, nullable: true })
-  latestFXPrice?: string;
 
   @OneToMany(() => PoolToken, (poolToken) => poolToken.token)
   poolTokens!: PoolToken[];

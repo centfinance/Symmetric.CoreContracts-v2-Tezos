@@ -144,7 +144,6 @@ export async function createToken(
   token.FA2 = tokenId ? true : false;
 
   await dbContext.transaction.save(Token, token);
-  console.log("im here");
   return token;
 }
 
