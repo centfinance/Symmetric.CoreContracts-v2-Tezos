@@ -160,10 +160,14 @@ export async function createPoolTokenEntity(
     tokenId ? tokenId : BigNumber(0)
   );
 
-  let token = await getTokenMetadata(tokenAddress, 0);
+  let token = await getTokenMetadata(
+    tokenAddress,
+    tokenId ? tokenId.toNumber() : 0
+  );
   let symbol = token.symbol || "SYMMLP";
   let name = token.name || "Symmetric Pool Token";
-  let decimals = 18;
+  let decimals =
+    !token.decimals || Number.isNaN(token.decimals) ? 18 : token.decimals;
 
   let poolToken = new PoolToken();
   poolToken.id = poolTokenId;

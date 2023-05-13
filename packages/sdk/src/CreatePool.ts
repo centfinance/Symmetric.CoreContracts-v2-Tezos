@@ -66,7 +66,7 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
             value: tas.nat("125000000000000000"),
           },
         ]),
-        swapFeePercentage: tas.nat("1000000000000"),
+        swapFeePercentage: tas.nat("10000000000000000"),
         tokenDecimals: tas.map([
           {
             key: tas.nat("0"),

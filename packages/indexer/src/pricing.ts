@@ -152,7 +152,10 @@ export async function swapValueInUSD(
     return swapValueUSD;
   }
 
-  if (isPricingAsset(tokenInAddress) && !isPricingAsset(tokenOutAddress)) {
+  if (
+    isPricingAsset(tokenInAddress, tokenInId) &&
+    !isPricingAsset(tokenOutAddress)
+  ) {
     // if only one of the tokens is a pricing asset, it takes precedence
     swapValueUSD = await valueInUSD(
       tokenAmountIn,
@@ -196,9 +199,16 @@ export async function swapValueInUSD(
   return swapValueUSD;
 }
 
-export function isUSDStable(asset: string): boolean {
+export function isUSDStable(
+  asset: string,
+  id: BigNumber | null = null
+): boolean {
   for (let i: number = 0; i < USD_STABLE_ASSETS.length; i++) {
-    if (USD_STABLE_ASSETS[i] === asset) return true;
+    if (
+      USD_STABLE_ASSETS[i].address === asset &&
+      USD_STABLE_ASSETS[i].id === id
+    )
+      return true;
   }
   return false;
 }
@@ -345,9 +355,13 @@ export function getPoolHistoricalLiquidityId(
     .concat(block.toString());
 }
 
-export function isPricingAsset(asset: string): boolean {
+export function isPricingAsset(
+  asset: string,
+  id: BigNumber | null = null
+): boolean {
   for (let i: number = 0; i < PRICING_ASSETS.length; i++) {
-    if (PRICING_ASSETS[i] === asset) return true;
+    if (PRICING_ASSETS[i].address === asset && PRICING_ASSETS[i].id === id)
+      return true;
   }
   return false;
 }
@@ -421,7 +435,12 @@ export async function updateLatestPrice(
 export function getPreferentialPricingAsset(assets: string[]): string {
   // Assumes PRICING_ASSETS are sorted by order of preference
   for (let i: number = 0; i < PRICING_ASSETS.length; i++) {
-    if (assets.includes(PRICING_ASSETS[i])) return PRICING_ASSETS[i];
+    if (
+      assets.includes(
+        PRICING_ASSETS[i].address.concat(PRICING_ASSETS[i].id.toString())
+      )
+    )
+      return PRICING_ASSETS[i].address;
   }
   return "0";
 }
