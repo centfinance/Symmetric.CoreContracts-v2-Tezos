@@ -255,7 +255,7 @@ export async function handlePoolJoined(
     const tokenAddress = tokens[i].slice(0, 36);
     const tokenId = BigNumber(tokens[i].slice(36));
 
-    if (isPricingAsset(tokens[i])) {
+    if (isPricingAsset(tokenAddress, tokenId)) {
       const success = await addHistoricalPoolLiquidityRecord(
         poolId,
         block,
@@ -404,7 +404,7 @@ export async function handlePoolExited(
     const tokenAddress = tokens[i].slice(0, 36);
     const tokenId = BigNumber(tokens[i].slice(36));
 
-    if (isPricingAsset(tokens[i])) {
+    if (isPricingAsset(tokenAddress, tokenId)) {
       let success = await addHistoricalPoolLiquidityRecord(
         poolId,
         block,
@@ -544,6 +544,7 @@ export async function handleSwapEvent(
     BigNumber(tokenAmountOut),
     dbContext
   );
+  console.log(valueUSD);
 
   if (poolAddress != tokenInAddress && poolAddress != tokenOutAddress) {
     swapValueUSD = valueUSD.toString();
@@ -613,7 +614,7 @@ export async function handleSwapEvent(
 
   // update pool swapsCount
   // let pool = Pool.load(poolId.toHex());
-  pool.swapsCount = pool.swapsCount + BigInt(1);
+  pool.swapsCount = pool.swapsCount++;
   pool.totalSwapVolume = BigNumber(pool.totalSwapVolume)
     .plus(swapValueUSD)
     .toString();
@@ -631,7 +632,7 @@ export async function handleSwapEvent(
   vault.totalSwapFee = BigNumber(vault.totalSwapFee)
     .plus(swapFeesUSD)
     .toString();
-  vault.totalSwapCount = vault.totalSwapCount + BigInt(1);
+  vault.totalSwapCount = vault.totalSwapCount++;
   await dbContext.transaction.save(Symmetric, vault);
 
   let vaultSnapshot = await getSymmetricSnapshot(
@@ -714,7 +715,7 @@ export async function handleSwapEvent(
   let tokenInWeight = poolTokenIn.weight;
   let tokenOutWeight = poolTokenOut.weight;
   if (
-    isPricingAsset(tokenInAddress) &&
+    isPricingAsset(tokenInAddress, tokenInId) &&
     BigNumber(pool.totalLiquidity).gt(MIN_POOL_LIQUIDITY) &&
     valueUSD.gt(MIN_SWAP_VALUE_USD)
   ) {
@@ -731,8 +732,10 @@ export async function handleSwapEvent(
     tokenPrice.block = blockNumber;
     tokenPrice.timestamp = blockTimestamp;
     tokenPrice.asset = tokenOutAddress;
+    tokenPrice.assetId = tokenOutId ? tokenOutId.toString() : "0";
     tokenPrice.amount = tokenAmountIn;
     tokenPrice.pricingAsset = tokenInAddress;
+    tokenPrice.pricingAssetId = tokenInId ? tokenInId.toString() : "0";
 
     if (tokenInWeight && tokenOutWeight) {
       // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens
@@ -753,7 +756,7 @@ export async function handleSwapEvent(
     await updateLatestPrice(tokenPrice, blockTimestamp, dbContext);
   }
   if (
-    isPricingAsset(tokenOutAddress) &&
+    isPricingAsset(tokenOutAddress, tokenOutId) &&
     BigNumber(pool.totalLiquidity).gt(MIN_POOL_LIQUIDITY) &&
     valueUSD.gt(MIN_SWAP_VALUE_USD)
   ) {
@@ -770,8 +773,10 @@ export async function handleSwapEvent(
     tokenPrice.block = blockNumber;
     tokenPrice.timestamp = blockTimestamp;
     tokenPrice.asset = tokenInAddress;
+    tokenPrice.assetId = tokenInId ? tokenInId.toString() : "0";
     tokenPrice.amount = tokenAmountOut;
     tokenPrice.pricingAsset = tokenOutAddress;
+    tokenPrice.pricingAssetId = tokenOutId ? tokenOutId.toString() : "0";
 
     if (tokenInWeight && tokenOutWeight) {
       // As the swap is with a WeightedPool, we can easily calculate the spot price between the two tokens

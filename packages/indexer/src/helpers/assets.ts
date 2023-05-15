@@ -1,12 +1,16 @@
 import BigNumber from "bignumber.js";
 
+const tokenAddress = "KT19SwoUtpqsJrKFkJHiDQkXBNU8qXKoUZp4";
 export const stableAssets = [
-  { address: "KT1JMK7ZY4WZYVX4HX7Y4WZJ6Z7QKZHZ7YV", id: BigNumber(1) },
-  { address: "KT1JMK7ZY4WZYVX4HX7Y4WZJ6Z7QKZHZ7YV", id: BigNumber(2) },
+  { address: tokenAddress, id: BigNumber(2) },
+  { address: tokenAddress, id: BigNumber(5) },
+  { address: tokenAddress, id: BigNumber(6) },
+  { address: tokenAddress, id: BigNumber(8) },
 ];
 
 export const pricingAssets = [
-  { address: "KT1JMK7ZY4WZYVX4HX7Y4WZJ6Z7QKZHZ7YV", id: BigNumber(1) },
-  { address: "KT1JMK7ZY4WZYVX4HX7Y4WZJ6Z7QKZHZ7YV", id: BigNumber(1) },
-  { address: "KT1JMK7ZY4WZYVX4HX7Y4WZJ6Z7QKZHZ7YV", id: BigNumber(1) },
+  { address: tokenAddress, id: BigNumber(0) },
+  { address: tokenAddress, id: BigNumber(1) },
+  { address: tokenAddress, id: BigNumber(3) },
+  { address: tokenAddress, id: BigNumber(4) },
 ];

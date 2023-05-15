@@ -215,20 +215,20 @@ async function example() {
     token4.set("symbol", char2Bytes("SYMM"));
     token4.set("decimals", "18");
     const token5 = new MichelsonMap();
-    token5.set("name", char2Bytes("wToken"));
-    token5.set("symbol", char2Bytes("wTK"));
+    token5.set("name", char2Bytes("uUSD"));
+    token5.set("symbol", char2Bytes("uUSD"));
     token5.set("decimals", "18");
     const token6 = new MichelsonMap();
-    token6.set("name", char2Bytes("AliceToken"));
-    token6.set("symbol", char2Bytes("ALC"));
+    token6.set("name", char2Bytes("Wrapped USDC"));
+    token6.set("symbol", char2Bytes("wUSDC"));
     token6.set("decimals", "18");
     const token7 = new MichelsonMap();
-    token7.set("name", char2Bytes("wToken"));
-    token7.set("symbol", char2Bytes("wTK"));
+    token7.set("name", char2Bytes("PLENTY"));
+    token7.set("symbol", char2Bytes("PLENTY"));
     token7.set("decimals", "18");
     const token8 = new MichelsonMap();
-    token8.set("name", char2Bytes("AliceToken"));
-    token8.set("symbol", char2Bytes("ALC"));
+    token8.set("name", char2Bytes("kUSD"));
+    token8.set("symbol", char2Bytes("kUSD"));
     token8.set("decimals", "18");
 
     token_metadata.set("0", {

@@ -164,7 +164,6 @@ async function handleNewPoolTokens(
 ): Promise<void> {
   for (let i: number = 0; i < tokens.size; i++) {
     const tokenData = tokens.get(BigNumber(i))!;
-
     await createPoolTokenEntity(
       pool,
       tokenData?.[0],

@@ -140,6 +140,7 @@ export async function createToken(
   token.totalVolumeUSD = ZERO_BD;
   token.totalVolumeNotional = ZERO_BD;
   token.address = tokenAddress;
+
   token.tokenId = tokenId ? tokenId.toNumber() : 0;
   token.FA2 = tokenId ? true : false;
 
@@ -160,14 +161,16 @@ export async function createPoolTokenEntity(
     tokenId ? tokenId : BigNumber(0)
   );
 
-  let token = await getTokenMetadata(
+  let metadata = await getTokenMetadata(
     tokenAddress,
     tokenId ? tokenId.toNumber() : 0
   );
-  let symbol = token.symbol || "SYMMLP";
-  let name = token.name || "Symmetric Pool Token";
+  let symbol = metadata.symbol || "SYMMLP";
+  let name = metadata.name || "Symmetric Pool Token";
   let decimals =
-    !token.decimals || Number.isNaN(token.decimals) ? 18 : token.decimals;
+    !metadata.decimals || Number.isNaN(metadata.decimals)
+      ? 18
+      : metadata.decimals;
 
   let poolToken = new PoolToken();
   poolToken.id = poolTokenId;
@@ -178,7 +181,7 @@ export async function createPoolTokenEntity(
   poolToken.poolId = pool.id;
   poolToken.pool = pool;
   poolToken.address = tokenAddress;
-  poolToken.tokenId = tokenId ? tokenId.toString() : null;
+  poolToken.tokenId = tokenId ? tokenId.toString() : "0";
   poolToken.name = name;
   poolToken.symbol = symbol;
   poolToken.decimals = decimals;
@@ -334,7 +337,7 @@ export async function uptickSwapsForToken(
 ): Promise<void> {
   let token = await getToken(tokenAddress, tokenId, dbContext);
   // update the overall swap count for the token
-  token.totalSwapCount = token.totalSwapCount + BigInt(1);
+  token.totalSwapCount = token.totalSwapCount++;
   await dbContext.transaction.save(Token, token);
 
   // update the snapshots

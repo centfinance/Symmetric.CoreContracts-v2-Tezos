@@ -12,11 +12,17 @@ export class TokenPrice {
   @Column("varchar")
   asset!: string;
 
+  @Column("numeric")
+  assetId!: string;
+
   @Column("decimal")
   amount!: string;
 
   @Column("varchar")
   pricingAsset!: string;
+
+  @Column("numeric")
+  pricingAssetId!: string;
 
   @Column("decimal")
   price!: string;

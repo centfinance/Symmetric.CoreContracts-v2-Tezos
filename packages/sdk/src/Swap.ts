@@ -8,7 +8,7 @@ const Tezos = new TezosToolkit("http://localhost:20000");
 
 const config = require("../../../.taq/config.local.development.json");
 
-const tokenAddress = "KT1TFoy7ikLHYQqhYyvsBjDFTGukPm2jLs9f";
+const tokenAddress = "KT19SwoUtpqsJrKFkJHiDQkXBNU8qXKoUZp4";
 
 function addMinutes(date: Date, minutes: number) {
   return new Date(date.getTime() + minutes * 60000);
@@ -30,17 +30,17 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
     const singleSwap = {
       amount: tas.nat(1 * 10 ** 18),
       assetIn: {
-        0: tas.address("KT1HV453GKwd6M2PKkxHy7Tnajdorisv268q"),
-        1: tas.nat("1"),
+        0: tas.address(tokenAddress),
+        1: tas.nat("2"),
       },
       assetOut: {
-        0: tas.address("KT1HV453GKwd6M2PKkxHy7Tnajdorisv268q"),
-        1: tas.nat("2"),
+        0: tas.address(tokenAddress),
+        1: tas.nat("3"),
       },
       kind: "GIVEN_OUT",
       poolId: {
-        0: tas.address("KT1ELPXpfFSpk1AJVQ9m8t5uudGvVrvCgVHU"),
-        1: tas.nat("1"),
+        0: tas.address("KT1HNE3uYR1XxLzfMFP65DC7nJqVSvhpgaV7"),
+        1: tas.nat("4"),
       },
     };
 

@@ -1,29 +1,29 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  OneToMany,
-  ManyToOne,
-} from "typeorm";
+import { Entity, Column, PrimaryColumn, OneToMany, ManyToOne } from "typeorm";
 import { Pool } from "./Pool";
 
 @Entity()
 export class LatestPrice {
-  @PrimaryColumn('varchar')
+  @PrimaryColumn("varchar")
   id!: string;
 
-  @Column('varchar')
+  @Column("varchar")
   asset!: string;
 
-  @Column('varchar')
+  @Column("numeric")
+  assetId!: string;
+
+  @Column("varchar")
   pricingAsset!: string;
+
+  @Column("numeric")
+  pricingAssetId!: string;
 
   @ManyToOne(() => Pool)
   poolId!: Pool;
 
-  @Column('decimal')
+  @Column("decimal")
   price!: string;
 
-  @Column('numeric')
+  @Column("numeric")
   block!: number;
 }

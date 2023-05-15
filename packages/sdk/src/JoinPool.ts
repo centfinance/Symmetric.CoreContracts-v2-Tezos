@@ -7,7 +7,7 @@ const config = require("../../../.taq/config.local.development.json");
 
 const Tezos = new TezosToolkit(config.rpcUrl);
 
-const tokenAddress = "KT1HV453GKwd6M2PKkxHy7Tnajdorisv268q";
+const tokenAddress = "KT19SwoUtpqsJrKFkJHiDQkXBNU8qXKoUZp4";
 
 InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
   .then((theSigner) => {
@@ -20,8 +20,8 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
     const joinPoolRequest = await contract.methodsObject
       .joinPool({
         poolId: {
-          0: tas.address("KT1ELPXpfFSpk1AJVQ9m8t5uudGvVrvCgVHU"),
-          1: tas.nat("1"),
+          0: tas.address("KT1HNE3uYR1XxLzfMFP65DC7nJqVSvhpgaV7"),
+          1: tas.nat("4"),
         },
         recipient: tas.address("tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6"),
         request: {

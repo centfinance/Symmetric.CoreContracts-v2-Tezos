@@ -105,8 +105,9 @@ export async function valueInUSD(
   dbContext: DbContext
 ): Promise<BigNumber> {
   let usdValue = BigNumber(ZERO_BD);
-
-  if (isUSDStable(asset)) {
+  console.log(assetId);
+  console.log(isUSDStable(asset, assetId ? assetId : BigNumber(0)));
+  if (isUSDStable(asset, assetId ? assetId : BigNumber(0))) {
     usdValue = value;
   } else {
     // convert to USD
@@ -132,7 +133,7 @@ export async function swapValueInUSD(
 ): Promise<BigNumber> {
   let swapValueUSD = BigNumber(ZERO_BD);
 
-  if (isUSDStable(tokenOutAddress)) {
+  if (isUSDStable(tokenOutAddress, tokenOutId)) {
     // if one of the tokens is a stable, it takes precedence
     swapValueUSD = await valueInUSD(
       tokenAmountOut,
@@ -141,8 +142,9 @@ export async function swapValueInUSD(
       dbContext
     );
     return swapValueUSD;
-  } else if (isUSDStable(tokenInAddress)) {
+  } else if (isUSDStable(tokenInAddress, tokenInId)) {
     // if one of the tokens is a stable, it takes precedence
+    console.log("isStable");
     swapValueUSD = await valueInUSD(
       tokenAmountIn,
       tokenInAddress,
@@ -154,7 +156,7 @@ export async function swapValueInUSD(
 
   if (
     isPricingAsset(tokenInAddress, tokenInId) &&
-    !isPricingAsset(tokenOutAddress)
+    !isPricingAsset(tokenOutAddress, tokenOutId)
   ) {
     // if only one of the tokens is a pricing asset, it takes precedence
     swapValueUSD = await valueInUSD(
@@ -166,7 +168,10 @@ export async function swapValueInUSD(
     if (swapValueUSD.gt(ZERO_BD)) return swapValueUSD;
   }
 
-  if (isPricingAsset(tokenOutAddress) && !isPricingAsset(tokenInAddress)) {
+  if (
+    isPricingAsset(tokenOutAddress, tokenOutId) &&
+    !isPricingAsset(tokenInAddress, tokenInId)
+  ) {
     // if only one of the tokens is a pricing asset, it takes precedence
     swapValueUSD = await valueInUSD(
       tokenAmountOut,
@@ -206,7 +211,7 @@ export function isUSDStable(
   for (let i: number = 0; i < USD_STABLE_ASSETS.length; i++) {
     if (
       USD_STABLE_ASSETS[i].address === asset &&
-      USD_STABLE_ASSETS[i].id === id
+      USD_STABLE_ASSETS[i].id.toNumber() === (id ? id.toNumber() : 0)
     )
       return true;
   }
@@ -243,9 +248,6 @@ export async function addHistoricalPoolLiquidityRecord(
   let poolValue = BigNumber(ZERO_BD);
 
   for (let j: number = 0; j < tokensList.length; j++) {
-    const token = JSON.parse(
-      tokensList[j]
-    ) as WeightedPoolFactoryCreateParameterTokensValue;
     const tokenAddress = tokensList[j].slice(0, 36);
     const tokenId = BigNumber(tokensList[j].slice(36));
 
@@ -360,8 +362,12 @@ export function isPricingAsset(
   id: BigNumber | null = null
 ): boolean {
   for (let i: number = 0; i < PRICING_ASSETS.length; i++) {
-    if (PRICING_ASSETS[i].address === asset && PRICING_ASSETS[i].id === id)
+    if (
+      PRICING_ASSETS[i].address == asset &&
+      PRICING_ASSETS[i].id.toNumber() == (id ? id.toNumber() : 0)
+    ) {
       return true;
+    }
   }
   return false;
 }
@@ -383,7 +389,9 @@ export async function updateLatestPrice(
     latestPrice = new LatestPrice();
     latestPrice.id = latestPriceId;
     latestPrice.asset = tokenPrice.asset;
+    latestPrice.assetId = tokenPrice.assetId;
     latestPrice.pricingAsset = tokenPrice.pricingAsset;
+    latestPrice.pricingAssetId = tokenPrice.pricingAssetId;
   }
 
   latestPrice.block = tokenPrice.block;
@@ -396,12 +404,10 @@ export async function updateLatestPrice(
     BigNumber(tokenAsset.slice(36)),
     dbContext
   );
-  const pricingAssetAddress = pricingAsset.slice(0, 36);
-  const pricingAssetId = BigNumber(pricingAsset.slice(36));
   const currentUSDPrice = await valueInUSD(
     BigNumber(tokenPrice.price),
-    pricingAssetAddress,
-    pricingAssetId,
+    tokenPrice.pricingAsset,
+    BigNumber(tokenPrice.pricingAssetId),
     dbContext
   );
 
