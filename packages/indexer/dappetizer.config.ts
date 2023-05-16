@@ -1,27 +1,55 @@
-import { DappetizerConfigUsingDb } from '@tezos-dappetizer/database';
-import { loadDappetizerNetworkConfigs } from '@tezos-dappetizer/indexer';
+import { DappetizerConfigUsingDb } from "@tezos-dappetizer/database";
+import { loadDappetizerNetworkConfigs } from "@tezos-dappetizer/indexer";
+
+const network = require("../../.taq/config.local.development.json");
 
 const config: DappetizerConfigUsingDb = {
-    modules: [{
-        id: '.', // This project is the indexer module itself.
-    }],
-    networks: loadDappetizerNetworkConfigs(__dirname),
-    database: {
-        type: 'sqlite',
-        database: 'database.sqlite',
+  modules: [
+    {
+      id: "./src/index.ts", // This project is the indexer module itself.
+    },
+  ],
+  networks: {
+    mainnet: {
+      indexing: {
+        fromBlockLevel: 900,
+        contracts: [
+          {
+            name: "WeightedPoolFactory",
+            addresses: [network.contracts.WeightedPoolFactory.address],
+          },
+          {
+            name: "Vault",
+            addresses: [network.contracts.Vault.address],
+          },
+        ],
+      },
+      tezosNode: {
+        url: "http://localhost:20000",
+      },
+    },
+  },
+  database: {
+    // type: 'sqlite',
+    // database: 'database.sqlite',
 
-        // If you want to use PostgreSQL:
-        // type: 'postgres',
-        // host: 'localhost',
-        // port: 5432,
-        // username: 'postgres',
-        // password: 'postgrespassword',
-        // database: 'postgres',
-        // schema: 'indexer',
-    },
-    usageStatistics: {
-        enabled: true,
-    },
+    // If you want to use PostgreSQL:
+    type: "postgres",
+    host: "localhost",
+    port: 5432,
+    username: "tzkt",
+    password: "local",
+    database: "postgres",
+    schema: "indexer",
+  },
+  // hasura: {
+  //   url: "http://localhost:8080/",
+  //   autotrackEntities: true,
+  //   dropExistingTracking: true,
+  // },
+  usageStatistics: {
+    enabled: true,
+  },
 };
 
 export default config;

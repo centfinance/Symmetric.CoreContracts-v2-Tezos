@@ -8,10 +8,16 @@ const config = require('../../../.taq/config.local.development.json');
 
 const tezos = new TezosToolkit('http://localhost:20000');
 
-export async function deployProtocolFeesCollector(adminAddress: string, vaultAddress: string, flashLoanFeePercentage: string, swapFeePercentage: string) {
+export async function deployProtocolFeesCollector(
+  adminAddress: string, 
+  vaultAddress: string, 
+  flashLoanFeePercentage: string, 
+  swapFeePercentage: string,
+  tezos: TezosToolkit,
+  ) {
     try {
-        const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
-        tezos.setProvider({ signer });
+        // const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
+        // tezos.setProvider({ signer });
 
         const protocolFeesCollectorCode = ProtocolFeesCollectorCode.code;
 

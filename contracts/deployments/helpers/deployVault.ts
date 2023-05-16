@@ -9,11 +9,11 @@ const config = require('../../../.taq/config.local.development.json');
 
 const tezos = new TezosToolkit('http://localhost:20000');
 
-export async function deployVault(adminAddress: string) {
+export async function deployVault(adminAddress: string, tezos: TezosToolkit) {
     try {
         // Replace with the private key of the account you want to deploy the contract with
-        const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
-        tezos.setProvider({ signer });
+        // const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
+        // tezos.setProvider({ signer });
 
         // Replace with the Michelson code of the Vault contract
         const vaultCode = VaultCode.code;

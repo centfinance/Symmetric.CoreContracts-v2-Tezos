@@ -3,7 +3,7 @@
 
 // This file was generated.
 // It should NOT be modified manually rather it should be regenerated.
-// Contract: KT1DSsMYr3n7C1ecYSgZimtFkDXdEQbxULFw
+// Contract: KT1GQ1ZkB6CFfyjrfWddvfJA5VRwEYnR26Xu
 // Tezos network: mainnet
 
 import { UnitValue } from '@taquito/michelson-encoder';
@@ -62,14 +62,11 @@ export interface VaultBatchSwapParameter {
 }
 
 export interface VaultBatchSwapParameterAssetsValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber | null;
 }
 
 export interface VaultBatchSwapParameterFunds {
@@ -96,13 +93,19 @@ export interface VaultBatchSwapParameterSwapsValue {
     /** Nat - arbitrary big integer >= 0. */
     assetOutIndex: BigNumber;
 
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultBatchSwapParameterSwapsValuePoolId;
+}
+
+export interface VaultBatchSwapParameterSwapsValuePoolId {
+    /** Tezos address. */
+    '3': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '4': BigNumber;
 }
 
 export interface VaultExitPoolParameter {
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultExitPoolParameterPoolId;
 
     /** Tezos address. */
     recipient: string;
@@ -111,6 +114,14 @@ export interface VaultExitPoolParameter {
 
     /** Tezos address. */
     sender: string;
+}
+
+export interface VaultExitPoolParameterPoolId {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber;
 }
 
 export interface VaultExitPoolParameterRequest {
@@ -139,14 +150,11 @@ export interface VaultExitPoolParameterRequest {
 }
 
 export interface VaultExitPoolParameterRequestAssetsValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber | null;
 }
 
 export interface VaultExitPoolParameterRequestUserData {
@@ -176,8 +184,7 @@ export interface VaultExitPoolParameterRequestUserData {
 }
 
 export interface VaultJoinPoolParameter {
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultJoinPoolParameterPoolId;
 
     /** Tezos address. */
     recipient: string;
@@ -186,6 +193,14 @@ export interface VaultJoinPoolParameter {
 
     /** Tezos address. */
     sender: string;
+}
+
+export interface VaultJoinPoolParameterPoolId {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber;
 }
 
 export interface VaultJoinPoolParameterRequest {
@@ -214,14 +229,11 @@ export interface VaultJoinPoolParameterRequest {
 }
 
 export interface VaultJoinPoolParameterRequestAssetsValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber | null;
 }
 
 export interface VaultJoinPoolParameterRequestUserData {
@@ -250,8 +262,8 @@ export interface VaultJoinPoolParameterRequestUserData {
     tokenIndex: BigNumber | null;
 }
 
-/** Nat - arbitrary big integer >= 0. */
-export type VaultRegisterPoolParameter = BigNumber;
+/** An empty result. */
+export type VaultRegisterPoolParameter = typeof UnitValue;
 
 export interface VaultRegisterTokensParameter {
     /**
@@ -263,8 +275,7 @@ export interface VaultRegisterTokensParameter {
      */
     assetManagers: MichelsonMap<BigNumber, string> | null;
 
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultRegisterTokensParameterPoolId;
 
     /**
      * In-memory map.
@@ -276,15 +287,20 @@ export interface VaultRegisterTokensParameter {
     tokens: MichelsonMap<BigNumber, VaultRegisterTokensParameterTokensValue>;
 }
 
-export interface VaultRegisterTokensParameterTokensValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
+export interface VaultRegisterTokensParameterPoolId {
     /** Tezos address. */
-    address: string;
+    '1': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '2': BigNumber;
+}
+
+export interface VaultRegisterTokensParameterTokensValue {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber | null;
 }
 
 /** Simple boolean. */
@@ -327,30 +343,31 @@ export interface VaultSwapParameterSingleSwap {
     /** Arbitrary string. */
     kind: string;
 
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultSwapParameterSingleSwapPoolId;
 }
 
 export interface VaultSwapParameterSingleSwapAssetIn {
-    /** Simple boolean. */
-    FA2: boolean;
-
     /** Tezos address. */
-    address: string;
+    '4': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '5': BigNumber | null;
 }
 
 export interface VaultSwapParameterSingleSwapAssetOut {
-    /** Simple boolean. */
-    FA2: boolean;
-
     /** Tezos address. */
-    address: string;
+    '5': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '6': BigNumber | null;
+}
+
+export interface VaultSwapParameterSingleSwapPoolId {
+    /** Tezos address. */
+    '8': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '9': BigNumber;
 }
 
 /** Tezos address. */
@@ -363,7 +380,7 @@ export interface VaultCurrentStorage {
     /**
      * Big map.
      * 
-     * Key of `string`: Bytes.
+     * Key of `VaultCurrentStorageIsPoolRegisteredKey`.
      * 
      * Value of `typeof UnitValue`: An empty result.
      */
@@ -384,7 +401,7 @@ export interface VaultCurrentStorage {
     /**
      * Big map.
      * 
-     * Key of `string`: Bytes.
+     * Key of `VaultCurrentStoragePoolsBalancesKey`.
      * 
      * Value of `MichelsonMap<VaultCurrentStoragePoolsBalancesValueKey, VaultCurrentStoragePoolsBalancesValueValue>`:
      * In-memory map.
@@ -398,7 +415,7 @@ export interface VaultCurrentStorage {
     /**
      * Big map.
      * 
-     * Key of `string`: Bytes.
+     * Key of `VaultCurrentStoragePoolsTokensKey`.
      * 
      * Value of `MichelsonMap<BigNumber, VaultCurrentStoragePoolsTokensValueValue>`:
      * In-memory map.
@@ -416,37 +433,52 @@ export interface VaultCurrentStorage {
     settings: boolean;
 }
 
-export interface VaultCurrentStoragePoolsBalancesValueKey {
-    /** Simple boolean. */
-    FA2: boolean;
-
+export interface VaultCurrentStorageIsPoolRegisteredKey {
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber;
+}
+
+export interface VaultCurrentStoragePoolsBalancesKey {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber;
+}
+
+export interface VaultCurrentStoragePoolsBalancesValueKey {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber | null;
 }
 
 export interface VaultCurrentStoragePoolsBalancesValueValue {
     /** Nat - arbitrary big integer >= 0. */
-    cash: BigNumber;
+    '0': BigNumber;
 
     /** Nat - arbitrary big integer >= 0. */
-    lastChangeBlock: BigNumber;
+    '1': BigNumber;
+}
+
+export interface VaultCurrentStoragePoolsTokensKey {
+    /** Tezos address. */
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    managed: BigNumber;
+    '1': BigNumber;
 }
 
 export interface VaultCurrentStoragePoolsTokensValueValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber | null;
 }
 
 export interface VaultChangedStorage {
@@ -482,11 +514,11 @@ export interface VaultInitialStorage {
     /**
      * Big map initial values.
      * 
-     * Key of `string`: Bytes.
+     * Key of `VaultInitialStorageIsPoolRegisteredKey`.
      * 
      * Value of `typeof UnitValue`: An empty result.
      */
-    isPoolRegistered: MichelsonMap<string, typeof UnitValue>;
+    isPoolRegistered: MichelsonMap<VaultInitialStorageIsPoolRegisteredKey, typeof UnitValue>;
 
     /**
      * Big map initial values.
@@ -503,7 +535,7 @@ export interface VaultInitialStorage {
     /**
      * Big map initial values.
      * 
-     * Key of `string`: Bytes.
+     * Key of `VaultInitialStoragePoolsBalancesKey`.
      * 
      * Value of `MichelsonMap<VaultInitialStoragePoolsBalancesValueKey, VaultInitialStoragePoolsBalancesValueValue>`:
      * In-memory map.
@@ -512,12 +544,12 @@ export interface VaultInitialStorage {
      * 
      * Value of `VaultInitialStoragePoolsBalancesValueValue`.
      */
-    poolsBalances: MichelsonMap<string, MichelsonMap<VaultInitialStoragePoolsBalancesValueKey, VaultInitialStoragePoolsBalancesValueValue>>;
+    poolsBalances: MichelsonMap<VaultInitialStoragePoolsBalancesKey, MichelsonMap<VaultInitialStoragePoolsBalancesValueKey, VaultInitialStoragePoolsBalancesValueValue>>;
 
     /**
      * Big map initial values.
      * 
-     * Key of `string`: Bytes.
+     * Key of `VaultInitialStoragePoolsTokensKey`.
      * 
      * Value of `MichelsonMap<BigNumber, VaultInitialStoragePoolsTokensValueValue>`:
      * In-memory map.
@@ -526,7 +558,7 @@ export interface VaultInitialStorage {
      * 
      * Value of `VaultInitialStoragePoolsTokensValueValue`.
      */
-    poolsTokens: MichelsonMap<string, MichelsonMap<BigNumber, VaultInitialStoragePoolsTokensValueValue>>;
+    poolsTokens: MichelsonMap<VaultInitialStoragePoolsTokensKey, MichelsonMap<BigNumber, VaultInitialStoragePoolsTokensValueValue>>;
 
     /** Tezos address. */
     proposed_admin: string | null;
@@ -535,41 +567,61 @@ export interface VaultInitialStorage {
     settings: boolean;
 }
 
-export interface VaultInitialStoragePoolsBalancesValueKey {
-    /** Simple boolean. */
-    FA2: boolean;
-
+export interface VaultInitialStorageIsPoolRegisteredKey {
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber;
+}
+
+export interface VaultInitialStoragePoolsBalancesKey {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber;
+}
+
+export interface VaultInitialStoragePoolsBalancesValueKey {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber | null;
 }
 
 export interface VaultInitialStoragePoolsBalancesValueValue {
     /** Nat - arbitrary big integer >= 0. */
-    cash: BigNumber;
+    '0': BigNumber;
 
     /** Nat - arbitrary big integer >= 0. */
-    lastChangeBlock: BigNumber;
+    '1': BigNumber;
+}
+
+export interface VaultInitialStoragePoolsTokensKey {
+    /** Tezos address. */
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    managed: BigNumber;
+    '1': BigNumber;
 }
 
 export interface VaultInitialStoragePoolsTokensValueValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber | null;
 }
 
-/** Bytes. */
-export type VaultIsPoolRegisteredKey = string;
+export interface VaultIsPoolRegisteredKey {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber;
+}
 
 /** An empty result. */
 export type VaultIsPoolRegisteredValue = typeof UnitValue;
@@ -580,8 +632,13 @@ export type VaultMetadataKey = string;
 /** Bytes. */
 export type VaultMetadataValue = string;
 
-/** Bytes. */
-export type VaultPoolsBalancesKey = string;
+export interface VaultPoolsBalancesKey {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber;
+}
 
 /**
  * In-memory map.
@@ -593,29 +650,28 @@ export type VaultPoolsBalancesKey = string;
 export type VaultPoolsBalancesValue = MichelsonMap<VaultPoolsBalancesValueKey, VaultPoolsBalancesValueValue>;
 
 export interface VaultPoolsBalancesValueKey {
-    /** Simple boolean. */
-    FA2: boolean;
-
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber | null;
 }
 
 export interface VaultPoolsBalancesValueValue {
     /** Nat - arbitrary big integer >= 0. */
-    cash: BigNumber;
+    '0': BigNumber;
 
     /** Nat - arbitrary big integer >= 0. */
-    lastChangeBlock: BigNumber;
-
-    /** Nat - arbitrary big integer >= 0. */
-    managed: BigNumber;
+    '1': BigNumber;
 }
 
-/** Bytes. */
-export type VaultPoolsTokensKey = string;
+export interface VaultPoolsTokensKey {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber;
+}
 
 /**
  * In-memory map.
@@ -627,14 +683,11 @@ export type VaultPoolsTokensKey = string;
 export type VaultPoolsTokensValue = MichelsonMap<BigNumber, VaultPoolsTokensValueValue>;
 
 export interface VaultPoolsTokensValueValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber | null;
 }
 
 export interface VaultPoolBalanceChangedPayload1 {
@@ -647,8 +700,7 @@ export interface VaultPoolBalanceChangedPayload1 {
      */
     amountsInOrOut: MichelsonMap<BigNumber, BigNumber>;
 
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultPoolBalanceChangedPayload1PoolId;
 
     /** Tezos address. */
     sender: string;
@@ -663,15 +715,20 @@ export interface VaultPoolBalanceChangedPayload1 {
     tokens: MichelsonMap<BigNumber, VaultPoolBalanceChangedPayload1TokensValue>;
 }
 
-export interface VaultPoolBalanceChangedPayload1TokensValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
+export interface VaultPoolBalanceChangedPayload1PoolId {
     /** Tezos address. */
-    address: string;
+    '1': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '2': BigNumber;
+}
+
+export interface VaultPoolBalanceChangedPayload1TokensValue {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber | null;
 }
 
 export interface VaultPoolBalanceChangedPayload2 {
@@ -684,8 +741,7 @@ export interface VaultPoolBalanceChangedPayload2 {
      */
     amountsInOrOut: MichelsonMap<BigNumber, BigNumber>;
 
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultPoolBalanceChangedPayload2PoolId;
 
     /** Tezos address. */
     sender: string;
@@ -700,15 +756,20 @@ export interface VaultPoolBalanceChangedPayload2 {
     tokens: MichelsonMap<BigNumber, VaultPoolBalanceChangedPayload2TokensValue>;
 }
 
-export interface VaultPoolBalanceChangedPayload2TokensValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
+export interface VaultPoolBalanceChangedPayload2PoolId {
     /** Tezos address. */
-    address: string;
+    '1': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '2': BigNumber;
+}
+
+export interface VaultPoolBalanceChangedPayload2TokensValue {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber | null;
 }
 
 export type VaultPoolBalanceChangedPayload = VaultPoolBalanceChangedPayload1 | VaultPoolBalanceChangedPayload2;
@@ -717,11 +778,15 @@ export interface VaultPoolRegisteredPayload {
     /** Tezos address. */
     pool: string;
 
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultPoolRegisteredPayloadPoolId;
+}
+
+export interface VaultPoolRegisteredPayloadPoolId {
+    /** Tezos address. */
+    '1': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    specialization: BigNumber;
+    '2': BigNumber;
 }
 
 export interface VaultSwapPayload1 {
@@ -731,28 +796,35 @@ export interface VaultSwapPayload1 {
     /** Nat - arbitrary big integer >= 0. */
     amountOut: BigNumber;
 
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultSwapPayload1PoolId;
 
     tokenIn: VaultSwapPayload1TokenIn;
 
     tokenOut: VaultSwapPayload1TokenOut;
 }
 
-export interface VaultSwapPayload1TokenIn {
+export interface VaultSwapPayload1PoolId {
     /** Tezos address. */
-    '3': string;
+    '2': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    '4': BigNumber;
+    '3': BigNumber;
+}
+
+export interface VaultSwapPayload1TokenIn {
+    /** Tezos address. */
+    '4': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '5': BigNumber | null;
 }
 
 export interface VaultSwapPayload1TokenOut {
     /** Tezos address. */
-    '5': string;
+    '6': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    '6': BigNumber;
+    '7': BigNumber | null;
 }
 
 export interface VaultSwapPayload2 {
@@ -762,38 +834,41 @@ export interface VaultSwapPayload2 {
     /** Nat - arbitrary big integer >= 0. */
     amountOut: BigNumber;
 
-    /** Bytes. */
-    poolId: string;
+    poolId: VaultSwapPayload2PoolId;
 
     tokenIn: VaultSwapPayload2TokenIn;
 
     tokenOut: VaultSwapPayload2TokenOut;
 }
 
-export interface VaultSwapPayload2TokenIn {
+export interface VaultSwapPayload2PoolId {
     /** Tezos address. */
-    '3': string;
+    '2': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    '4': BigNumber;
+    '3': BigNumber;
+}
+
+export interface VaultSwapPayload2TokenIn {
+    /** Tezos address. */
+    '4': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '5': BigNumber | null;
 }
 
 export interface VaultSwapPayload2TokenOut {
     /** Tezos address. */
-    '5': string;
+    '6': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    '6': BigNumber;
+    '7': BigNumber | null;
 }
 
 export type VaultSwapPayload = VaultSwapPayload1 | VaultSwapPayload2;
 
 export interface VaultTokensRegisteredPayload {
-    /** Bytes. */
-    poolId: string;
-
-    /** Nat - arbitrary big integer >= 0. */
-    specialization: BigNumber;
+    poolId: VaultTokensRegisteredPayloadPoolId;
 
     /**
      * In-memory map.
@@ -805,13 +880,18 @@ export interface VaultTokensRegisteredPayload {
     tokens: MichelsonMap<BigNumber, VaultTokensRegisteredPayloadTokensValue>;
 }
 
-export interface VaultTokensRegisteredPayloadTokensValue {
-    /** Simple boolean. */
-    FA2: boolean;
-
+export interface VaultTokensRegisteredPayloadPoolId {
     /** Tezos address. */
-    address: string;
+    '0': string;
 
     /** Nat - arbitrary big integer >= 0. */
-    id: BigNumber;
+    '1': BigNumber;
+}
+
+export interface VaultTokensRegisteredPayloadTokensValue {
+    /** Tezos address. */
+    '0': string;
+
+    /** Nat - arbitrary big integer >= 0. */
+    '1': BigNumber | null;
 }

@@ -1,3 +1,4 @@
+from contracts.pool_utils.BasePool import IBasePool
 import smartpy as sp
 
 
@@ -16,15 +17,26 @@ class BasePoolFactory:
                 tkey=sp.TAddress,
                 tvalue=sp.TUnit,
             ),
+            lastPool=sp.address('KT1H2SaqZyCmmHxbsTfwx12YeUzugzj8eN2t'),
         )
 
         def _create(self, params):
             pool = sp.create_contract(
                 contract=self._creationCode, storage=params)
 
+            self.data.lastPool = pool
             self.data.isPoolFromFactory[pool] = sp.unit
 
+            # initializePool = sp.contract(sp.TUnit, self.data.lastPool, "initializePool").open_some(
+            #     "INITIALIZE_FAIL")
+            # sp.transfer(sp.unit, sp.tez(0), initializePool)
+
             sp.emit(pool, with_type=True, tag='PoolCreated')
-            return pool
 
         self._create = _create
+
+        def initialize(self):
+            self.onlyAdministrator()
+            IBasePool.initializePool(self, self.data.lastPool)
+
+        self.initialize = sp.entry_point(initialize)

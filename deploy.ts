@@ -1,9 +1,9 @@
 import { deployAll } from './contracts/deployments/helpers/deployAll';
 
-const adminAddress = 'tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb';
+const adminAddress = 'tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B';
 
 if (adminAddress) {
-  deployAll(adminAddress).catch((error) => {
+  deployAll(adminAddress, 'local').catch((error) => {
     console.error('Error deploying contract:', error);
     process.exit(1);
   });

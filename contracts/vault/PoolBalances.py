@@ -21,7 +21,6 @@ class Types:
         userData=IBasePool.JOIN_USER_DATA,
         assets=sp.TMap(sp.TNat, TOKEN),
         limits=sp.TMap(sp.TNat, sp.TNat),
-        useInternalBalance=sp.TBool,
     )
 
     t_joinPool_params = sp.TRecord(
@@ -35,7 +34,6 @@ class Types:
         userData=IBasePool.EXIT_USER_DATA,
         assets=sp.TMap(sp.TNat, TOKEN),
         limits=sp.TMap(sp.TNat, sp.TNat),
-        useInternalBalance=sp.TBool,
     )
 
     t_exitPool_params = sp.TRecord(
@@ -223,7 +221,7 @@ class PoolBalances(
 
         return exitBalances
 
-    @ sp.private_lambda(with_storage='read-only', wrap_call=True)
+    @sp.private_lambda(with_storage='read-only', wrap_call=True)
     def _validateTokensAndGetBalances(self, params):
         sp.verify(sp.len(params.expectedTokens) == sp.len(params.limits))
 
@@ -237,7 +235,7 @@ class PoolBalances(
 
         sp.result(balances)
 
-    @ sp.private_lambda()
+    @sp.private_lambda()
     def _castToInt(self, params):
         signedValues = sp.compute(sp.map({}))
         with sp.for_('i', sp.range(0, sp.len(params.amounts))) as i:

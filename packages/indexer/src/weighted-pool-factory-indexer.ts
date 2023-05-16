@@ -1,57 +1,82 @@
-import { MichelsonMap } from '@taquito/michelson-encoder';
-import { DbContext } from '@tezos-dappetizer/database';
+import { MichelsonMap } from "@taquito/michelson-encoder";
+import { DbContext } from "@tezos-dappetizer/database";
 import {
-    contractFilter,
-    indexEvent,
-} from '@tezos-dappetizer/decorators';
+  contractFilter,
+  indexEvent,
+  indexOrigination,
+} from "@tezos-dappetizer/decorators";
 import {
-    EventIndexingContext,
-} from '@tezos-dappetizer/indexer';
-import BigNumber from 'bignumber.js';
-import { Pool, Symmetric, Token } from './entities';
-import { createPoolTokenEntity, getStorage, getTokenMetadata, newPoolEntity, scaleDown } from './helpers/misc';
-import { setPriceRateProviders } from './helpers/pools';
-import { address, nat } from './types/type-aliases';
+  EventIndexingContext,
+  OriginationIndexingContext,
+} from "@tezos-dappetizer/indexer";
+import BigNumber from "bignumber.js";
+import { Pool } from "./entities/Pool";
+import { Symmetric } from "./entities/Symmetric";
+// import { Pool, Symmetric, Token } from './entities';
+import {
+  createPoolTokenEntity,
+  getStorage,
+  getTokenMetadata,
+  newPoolEntity,
+  scaleDown,
+} from "./helpers/misc";
+import { setPriceRateProviders } from "./helpers/pools";
+import { address, nat } from "./types/type-aliases";
 
-import { 
-  WeightedPoolFactoryCreateParameter, 
-  WeightedPoolFactoryCreateParameterTokensValue, 
-  WeightedPoolFactoryIsPoolFromFactoryKey, 
-  WeightedPoolFactoryIsPoolFromFactoryValue 
-} from './weighted-pool-factory-indexer-interfaces.generated';
+import {
+  WeightedPoolFactoryCreateParameter,
+  WeightedPoolFactoryCreateParameterTokensValue,
+  WeightedPoolFactoryInitialStorage,
+  WeightedPoolFactoryIsPoolFromFactoryKey,
+  WeightedPoolFactoryIsPoolFromFactoryValue,
+  WeightedPoolFactoryPoolCreatedPayload,
+} from "./weighted-pool-factory-indexer-interfaces.generated";
 
-
-
-
-
-
-@contractFilter({ name: 'WeightedPoolFactory' })
+@contractFilter({ name: "WeightedPoolFactory" })
 export class WeightedPoolFactoryIndexer {
-  @indexEvent('PoolCreated')
-  async indexCreate(
-      key: WeightedPoolFactoryIsPoolFromFactoryKey,
-      parameter: WeightedPoolFactoryIsPoolFromFactoryValue,
-      dbContext: DbContext,
-      indexingContext: EventIndexingContext,
+  @indexOrigination()
+  async indexOrigination(
+    initialStorage: WeightedPoolFactoryInitialStorage,
+    dbContext: DbContext,
+    indexingContext: OriginationIndexingContext
   ): Promise<void> {
-      // Implement your indexing logic here or delete the method if not needed.
-      createWeightedLikePool(key, indexingContext, dbContext);
+    const vault = new Symmetric();
+    vault.id = "1";
+    vault.poolCount = 0;
+    vault.pools = [];
+    vault.totalLiquidity = "0";
+    vault.totalSwapCount = BigInt("0");
+    vault.totalSwapVolume = "0";
+    vault.totalSwapFee = "0";
+    await dbContext.transaction.save(Symmetric, vault);
+  }
 
+  @indexEvent("PoolCreated")
+  async indexPoolCreatedEvent(
+    payload: WeightedPoolFactoryPoolCreatedPayload,
+    dbContext: DbContext,
+    indexingContext: EventIndexingContext
+  ): Promise<void> {
+    // Implement your indexing logic here or delete the method if not needed.
+    await createWeightedLikePool(payload, indexingContext, dbContext);
   }
 }
 
 async function handleNewPool(
-  poolAddress: string, 
-  poolId: {
-    0: address;
-    1: nat;
-  }| undefined,
+  poolAddress: string,
+  poolId:
+    | {
+        0: address;
+        1: nat;
+      }
+    | undefined,
   params: WeightedPoolFactoryCreateParameter,
-  indexingContext: EventIndexingContext, 
+  indexingContext: EventIndexingContext,
   dbContext: DbContext
 ) {
-  const pool = newPoolEntity(JSON.stringify(poolId))
+  const pool = await newPoolEntity(poolAddress, dbContext);
   pool.swapFee = scaleDown(params.swapFeePercentage, 18);
+
   pool.createTime = indexingContext.block.timestamp.getTime();
   pool.address = poolAddress;
   pool.factory = indexingContext.contract.address;
@@ -60,22 +85,25 @@ async function handleNewPool(
   pool.swapEnabled = true;
   pool.isPaused = false;
 
-  const metadata = await getTokenMetadata(poolAddress, 0)
-  pool.name = metadata.name!;
-  pool.symbol = metadata.symbol!;
+  // const metadata = await getTokenMetadata(poolAddress, 0)
+  // pool.name = metadata.name!;
+  // pool.symbol = metadata.symbol!;
 
-  dbContext.transaction.save(Pool, pool)
-  
+  pool.name = "Symm LP Token";
+  pool.symbol = "SYMMLP";
+
+  // await dbContext.transaction.save(Pool, pool)
+
   const vault = await dbContext.transaction.findOneOrFail(Symmetric, {
     where: {
-      id: '1',
-    }
-  })
+      id: "1",
+    },
+  });
 
   vault.poolCount += 1;
-  dbContext.transaction.save(Symmetric, vault)
+  await dbContext.transaction.save(Symmetric, vault);
 
-  // let vaultSnapshot = getBalancerSnapshot(vault.id, event.block.timestamp.toI32());
+  // let vaultSnapshot = getSymmetricSnapshot(vault.id, event.block.timestamp.toI32());
   // vaultSnapshot.poolCount += 1;
   // vaultSnapshot.save();
 
@@ -88,29 +116,68 @@ async function handleNewPool(
   return pool;
 }
 
-async function createWeightedLikePool(poolAddress: string, indexingContext: EventIndexingContext, dbContext: DbContext): Promise<void> {
-  const params = indexingContext.transactionParameter?.value.convert() as WeightedPoolFactoryCreateParameter
+async function createWeightedLikePool(
+  poolAddress: string,
+  indexingContext: EventIndexingContext,
+  dbContext: DbContext
+): Promise<void> {
+  const params =
+    indexingContext.transactionParameter?.value.convert() as WeightedPoolFactoryCreateParameter;
   const poolStorage = await getStorage(poolAddress);
 
-  let pool = await handleNewPool(poolAddress, poolStorage.poolId, params, indexingContext, dbContext);
-  pool.poolType = 'Weighted';
+  const pool = await handleNewPool(
+    poolAddress,
+    poolStorage.poolId,
+    params,
+    indexingContext,
+    dbContext
+  );
+  pool.poolType = "Weighted";
   pool.poolTypeVersion = 1;
   pool.owner = poolStorage.admin;
-  params.tokens
-  pool.tokensList = [...params.tokens.values()].map(t => JSON.stringify(t));
-  pool.totalWeight = '100';
+  pool.tokensList = [...params.tokens.values()].map((t) =>
+    t[0].concat(t[1] ? t[1].toString() : "0")
+  );
+  pool.totalWeight = "100";
+  pool.holdersCount = BigInt(0);
 
-  dbContext.transaction.save(Pool, pool)
+  await dbContext.transaction.save(Pool, pool);
 
-  await handleNewPoolTokens(pool, params.tokens, dbContext);
+  await handleNewPoolTokens(
+    pool,
+    params.tokens,
+    params.normalizedWeights,
+    dbContext
+  );
 
-  await setPriceRateProviders(JSON.stringify(poolStorage.poolId),  params.rateProviders!, pool.tokensList, dbContext);
+  // rome-ignore lint/style/noNonNullAssertion: <explanation>
+  await setPriceRateProviders(
+    JSON.stringify(poolStorage.poolId),
+    params.rateProviders!,
+    pool.tokensList,
+    dbContext
+  );
 }
 
-async function handleNewPoolTokens(pool: Pool, tokens: MichelsonMap<BigNumber, WeightedPoolFactoryCreateParameterTokensValue>, dbContext:DbContext): Promise<void> {
+async function handleNewPoolTokens(
+  pool: Pool,
+  tokens: MichelsonMap<
+    BigNumber,
+    WeightedPoolFactoryCreateParameterTokensValue
+  >,
+  weights: MichelsonMap<BigNumber, BigNumber>,
+  dbContext: DbContext
+): Promise<void> {
   for (let i: number = 0; i < tokens.size; i++) {
     const tokenData = tokens.get(BigNumber(i))!;
-    
-    await createPoolTokenEntity(pool, tokenData?.[0], tokenData?.[1], i, dbContext);
+    const weight = weights.get(BigNumber(i))!;
+    await createPoolTokenEntity(
+      pool,
+      tokenData?.[0],
+      tokenData?.[1],
+      weight,
+      i,
+      dbContext
+    );
   }
 }

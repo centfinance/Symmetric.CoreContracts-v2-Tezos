@@ -14,12 +14,13 @@ export async function deployWeightedPoolFactory(
     protocolFeeProviderAddress: string,
     vaultAddress: string,
     weightedMathLibAddress: string,
-    weightedProtocolFeesLibAddress: string
+    weightedProtocolFeesLibAddress: string,
+    tezos: TezosToolkit,
 ) {
     try {
         // Replace with the private key of the account you want to deploy the contract with
-        const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
-        tezos.setProvider({ signer });
+        // const signer = await InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12));
+        // tezos.setProvider({ signer });
 
         // Replace with the Michelson code of the WeightedPoolFactory contract
         const weightedPoolFactoryCode = WeightedPoolFactoryCode.code;

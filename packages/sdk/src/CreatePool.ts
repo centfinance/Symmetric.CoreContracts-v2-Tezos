@@ -1,15 +1,17 @@
 import { InMemorySigner } from "@taquito/signer";
 import { char2Bytes } from "@taquito/utils";
 import { PollingSubscribeProvider, TezosToolkit } from "@taquito/taquito";
-import { encodePubKey, Prefix } from "@taquito/utils";
-import { tas } from "../../../../types/type-aliases";
-import { WeightedPoolFactoryContractType as ContractType } from "../../../../types/WeightedPoolFactory.types";
+import { encodePubKey } from "@taquito/utils";
+import { tas } from "../../../types/type-aliases";
+import { WeightedPoolFactoryContractType as ContractType } from "../../../types/WeightedPoolFactory.types";
 
-const Tezos = new TezosToolkit("http://localhost:20000");
+const Tezos = new TezosToolkit("https://ghostnet.ecadinfra.com");
 
-const config = require("../../../../.taq/config.local.development.json");
+const config = require("../../../.taq/config.local.testing.json");
 
-InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
+const tokenAddress = "KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3";
+
+InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
   .then((theSigner) => {
     Tezos.setProvider({ signer: theSigner });
   })
@@ -64,7 +66,7 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
             value: tas.nat("125000000000000000"),
           },
         ]),
-        swapFeePercentage: tas.nat("1000000000000"),
+        swapFeePercentage: tas.nat("10000000000000000"),
         tokenDecimals: tas.map([
           {
             key: tas.nat("0"),
@@ -103,56 +105,56 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
           {
             key: tas.nat("0"),
             value: {
-              0: tas.address("KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3"),
+              0: tas.address(tokenAddress),
               1: tas.nat("0"),
             },
           },
           {
             key: tas.nat("1"),
             value: {
-              0: tas.address("KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3"),
+              0: tas.address(tokenAddress),
               1: tas.nat("1"),
             },
           },
           {
             key: tas.nat("2"),
             value: {
-              0: tas.address("KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3"),
+              0: tas.address(tokenAddress),
               1: tas.nat("2"),
             },
           },
           {
             key: tas.nat("3"),
             value: {
-              0: tas.address("KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3"),
+              0: tas.address(tokenAddress),
               1: tas.nat("3"),
             },
           },
           {
             key: tas.nat("4"),
             value: {
-              0: tas.address("KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3"),
+              0: tas.address(tokenAddress),
               1: tas.nat("4"),
             },
           },
           {
             key: tas.nat("5"),
             value: {
-              0: tas.address("KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3"),
+              0: tas.address(tokenAddress),
               1: tas.nat("5"),
             },
           },
           {
             key: tas.nat("6"),
             value: {
-              0: tas.address("KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3"),
+              0: tas.address(tokenAddress),
               1: tas.nat("6"),
             },
           },
           {
             key: tas.nat("7"),
             value: {
-              0: tas.address("KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3"),
+              0: tas.address(tokenAddress),
               1: tas.nat("7"),
             },
           },

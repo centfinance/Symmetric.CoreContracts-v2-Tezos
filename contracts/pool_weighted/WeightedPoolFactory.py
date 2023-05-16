@@ -1,3 +1,4 @@
+import json
 import smartpy as sp
 
 from contracts.pool_weighted.WeightedPool import WeightedPool
@@ -78,12 +79,12 @@ class WeightedPoolFactory(
 
     def __init__(
         self,
-        admin=sp.address('tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb'),
-        vault=sp.address('KT19vqRahNHjLQUSwK6hotc5sgdnnngyHbAK'),
-        weightedMathLib=sp.address('KT1C6tChcwy7YAqg9SCJWHPdHUp4fK5pJGXF'),
+        admin=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
+        vault=sp.address('KT1N5qYdthynXLfGbteRVHgKy4m6q2NGjt57'),
+        weightedMathLib=sp.address('KT1TSNcEvQhX5wQyThfvVXzRaCbno5bkkUPs'),
         weightedProtocolFeesLib=sp.address(
-            'KT1Hzg8h1VQ7ftnJ4kdtZdxNvhgz8wuBFPDB'),
-        protocolFeeProvider=sp.address('KT1HB23EeQ3dv2GqLniUrRhKDd5YJG9RKC23'),
+            'KT1VRdB2qWdGoj2ansGAsyDAFwVyerEAHGUg'),
+        protocolFeeProvider=sp.address('KT1HXtHSmaSGbz3JEtucqiyshVzu79rQQEzC'),
         feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
         metadata=CONTRACT_METADATA,
     ):
@@ -200,9 +201,9 @@ class WeightedPoolFactory(
             weightedMathLib=self.data.weightedMathLib,
             weightedProtocolFeesLib=self.data.weightedProtocolFeesLib,
         )
-        pool = self._create(self, STORAGE)
+        self._create(self, STORAGE)
 
-        IBasePool.initialize(pool)
+        # IBasePool.initialize(self, pool)
 
     def _computeScalingFactor(self, decimals):
         sp.set_type(decimals, sp.TNat)
