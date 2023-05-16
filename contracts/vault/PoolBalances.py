@@ -21,7 +21,6 @@ class Types:
         userData=IBasePool.JOIN_USER_DATA,
         assets=sp.TMap(sp.TNat, TOKEN),
         limits=sp.TMap(sp.TNat, sp.TNat),
-        useInternalBalance=sp.TBool,
     )
 
     t_joinPool_params = sp.TRecord(
@@ -35,7 +34,6 @@ class Types:
         userData=IBasePool.EXIT_USER_DATA,
         assets=sp.TMap(sp.TNat, TOKEN),
         limits=sp.TMap(sp.TNat, sp.TNat),
-        useInternalBalance=sp.TBool,
     )
 
     t_exitPool_params = sp.TRecord(

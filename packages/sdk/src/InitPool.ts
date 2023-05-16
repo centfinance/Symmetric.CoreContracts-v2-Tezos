@@ -3,15 +3,15 @@ import { InMemorySigner } from "@taquito/signer";
 import { encodePubKey } from "@taquito/utils";
 import { WeightedPoolFactoryContractType as ContractType } from "../../../types/WeightedPoolFactory.types";
 
-const config = require("../../../.taq/config.local.development.json");
+const config = require("../../../.taq/config.local.testing.json");
 
-const tezos = new TezosToolkit(config.rpcUrl);
+const tezos = new TezosToolkit("https://ghostnet.ecadinfra.com");
 // const secretKey = config.accounts[config.accountDefault].secretKey.slice(12);
 
 // const signer = await InMemorySigner.fromSecretKey(secretKey);
 // tezos.setProvider({ signer });
 
-InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
+InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
   .then((theSigner) => {
     tezos.setProvider({ signer: theSigner });
   })

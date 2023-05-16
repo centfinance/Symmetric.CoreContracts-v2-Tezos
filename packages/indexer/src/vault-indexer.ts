@@ -811,5 +811,5 @@ export async function handleSwapEvent(
     );
   }
 
-  await updatePoolLiquidity(poolId, blockNumber, dbContext);
+  await updatePoolLiquidity(poolId, blockTimestamp, dbContext);
 }

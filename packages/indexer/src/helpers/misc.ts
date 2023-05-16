@@ -152,6 +152,7 @@ export async function createPoolTokenEntity(
   pool: Pool,
   tokenAddress: string,
   tokenId: BigNumber | null,
+  tokenWeight: BigNumber,
   tokenIndex: number,
   dbContext: DbContext
 ): Promise<void> {
@@ -181,7 +182,7 @@ export async function createPoolTokenEntity(
   poolToken.poolId = pool.id;
   poolToken.pool = pool;
   poolToken.address = tokenAddress;
-  poolToken.tokenId = tokenId ? tokenId.toString() : "0";
+  poolToken.poolTokenId = tokenId ? tokenId.toString() : "0";
   poolToken.name = name;
   poolToken.symbol = symbol;
   poolToken.decimals = decimals;
@@ -192,6 +193,7 @@ export async function createPoolTokenEntity(
   poolToken.oldPriceRate = "1";
   poolToken.token = _token;
   poolToken.index = tokenIndex;
+  poolToken.weight = tokenWeight.toString();
 
   await dbContext.transaction.save(PoolToken, poolToken);
 }

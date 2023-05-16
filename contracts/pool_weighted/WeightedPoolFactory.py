@@ -79,12 +79,12 @@ class WeightedPoolFactory(
 
     def __init__(
         self,
-        admin=sp.address('tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6'),
-        vault=sp.address('KT1Ufmbob3d2Q1LZWAJaY3gYA1EuE9pUo3QW'),
-        weightedMathLib=sp.address('KT1D2h84KBEhLBkLgdupqpCo1TQqR3A5SqjR'),
+        admin=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
+        vault=sp.address('KT1N5qYdthynXLfGbteRVHgKy4m6q2NGjt57'),
+        weightedMathLib=sp.address('KT1TSNcEvQhX5wQyThfvVXzRaCbno5bkkUPs'),
         weightedProtocolFeesLib=sp.address(
-            'KT1DVScqtitYEgGXE8MmFq7jhHhQdY6xh13s'),
-        protocolFeeProvider=sp.address('KT1KkvjFWJCjHot6h36x73P5frFXcoPDnJhe'),
+            'KT1VRdB2qWdGoj2ansGAsyDAFwVyerEAHGUg'),
+        protocolFeeProvider=sp.address('KT1HXtHSmaSGbz3JEtucqiyshVzu79rQQEzC'),
         feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
         metadata=CONTRACT_METADATA,
     ):

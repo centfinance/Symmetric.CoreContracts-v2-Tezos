@@ -22,9 +22,7 @@ class ISwaps:
 
     FUND_MANAGEMENT = sp.TRecord(
         sender=sp.TAddress,
-        fromInternalBalance=sp.TBool,
         recipient=sp.TAddress,
-        toInternalBalance=sp.TBool,
     )
 
     t_swap_params = sp.TRecord(

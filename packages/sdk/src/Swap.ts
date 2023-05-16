@@ -4,28 +4,26 @@ import { encodePubKey } from "@taquito/utils";
 import { tas } from "../../../types/type-aliases";
 import { VaultContractType } from "../../../types/Vault.types";
 
-const Tezos = new TezosToolkit("http://localhost:20000");
+const Tezos = new TezosToolkit("https://ghostnet.ecadinfra.com");
 
-const config = require("../../../.taq/config.local.development.json");
+const config = require("../../../.taq/config.local.testing.json");
 
-const tokenAddress = "KT19SwoUtpqsJrKFkJHiDQkXBNU8qXKoUZp4";
+const tokenAddress = "KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3";
 
 function addMinutes(date: Date, minutes: number) {
   return new Date(date.getTime() + minutes * 60000);
 }
 
-InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
+InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
   .then((theSigner) => {
     Tezos.setProvider({ signer: theSigner });
   })
   .then(async () => {
     const contract = await Tezos.contract.at(config.contracts.Vault.address);
-    const funds = {
-      fromInternalBalance: false,
-      recipient: tas.address(config.accounts.bob.publicKeyHash),
-      sender: tas.address(config.accounts.bob.publicKeyHash),
-      toInternalBalance: false,
-    };
+    // const funds = {
+    //   recipient: tas.address(config.accounts.bob.publicKeyHash),
+    //   sender: tas.address(config.accounts.bob.publicKeyHash),
+    // };
 
     const singleSwap = {
       amount: tas.nat(1 * 10 ** 18),
@@ -39,18 +37,16 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
       },
       kind: "GIVEN_OUT",
       poolId: {
-        0: tas.address("KT1HNE3uYR1XxLzfMFP65DC7nJqVSvhpgaV7"),
-        1: tas.nat("4"),
+        0: tas.address("KT1ADiYeVqgr4xmVpcBatTQG3eopRRNGZj8k"),
+        1: tas.nat("1"),
       },
     };
 
     const swapRequest = await contract.methods
       .swap(
         tas.timestamp(addMinutes(new Date(), 30).toISOString()),
-        false,
-        tas.address(config.accounts.bob.publicKeyHash),
-        tas.address(config.accounts.bob.publicKeyHash),
-        false,
+        tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
+        tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
         tas.nat(2 * 10 ** 18),
         singleSwap.amount,
         singleSwap.assetIn[0],

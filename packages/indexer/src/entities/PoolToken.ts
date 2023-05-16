@@ -35,7 +35,7 @@ export class PoolToken {
   address!: string;
 
   @Column("numeric")
-  tokenId!: string | null;
+  poolTokenId!: string | null;
 
   @Column("decimal", { precision: 40, scale: 18, nullable: true })
   oldPriceRate?: string;

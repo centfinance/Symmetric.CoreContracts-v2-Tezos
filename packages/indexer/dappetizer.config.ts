@@ -12,7 +12,7 @@ const config: DappetizerConfigUsingDb = {
   networks: {
     mainnet: {
       indexing: {
-        fromBlockLevel: 0,
+        fromBlockLevel: 900,
         contracts: [
           {
             name: "WeightedPoolFactory",
@@ -42,6 +42,11 @@ const config: DappetizerConfigUsingDb = {
     database: "postgres",
     schema: "indexer",
   },
+  // hasura: {
+  //   url: "http://localhost:8080/",
+  //   autotrackEntities: true,
+  //   dropExistingTracking: true,
+  // },
   usageStatistics: {
     enabled: true,
   },

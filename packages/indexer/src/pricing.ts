@@ -47,8 +47,9 @@ export async function updatePoolLiquidity(
     const poolToken = await dbContext.transaction.findOneBy(PoolToken, {
       poolId: pool.id,
       address: tokenAddress,
-      tokenId: tokenId ? tokenId.toString() : undefined,
+      poolTokenId: tokenId ? tokenId.toString() : undefined,
     });
+    console.log("poolToken: ", poolToken);
     if (poolToken == null) continue;
 
     const poolTokenQuantity: BigNumber = BigNumber(poolToken.balance);
@@ -58,7 +59,9 @@ export async function updatePoolLiquidity(
       tokenId,
       dbContext
     );
+    console.log("poolTokenValue: ", poolTokenValue);
     newPoolLiquidity = newPoolLiquidity.plus(poolTokenValue);
+    console.log("newPoolLiquidity: ", newPoolLiquidity);
   }
 
   const oldPoolLiquidity: BigNumber = BigNumber(pool.totalLiquidity);

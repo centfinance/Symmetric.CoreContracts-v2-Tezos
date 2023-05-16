@@ -143,7 +143,12 @@ async function createWeightedLikePool(
 
   await dbContext.transaction.save(Pool, pool);
 
-  await handleNewPoolTokens(pool, params.tokens, dbContext);
+  await handleNewPoolTokens(
+    pool,
+    params.tokens,
+    params.normalizedWeights,
+    dbContext
+  );
 
   // rome-ignore lint/style/noNonNullAssertion: <explanation>
   await setPriceRateProviders(
@@ -160,14 +165,17 @@ async function handleNewPoolTokens(
     BigNumber,
     WeightedPoolFactoryCreateParameterTokensValue
   >,
+  weights: MichelsonMap<BigNumber, BigNumber>,
   dbContext: DbContext
 ): Promise<void> {
   for (let i: number = 0; i < tokens.size; i++) {
     const tokenData = tokens.get(BigNumber(i))!;
+    const weight = weights.get(BigNumber(i))!;
     await createPoolTokenEntity(
       pool,
       tokenData?.[0],
       tokenData?.[1],
+      weight,
       i,
       dbContext
     );
