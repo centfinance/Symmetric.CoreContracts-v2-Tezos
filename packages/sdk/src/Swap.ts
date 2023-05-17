@@ -29,11 +29,11 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
       amount: tas.nat(1 * 10 ** 18),
       assetIn: {
         0: tas.address(tokenAddress),
-        1: tas.nat("2"),
+        1: tas.nat("3"),
       },
       assetOut: {
         0: tas.address(tokenAddress),
-        1: tas.nat("3"),
+        1: tas.nat("2"),
       },
       kind: "GIVEN_OUT",
       poolId: {

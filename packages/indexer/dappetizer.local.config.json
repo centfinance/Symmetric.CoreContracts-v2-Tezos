@@ -20,6 +20,6 @@
     ]
   },
   "tezosNode": {
-    "url": "http://localhost:20000"
+    "url": "https://ghostnet.ecadinfra.com"
   }
 }

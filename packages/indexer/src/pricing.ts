@@ -49,7 +49,6 @@ export async function updatePoolLiquidity(
       address: tokenAddress,
       poolTokenId: tokenId ? tokenId.toString() : undefined,
     });
-    console.log("poolToken: ", poolToken);
     if (poolToken == null) continue;
 
     const poolTokenQuantity: BigNumber = BigNumber(poolToken.balance);
@@ -59,9 +58,7 @@ export async function updatePoolLiquidity(
       tokenId,
       dbContext
     );
-    console.log("poolTokenValue: ", poolTokenValue);
     newPoolLiquidity = newPoolLiquidity.plus(poolTokenValue);
-    console.log("newPoolLiquidity: ", newPoolLiquidity);
   }
 
   const oldPoolLiquidity: BigNumber = BigNumber(pool.totalLiquidity);
@@ -108,8 +105,7 @@ export async function valueInUSD(
   dbContext: DbContext
 ): Promise<BigNumber> {
   let usdValue = BigNumber(ZERO_BD);
-  console.log(assetId);
-  console.log(isUSDStable(asset, assetId ? assetId : BigNumber(0)));
+
   if (isUSDStable(asset, assetId ? assetId : BigNumber(0))) {
     usdValue = value;
   } else {
@@ -147,7 +143,6 @@ export async function swapValueInUSD(
     return swapValueUSD;
   } else if (isUSDStable(tokenInAddress, tokenInId)) {
     // if one of the tokens is a stable, it takes precedence
-    console.log("isStable");
     swapValueUSD = await valueInUSD(
       tokenAmountIn,
       tokenInAddress,

@@ -2,25 +2,13 @@ import { TezosToolkit } from "@taquito/taquito";
 import { Tzip12Module, tzip12 } from "@taquito/tzip12";
 import { DbContext } from "@tezos-dappetizer/database";
 import BigNumber from "bignumber.js";
+import { config } from "../../dappetizer.config";
 import { Pool } from "../entities/Pool";
 import { PoolToken } from "../entities/PoolToken";
 import { Symmetric } from "../entities/Symmetric";
 import { Token } from "../entities/Token";
-// import { Pool,
-//   PoolSnapshot,
-//   PoolToken,
-//   Symmetric,
-//   SymmetricSnapshot,
-//   Token,
-//   TokenSnapshot,
-//   TradePair,
-//   TradePairSnapshot } from '../entities';
 import { valueInUSD } from "../pricing";
 import { WeightedPoolContractType } from "../types/weighted-pool-types";
-import {
-  WeightedPoolFactoryCreateParameterTokensValue,
-  WeightedPoolFactoryInitialStorage,
-} from "../weighted-pool-factory-indexer-interfaces.generated";
 import { getPoolTokenId } from "./pools";
 import { PoolSnapshot } from "../entities/PoolSnapshot";
 import { SymmetricSnapshot } from "../entities/SymmetricSnapshot";
@@ -28,7 +16,7 @@ import { TokenSnapshot } from "../entities/TokenSnapshot";
 import { TradePair } from "../entities/TradePair";
 import { TradePairSnapshot } from "../entities/TradePairSnapshot";
 
-const tezos = new TezosToolkit("http://localhost:20000");
+const tezos = new TezosToolkit(config.networks.mainnet.tezosNode.url);
 tezos.addExtension(new Tzip12Module());
 
 export const ZERO_BD = "0";

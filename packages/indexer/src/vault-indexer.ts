@@ -347,7 +347,6 @@ export async function handlePoolExited(
   exit.type = InvestType.Exit;
   exit.amounts = exitAmounts;
   exit.pool = pool;
-  console.log(event.sender);
   exit.userId = event.sender;
   exit.timestamp = blockTimestamp;
   exit.tx = transactionHash;
@@ -544,7 +543,6 @@ export async function handleSwapEvent(
     BigNumber(tokenAmountOut),
     dbContext
   );
-  console.log(valueUSD);
 
   if (poolAddress != tokenInAddress && poolAddress != tokenOutAddress) {
     swapValueUSD = valueUSD.toString();
