@@ -12,6 +12,8 @@ FROM node:16-alpine3.11
 COPY --from=builder /app/package.json /app/dappetizer.config.ts /app/
 COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/src /app/src
+COPY --from=builder /app/tsconfig.json /app/tsconfig.json
 
 # Run the app.
 WORKDIR /app

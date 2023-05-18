@@ -593,10 +593,12 @@ export async function handleSwapEvent(
   let swap = new Swap();
   swap.id = swapId;
   swap.tokenIn = tokenInAddress;
+  swap.tokenInId = tokenInId ? tokenInId.toNumber() : 0;
   swap.tokenInSym = poolTokenIn.symbol;
   swap.tokenAmountIn = tokenAmountIn;
 
   swap.tokenOut = tokenOutAddress;
+  swap.tokenOutId = tokenOutId ? tokenOutId.toNumber() : 0;
   swap.tokenOutSym = poolTokenOut.symbol;
   swap.tokenAmountOut = tokenAmountOut;
 
@@ -612,7 +614,7 @@ export async function handleSwapEvent(
 
   // update pool swapsCount
   // let pool = Pool.load(poolId.toHex());
-  pool.swapsCount = pool.swapsCount++;
+  pool.swapsCount = BigInt(pool.swapsCount) + 1n;
   pool.totalSwapVolume = BigNumber(pool.totalSwapVolume)
     .plus(swapValueUSD)
     .toString();
@@ -630,7 +632,7 @@ export async function handleSwapEvent(
   vault.totalSwapFee = BigNumber(vault.totalSwapFee)
     .plus(swapFeesUSD)
     .toString();
-  vault.totalSwapCount = vault.totalSwapCount++;
+  vault.totalSwapCount = BigInt(vault.totalSwapCount) + BigInt(1);
   await dbContext.transaction.save(Symmetric, vault);
 
   let vaultSnapshot = await getSymmetricSnapshot(

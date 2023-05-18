@@ -2,7 +2,6 @@ import { TezosToolkit } from "@taquito/taquito";
 import { Tzip12Module, tzip12 } from "@taquito/tzip12";
 import { DbContext } from "@tezos-dappetizer/database";
 import BigNumber from "bignumber.js";
-import { config } from "../../dappetizer.config";
 import { Pool } from "../entities/Pool";
 import { PoolToken } from "../entities/PoolToken";
 import { Symmetric } from "../entities/Symmetric";
@@ -16,7 +15,7 @@ import { TokenSnapshot } from "../entities/TokenSnapshot";
 import { TradePair } from "../entities/TradePair";
 import { TradePairSnapshot } from "../entities/TradePairSnapshot";
 
-const tezos = new TezosToolkit(config.networks.mainnet.tezosNode.url);
+const tezos = new TezosToolkit(process.env.TEZOS_NODE!);
 tezos.addExtension(new Tzip12Module());
 
 export const ZERO_BD = "0";
@@ -327,7 +326,7 @@ export async function uptickSwapsForToken(
 ): Promise<void> {
   let token = await getToken(tokenAddress, tokenId, dbContext);
   // update the overall swap count for the token
-  token.totalSwapCount = token.totalSwapCount++;
+  token.totalSwapCount = BigInt(token.totalSwapCount) + BigInt(1);
   await dbContext.transaction.save(Token, token);
 
   // update the snapshots
