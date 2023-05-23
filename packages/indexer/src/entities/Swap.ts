@@ -13,11 +13,17 @@ export class Swap {
   @Column("varchar", { length: 36 })
   tokenIn!: string;
 
+  @Column("numeric")
+  tokenInId!: number;
+
   @Column()
   tokenInSym!: string;
 
   @Column("varchar", { length: 42 })
   tokenOut!: string;
+
+  @Column("numeric")
+  tokenOutId!: number;
 
   @Column()
   tokenOutSym!: string;

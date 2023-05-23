@@ -124,7 +124,6 @@ async function createWeightedLikePool(
   const params =
     indexingContext.transactionParameter?.value.convert() as WeightedPoolFactoryCreateParameter;
   const poolStorage = await getStorage(poolAddress);
-
   const pool = await handleNewPool(
     poolAddress,
     poolStorage.poolId,
@@ -142,7 +141,6 @@ async function createWeightedLikePool(
   pool.holdersCount = BigInt(0);
 
   await dbContext.transaction.save(Pool, pool);
-
   await handleNewPoolTokens(
     pool,
     params.tokens,

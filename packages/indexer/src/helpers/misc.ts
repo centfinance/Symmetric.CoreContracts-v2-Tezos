@@ -6,21 +6,8 @@ import { Pool } from "../entities/Pool";
 import { PoolToken } from "../entities/PoolToken";
 import { Symmetric } from "../entities/Symmetric";
 import { Token } from "../entities/Token";
-// import { Pool,
-//   PoolSnapshot,
-//   PoolToken,
-//   Symmetric,
-//   SymmetricSnapshot,
-//   Token,
-//   TokenSnapshot,
-//   TradePair,
-//   TradePairSnapshot } from '../entities';
 import { valueInUSD } from "../pricing";
 import { WeightedPoolContractType } from "../types/weighted-pool-types";
-import {
-  WeightedPoolFactoryCreateParameterTokensValue,
-  WeightedPoolFactoryInitialStorage,
-} from "../weighted-pool-factory-indexer-interfaces.generated";
 import { getPoolTokenId } from "./pools";
 import { PoolSnapshot } from "../entities/PoolSnapshot";
 import { SymmetricSnapshot } from "../entities/SymmetricSnapshot";
@@ -28,7 +15,7 @@ import { TokenSnapshot } from "../entities/TokenSnapshot";
 import { TradePair } from "../entities/TradePair";
 import { TradePairSnapshot } from "../entities/TradePairSnapshot";
 
-const tezos = new TezosToolkit("http://localhost:20000");
+const tezos = new TezosToolkit(process.env.TEZOS_NODE!);
 tezos.addExtension(new Tzip12Module());
 
 export const ZERO_BD = "0";
@@ -339,7 +326,7 @@ export async function uptickSwapsForToken(
 ): Promise<void> {
   let token = await getToken(tokenAddress, tokenId, dbContext);
   // update the overall swap count for the token
-  token.totalSwapCount = token.totalSwapCount++;
+  token.totalSwapCount = BigInt(token.totalSwapCount) + BigInt(1);
   await dbContext.transaction.save(Token, token);
 
   // update the snapshots

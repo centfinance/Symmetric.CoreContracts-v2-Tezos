@@ -4,7 +4,7 @@ import { encodePubKey } from "@taquito/utils";
 import { tas } from "../../../types/type-aliases";
 import { VaultContractType } from "../../../types/Vault.types";
 
-const Tezos = new TezosToolkit("https://ghostnet.ecadinfra.com");
+const Tezos = new TezosToolkit("https://ghostnet.smartpy.io");
 
 const config = require("../../../.taq/config.local.testing.json");
 
@@ -29,11 +29,11 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
       amount: tas.nat(1 * 10 ** 18),
       assetIn: {
         0: tas.address(tokenAddress),
-        1: tas.nat("2"),
+        1: tas.nat("5"),
       },
       assetOut: {
         0: tas.address(tokenAddress),
-        1: tas.nat("3"),
+        1: tas.nat("0"),
       },
       kind: "GIVEN_OUT",
       poolId: {

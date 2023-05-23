@@ -1,9 +1,8 @@
+import * as dotenv from "dotenv"; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+dotenv.config();
 import { DappetizerConfigUsingDb } from "@tezos-dappetizer/database";
-import { loadDappetizerNetworkConfigs } from "@tezos-dappetizer/indexer";
 
-const network = require("../../.taq/config.local.development.json");
-
-const config: DappetizerConfigUsingDb = {
+export const config: DappetizerConfigUsingDb = {
   modules: [
     {
       id: "./src/index.ts", // This project is the indexer module itself.
@@ -12,20 +11,24 @@ const config: DappetizerConfigUsingDb = {
   networks: {
     mainnet: {
       indexing: {
-        fromBlockLevel: 900,
+        fromBlockLevel: Number(process.env.FROM_LEVEL),
         contracts: [
           {
             name: "WeightedPoolFactory",
-            addresses: [network.contracts.WeightedPoolFactory.address],
+            addresses: [process.env.WEIGHTED_FACTORY_ADDRESS!],
           },
           {
             name: "Vault",
-            addresses: [network.contracts.Vault.address],
+            addresses: [process.env.VAULT_ADDRESS!],
           },
         ],
+        contractBoost: {
+          type: "tzkt",
+          apiUrl: process.env.TZKT_API,
+        },
       },
       tezosNode: {
-        url: "http://localhost:20000",
+        url: process.env.TEZOS_NODE!,
       },
     },
   },
@@ -35,10 +38,10 @@ const config: DappetizerConfigUsingDb = {
 
     // If you want to use PostgreSQL:
     type: "postgres",
-    host: "localhost",
-    port: 5432,
-    username: "tzkt",
-    password: "local",
+    host: process.env.POSTGRES_HOST,
+    port: Number(process.env.POSTGRES_PORT),
+    username: process.env.POSTGRES_USERNAME,
+    password: process.env.POSTGRES_PASSWORD,
     database: "postgres",
     schema: "indexer",
   },
