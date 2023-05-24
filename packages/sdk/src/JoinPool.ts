@@ -20,8 +20,8 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     const joinPoolRequest = await contract.methodsObject
       .joinPool({
         poolId: {
-          0: tas.address("KT1ADiYeVqgr4xmVpcBatTQG3eopRRNGZj8k"),
-          1: tas.nat("1"),
+          0: tas.address("KT19ujyJhubKE4Q44uyau6zgwDXbNkrJC5FH"),
+          1: tas.nat("2"),
         },
         recipient: tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
         request: {
@@ -30,53 +30,11 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
               key: tas.nat("0"),
               value: {
                 0: tas.address(tokenAddress),
-                1: tas.nat("0"),
-              },
-            },
-            {
-              key: tas.nat("1"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("1"),
-              },
-            },
-            {
-              key: tas.nat("2"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("2"),
-              },
-            },
-            {
-              key: tas.nat("3"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("3"),
-              },
-            },
-            {
-              key: tas.nat("4"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("4"),
-              },
-            },
-            {
-              key: tas.nat("5"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("5"),
-              },
-            },
-            {
-              key: tas.nat("6"),
-              value: {
-                0: tas.address(tokenAddress),
                 1: tas.nat("6"),
               },
             },
             {
-              key: tas.nat("7"),
+              key: tas.nat("1"),
               value: {
                 0: tas.address(tokenAddress),
                 1: tas.nat("7"),
@@ -92,30 +50,6 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
               key: tas.nat("1"),
               value: tas.nat(200 * 10 ** 18),
             },
-            {
-              key: tas.nat("2"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("3"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("4"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("5"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("6"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("7"),
-              value: tas.nat(200 * 10 ** 18),
-            },
           ]),
           userData: {
             allT: undefined,
@@ -126,30 +60,6 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
               },
               {
                 key: tas.nat("1"),
-                value: tas.nat(200 * 10 ** 18),
-              },
-              {
-                key: tas.nat("2"),
-                value: tas.nat(200 * 10 ** 18),
-              },
-              {
-                key: tas.nat("3"),
-                value: tas.nat(200 * 10 ** 18),
-              },
-              {
-                key: tas.nat("4"),
-                value: tas.nat(200 * 10 ** 18),
-              },
-              {
-                key: tas.nat("5"),
-                value: tas.nat(200 * 10 ** 18),
-              },
-              {
-                key: tas.nat("6"),
-                value: tas.nat(200 * 10 ** 18),
-              },
-              {
-                key: tas.nat("7"),
                 value: tas.nat(200 * 10 ** 18),
               },
             ]),

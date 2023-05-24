@@ -5,7 +5,7 @@ import { encodePubKey } from "@taquito/utils";
 import { tas } from "../../../types/type-aliases";
 import { WeightedPoolFactoryContractType as ContractType } from "../../../types/WeightedPoolFactory.types";
 
-const Tezos = new TezosToolkit("https://ghostnet.ecadinfra.com");
+const Tezos = new TezosToolkit("https://ghostnet.smartpy.io");
 
 const config = require("../../../.taq/config.local.testing.json");
 
@@ -21,10 +21,10 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     );
     const createRequest = await contract.methodsObject
       .create({
-        metadata: tas.bytes(char2Bytes("SYMMLP")),
+        metadata: tas.bytes(char2Bytes("WTZWUSDC")),
         token_metadata: tas.map({
-          name: tas.bytes(char2Bytes("8 Token Pool")),
-          symbol: tas.bytes(char2Bytes("SYMMLP")),
+          name: tas.bytes(char2Bytes("2 Token Pool")),
+          symbol: tas.bytes(char2Bytes("WTZWUSDC")),
           decimals: tas.bytes(char2Bytes("18")),
           thumbnailUri: tas.bytes(
             char2Bytes(
@@ -35,35 +35,11 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
         normalizedWeights: tas.map([
           {
             key: tas.nat("0"),
-            value: tas.nat("125000000000000000"),
+            value: tas.nat("500000000000000000"),
           },
           {
             key: tas.nat("1"),
-            value: tas.nat("125000000000000000"),
-          },
-          {
-            key: tas.nat("2"),
-            value: tas.nat("125000000000000000"),
-          },
-          {
-            key: tas.nat("3"),
-            value: tas.nat("125000000000000000"),
-          },
-          {
-            key: tas.nat("4"),
-            value: tas.nat("125000000000000000"),
-          },
-          {
-            key: tas.nat("5"),
-            value: tas.nat("125000000000000000"),
-          },
-          {
-            key: tas.nat("6"),
-            value: tas.nat("125000000000000000"),
-          },
-          {
-            key: tas.nat("7"),
-            value: tas.nat("125000000000000000"),
+            value: tas.nat("500000000000000000"),
           },
         ]),
         swapFeePercentage: tas.nat("10000000000000000"),
@@ -76,83 +52,17 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
             key: tas.nat("1"),
             value: tas.nat("18"),
           },
-          {
-            key: tas.nat("2"),
-            value: tas.nat("18"),
-          },
-          {
-            key: tas.nat("3"),
-            value: tas.nat("18"),
-          },
-          {
-            key: tas.nat("4"),
-            value: tas.nat("18"),
-          },
-          {
-            key: tas.nat("5"),
-            value: tas.nat("18"),
-          },
-          {
-            key: tas.nat("6"),
-            value: tas.nat("18"),
-          },
-          {
-            key: tas.nat("7"),
-            value: tas.nat("18"),
-          },
         ]),
         tokens: tas.map([
           {
             key: tas.nat("0"),
             value: {
               0: tas.address(tokenAddress),
-              1: tas.nat("0"),
-            },
-          },
-          {
-            key: tas.nat("1"),
-            value: {
-              0: tas.address(tokenAddress),
-              1: tas.nat("1"),
-            },
-          },
-          {
-            key: tas.nat("2"),
-            value: {
-              0: tas.address(tokenAddress),
-              1: tas.nat("2"),
-            },
-          },
-          {
-            key: tas.nat("3"),
-            value: {
-              0: tas.address(tokenAddress),
-              1: tas.nat("3"),
-            },
-          },
-          {
-            key: tas.nat("4"),
-            value: {
-              0: tas.address(tokenAddress),
-              1: tas.nat("4"),
-            },
-          },
-          {
-            key: tas.nat("5"),
-            value: {
-              0: tas.address(tokenAddress),
-              1: tas.nat("5"),
-            },
-          },
-          {
-            key: tas.nat("6"),
-            value: {
-              0: tas.address(tokenAddress),
               1: tas.nat("6"),
             },
           },
           {
-            key: tas.nat("7"),
+            key: tas.nat("1"),
             value: {
               0: tas.address(tokenAddress),
               1: tas.nat("7"),
