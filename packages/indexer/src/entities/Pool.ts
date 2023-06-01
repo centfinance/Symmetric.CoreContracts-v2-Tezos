@@ -15,6 +15,9 @@ export class Pool {
   @Column("varchar", { length: 36 })
   address!: string;
 
+  @Column("numeric")
+  index?: string;
+
   @Column("text")
   poolType!: string;
 

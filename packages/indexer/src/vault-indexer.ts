@@ -103,6 +103,21 @@ export class VaultIndexer {
     await dbContext.transaction.save(Symmetric, vault);
   }
 
+  @indexEvent("PoolRegistered")
+  async handlePoolRegisteredEvent(
+    payload: VaultPoolRegisteredPayload,
+    dbContext: DbContext,
+    indexingContext: EventIndexingContext
+  ): Promise<void> {
+    const pool = await dbContext.transaction.findOneBy(Pool, {
+      id: payload.pool,
+    });
+    if (pool) {
+      pool.index = payload.poolId[2].toString();
+      await dbContext.transaction.save(Pool, pool);
+    }
+  }
+
   @indexEvent("PoolBalanceChanged")
   async indexPoolBalanceChangedEvent(
     payload: VaultPoolBalanceChangedPayload,
