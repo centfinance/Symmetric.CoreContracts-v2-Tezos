@@ -1,6 +1,5 @@
 .DS_Store
 artifacts
-types
 .taq/*-state.json
 .taq/config.local.*.json
 node_modules/
