@@ -8,6 +8,7 @@
   "homepage": "https://symmetric.exchange",
   "license": "GPL-3.0",
   "interfaces": [
-    "TZIP-016"
+    "TZIP-016",
+    "TZIP-012"
   ]
 }

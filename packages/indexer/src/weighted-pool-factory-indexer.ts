@@ -21,7 +21,7 @@ import {
   scaleDown,
 } from "./helpers/misc";
 import { setPriceRateProviders } from "./helpers/pools";
-import { address, nat } from "./types/type-aliases";
+import type { address, nat } from "./types/type-aliases";
 
 import {
   WeightedPoolFactoryCreateParameter,

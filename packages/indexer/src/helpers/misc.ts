@@ -7,7 +7,7 @@ import { PoolToken } from "../entities/PoolToken";
 import { Symmetric } from "../entities/Symmetric";
 import { Token } from "../entities/Token";
 import { valueInUSD } from "../pricing";
-import { WeightedPoolContractType } from "../types/weighted-pool-types";
+import { WeightedPoolContractType } from "../types/WeightedPool.types";
 import { getPoolTokenId } from "./pools";
 import { PoolSnapshot } from "../entities/PoolSnapshot";
 import { SymmetricSnapshot } from "../entities/SymmetricSnapshot";

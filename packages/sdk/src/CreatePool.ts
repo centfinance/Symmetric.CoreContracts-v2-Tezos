@@ -21,10 +21,14 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     );
     const createRequest = await contract.methodsObject
       .create({
-        metadata: tas.bytes(char2Bytes("WTZWUSDC")),
+        metadata: tas.bytes(
+          char2Bytes(
+            "https://raw.githubusercontent.com/centfinance/Symmetric.CoreContracts-v2-Tezos/main/metadata/testnet/pools/SYMM-CTEZ/50-50.json"
+          )
+        ),
         token_metadata: tas.map({
-          name: tas.bytes(char2Bytes("2 Token Pool")),
-          symbol: tas.bytes(char2Bytes("WTZWUSDC")),
+          name: tas.bytes(char2Bytes("SYMM / CTEZ 50/50")),
+          symbol: tas.bytes(char2Bytes("SYMMLP")),
           decimals: tas.bytes(char2Bytes("18")),
           thumbnailUri: tas.bytes(
             char2Bytes(
