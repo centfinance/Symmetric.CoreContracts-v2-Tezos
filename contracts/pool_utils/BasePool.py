@@ -97,7 +97,7 @@ class IBasePool:
                 pool,
                 params,
                 sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat),
-            ).open_some("Invalid view")
+            ).open_some(Errors.BEFORE_JOIN_POOL_INVALID)
         )
         return view_result
 
@@ -108,7 +108,7 @@ class IBasePool:
                 pool,
                 params,
                 sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat),
-            ).open_some("Invalid view")
+            ).open_some(Errors.BEFORE_EXIT_POOL_INVALID)
         )
         return view_result
 

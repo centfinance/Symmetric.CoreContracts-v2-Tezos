@@ -20,8 +20,8 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     const joinPoolRequest = await contract.methodsObject
       .joinPool({
         poolId: {
-          0: tas.address("KT19ujyJhubKE4Q44uyau6zgwDXbNkrJC5FH"),
-          1: tas.nat("2"),
+          0: tas.address("KT1F3rKLMhkGzZFizJ3hbTsreG9QdGDCPCy3"),
+          1: tas.nat("4"),
         },
         recipient: tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
         request: {

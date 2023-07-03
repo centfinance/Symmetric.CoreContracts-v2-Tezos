@@ -1,5 +1,6 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricErrors as Errors
 
 class Types:
     TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
@@ -15,7 +16,7 @@ class Types:
 
 def registerPool(vault, tokens, assetManagers):
     nonce = sp.compute(sp.view('getNextPoolNonce', vault, sp.unit,
-                               t=sp.TNat).open_some("Invalid view"))
+                               t=sp.TNat).open_some(Errors.GET_NEXT_POOL_NONCE_INVALID))
 
     poolId = (sp.self_address, nonce)
 

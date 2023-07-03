@@ -70,7 +70,7 @@ class PoolBalances(
 
         # Call BasePool view to get amounts
         t = sp.compute(sp.view('beforeJoinPool', pool,
-                               sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some("Invalid view"))
+                               sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some(Errors.BEFORE_JOIN_POOL_INVALID))
         sptAmountOut, amountsIn, invariant = sp.match_tuple(
             t, 'sptAmountOut', 'amountsIn', 'invariant')
         params = sp.record(
@@ -130,7 +130,7 @@ class PoolBalances(
 
         # Call BasePool view to get amounts
         t = sp.compute(sp.view('beforeExitPool', pool,
-                               sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some("Invalid view"))
+                               sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some(Errors.BEFORE_EXIT_POOL_INVALID)
         sptAmountIn, amountsOut, invariant = sp.match_tuple(
             t, 'sptAmountIn', 'amountsOut', 'invariant')
 
@@ -211,7 +211,7 @@ class PoolBalances(
             sp.map(l={}, tkey=sp.TNat, tvalue=sp.TPair(sp.TNat, sp.TNat)))
         with sp.for_('x', sp.range(0, sp.len(change.assets))) as x:
             amountOut = amountsOut[x]
-            sp.verify(amountOut <= change.limits[x], Errors.EXIT_BELOW_MIN)
+            sp.verify(amountOut >= change.limits[x], Errors.EXIT_BELOW_MIN)
 
             asset = change.assets[x]
             AssetTransfersHandler._sendAsset(asset, amountOut, recipient)

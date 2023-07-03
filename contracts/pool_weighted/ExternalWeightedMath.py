@@ -1,5 +1,7 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricErrors as Errors
+
 import contracts.utils.math.FixedPoint as FixedPoint
 
 from contracts.pool_weighted.WeightedMath import WeightedMath
@@ -68,7 +70,7 @@ class IExternalWeightedMath:
             amountIn=sp.TNat,
         ))
         return sp.compute(sp.view('calcOutGivenIn', lib, params,
-                                  t=sp.TNat).open_some("Invalid view"))
+                                  t=sp.TNat).open_some(Errors.CALC_OUT_GIVEN_IN_INVALID))
 
     def calcInGivenOut(lib, params):
         sp.set_type(params, sp.TRecord(
@@ -79,7 +81,7 @@ class IExternalWeightedMath:
             amountOut=sp.TNat,
         ))
         return sp.compute(sp.view('calcInGivenOut', lib, params,
-                                  t=sp.TNat).open_some("Invalid view"))
+                                  t=sp.TNat).open_some(Errors.CALC_IN_GIVEN_OUT_INVALID))
 
     def calculateInvariant(lib, params):
         sp.set_type(params, sp.TRecord(
@@ -87,7 +89,7 @@ class IExternalWeightedMath:
             balances=sp.TMap(sp.TNat, sp.TNat),
         ))
         return sp.compute(sp.view('calculateInvariant', lib, params,
-                                  t=sp.TNat).open_some("Invalid view"))
+                                  t=sp.TNat).open_some(Errors.CALCULATE_INVARIANT_INVALID))
 
     def calcSptOutGivenExactTokensIn(lib, params):
         sp.set_type(params, sp.TRecord(
@@ -98,7 +100,7 @@ class IExternalWeightedMath:
             swapFeePercentage=sp.TNat,
         ))
         return sp.compute(sp.view('calcSptOutGivenExactTokensIn', lib, params,
-                                  t=sp.TNat).open_some("Invalid view"))
+                                  t=sp.TNat).open_some(Errors.CALC_SPT_OUT_GIVEN_EXACT_TOKENS_IN_INVALID))
 
     def calcSptInGivenExactTokensOut(lib, params):
         sp.set_type(params, sp.TRecord(
@@ -109,7 +111,7 @@ class IExternalWeightedMath:
             swapFeePercentage=sp.TNat,
         ))
         return sp.compute(sp.view('calcSptInGivenExactTokensOut', lib, params,
-                                  t=sp.TNat).open_some("Invalid view"))
+                                  t=sp.TNat).open_some(Errors.CALC_SPT_IN_GIVEN_EXACT_TOKENS_OUT_INVALID))
 
     def calcTokenInGivenExactSptOut(lib, params):
         sp.set_type(params, sp.TRecord(
@@ -120,7 +122,7 @@ class IExternalWeightedMath:
             swapFeePercentage=sp.TNat,
         ))
         return sp.compute(sp.view('calcTokenInGivenExactSptOut', lib, params,
-                                  t=sp.TNat).open_some("Invalid view"))
+                                  t=sp.TNat).open_some(Errors.CALC_TOKEN_IN_GIVEN_EXACT_SPT_OUT_INVALID))
 
     def calcTokenOutGivenExactSptIn(lib, params):
         sp.set_type(params, sp.TRecord(
@@ -131,7 +133,7 @@ class IExternalWeightedMath:
             swapFeePercentage=sp.TNat,
         ))
         return sp.compute(sp.view('calcTokenOutGivenExactSptIn', lib, params,
-                                  t=sp.TNat).open_some("Invalid view"))
+                                  t=sp.TNat).open_some(Errors.CALC_TOKEN_OUT_GIVEN_EXACT_SPT_IN_INVALID))
 
 
 class ExternalWeightedMath(sp.Contract):

@@ -38,7 +38,7 @@ class BaseWeightedPool(
         p = sp.compute(sp.view('getPoolTokens', self.data.vault, self.data.poolId.open_some(), t=sp.TPair(
             sp.TMap(sp.TNat, TOKEN),
             sp.TMap(sp.TNat, sp.TNat),
-        )).open_some('Invalid View'))
+        )).open_some(Errors.GET_POOL_TOKENS_INVALID))
 
         upscaledBalances = sp.compute(self.data.scaling_helpers['scale']((
             sp.snd(p), self.data.scalingFactors, self.data.fixedPoint['mulDown'])))

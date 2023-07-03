@@ -1,5 +1,7 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricErrors as Errors
+
 from contracts.pool_utils.external_fees.InvariantGrowthProtocolSwapFees import InvariantGrowthProtocolSwapFees
 
 import contracts.utils.math.FixedPoint as FixedPoint
@@ -42,19 +44,19 @@ class IExternalWeightedProtocolFees:
     def getPreJoinExitProtocolFees(lib, params):
         sp.set_type(params, IExternalWeightedProtocolFees.PreJoinExitParamsType)
         return sp.compute(sp.view('getPreJoinExitProtocolFees', lib, params,
-                                  t=sp.TPair(sp.TNat, sp.TNat)).open_some("Invalid view"))
+                                  t=sp.TPair(sp.TNat, sp.TNat)).open_some(Errors.GET_PRE_JOIN_EXIT_PROTOCOL_FEES_INVALID))
 
     def getPostJoinExitProtocolFees(lib, params):
         sp.set_type(
             params, IExternalWeightedProtocolFees.PostJoinExitParamsType)
         return sp.compute(sp.view('getPostJoinExitProtocolFees', lib, params,
-                                  t=sp.TPair(sp.TNat, sp.TNat)).open_some("Invalid view"))
+                                  t=sp.TPair(sp.TNat, sp.TNat)).open_some(Errors.GET_POST_JOIN_EXIT_PROTOCOL_FEES_INVALID))
 
     def getRateProduct(lib, params):
         sp.set_type(
             params, IExternalWeightedProtocolFees.GetRateProductParamsType)
         return sp.compute(sp.view('getRateProduct', lib, params,
-                                  t=sp.TNat).open_some("Invalid view"))
+                                  t=sp.TNat).open_some(Errors.GET_RATE_PRODUCT_INVALID))
 
 
 class ExternalWeightedProtocolFees(sp.Contract):
