@@ -3,9 +3,9 @@ import { TezosToolkit } from "@taquito/taquito";
 import { tas } from "../../../types/type-aliases";
 import { VaultContractType as ContractType } from "../../../types/Vault.types";
 
-const config = require("../../../.taq/config.local.testing.json");
+const Tezos = new TezosToolkit("https://ghostnet.smartpy.io");
 
-const Tezos = new TezosToolkit("https://ghostnet.ecadinfra.com");
+const config = require("../../../.taq/config.local.testing.json");
 
 const tokenAddress = "KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3";
 
@@ -20,8 +20,8 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
     const joinPoolRequest = await contract.methodsObject
       .joinPool({
         poolId: {
-          0: tas.address("KT1F3rKLMhkGzZFizJ3hbTsreG9QdGDCPCy3"),
-          1: tas.nat("4"),
+          0: tas.address("KT1VHbP2ska1R5goBCER1W8n1CNDKRPXSpn1"),
+          1: tas.nat("1"),
         },
         recipient: tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
         request: {
@@ -30,14 +30,14 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
               key: tas.nat("0"),
               value: {
                 0: tas.address(tokenAddress),
-                1: tas.nat("6"),
+                1: tas.nat("1"),
               },
             },
             {
               key: tas.nat("1"),
               value: {
                 0: tas.address(tokenAddress),
-                1: tas.nat("7"),
+                1: tas.nat("0"),
               },
             },
           ]),
@@ -63,8 +63,8 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
                 value: tas.nat(200 * 10 ** 18),
               },
             ]),
-            kind: "INIT",
-            minSPTAmountOut: undefined,
+            kind: "EXACT_TOKENS_IN_FOR_SPT_OUT",
+            minSPTAmountOut: tas.nat(1),
             sptAmountOut: undefined,
             tokenIndex: undefined,
           },

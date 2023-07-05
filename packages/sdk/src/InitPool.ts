@@ -3,9 +3,9 @@ import { InMemorySigner } from "@taquito/signer";
 import { encodePubKey } from "@taquito/utils";
 import { WeightedPoolFactoryContractType as ContractType } from "../../../types/WeightedPoolFactory.types";
 
-const config = require("../../../.taq/config.local.testing.json");
+const tezos = new TezosToolkit("https://ghostnet.smartpy.io");
 
-const tezos = new TezosToolkit("https://ghostnet.ecadinfra.com");
+const config = require("../../../.taq/config.local.testing.json");
 // const secretKey = config.accounts[config.accountDefault].secretKey.slice(12);
 
 // const signer = await InMemorySigner.fromSecretKey(secretKey);

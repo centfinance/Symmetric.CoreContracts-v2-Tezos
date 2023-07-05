@@ -1,3 +1,5 @@
+
+import json
 import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
@@ -5,6 +7,10 @@ import contracts.interfaces.SymmetricErrors as Errors
 from contracts.utils.mixins.Administrable import Administrable
 
 from contracts.vault.AssetTransfersHandler import AssetTransfersHandler
+
+f = open(".taq/config.local.testing.json")
+
+data = json.load(f)
 
 MAX_PROTOCOL_SWAP_FEE_PERCENTAGE = 500000000000000000  # 50%
 MAX_PROTOCOL_FLASH_LOAN_FEE_PERCENTAGE = 10000000000000000  # 1%
@@ -18,7 +24,7 @@ class ProtocolFeesCollector(
 ):
     def __init__(
             self,
-            vault=sp.address('KT1N5qYdthynXLfGbteRVHgKy4m6q2NGjt57'),
+            vault=sp.address(data["contracts"]["Vault"]["address"]),
             admin=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
     ):
         self.init(

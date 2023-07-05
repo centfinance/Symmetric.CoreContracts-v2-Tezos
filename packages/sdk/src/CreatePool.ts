@@ -62,14 +62,14 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
             key: tas.nat("0"),
             value: {
               0: tas.address(tokenAddress),
-              1: tas.nat("6"),
+              1: tas.nat("1"),
             },
           },
           {
             key: tas.nat("1"),
             value: {
               0: tas.address(tokenAddress),
-              1: tas.nat("7"),
+              1: tas.nat("0"),
             },
           },
         ]),

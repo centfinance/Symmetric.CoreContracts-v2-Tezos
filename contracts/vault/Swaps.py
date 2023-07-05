@@ -258,7 +258,7 @@ class Swaps(PoolBalances):
         )
 
         amountCalculated = sp.compute(sp.view('onSwap', params.pool,
-                                              swapParams, t=sp.TNat).open_some(Errors.ON_SWAP_INVALID)
+                                              swapParams, t=sp.TNat).open_some(Errors.ON_SWAP_INVALID))
 
         amountIn, amountOut = sp.match_pair(sp.compute(sp.eif(
             params.request.kind == 'GIVEN_IN',

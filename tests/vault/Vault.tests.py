@@ -116,7 +116,7 @@ def test():
 
     sc += p
 
-    p.initialize()
+    p.initializePool()
 
     sender = sp.test_account('sender').address
     recipient = sender
@@ -156,7 +156,6 @@ def test():
         userData=userData,
         assets=tokens,
         limits=limits,
-        useInternalBalance=False,
     )
 
     v.joinPool(
@@ -181,7 +180,6 @@ def test():
         userData=joinUserData,
         assets=tokens,
         limits=limits,
-        useInternalBalance=False,
     )
 
     v.joinPool(
@@ -192,7 +190,17 @@ def test():
             request=joinRequest,
         )
     )
-
+    
+    exitLimits = {
+        0: 1000000,
+        1: 1000000,
+        2: 1000000,
+        3: 1000000,
+        4: 1000000,
+        5: 1000000,
+        6: 1000000,
+        7: 1000000,
+    }
     exitUserData = sp.record(
         kind='EXACT_SPT_IN_FOR_TOKENS_OUT',
         amountsOut=sp.none,
@@ -205,8 +213,7 @@ def test():
     exitRequest = sp.record(
         userData=exitUserData,
         assets=tokens,
-        limits=limits,
-        useInternalBalance=False,
+        limits=exitLimits,
     )
 
     v.exitPool(
@@ -228,9 +235,7 @@ def test():
 
     funds = sp.record(
         sender=sender,
-        fromInternalBalance=False,
         recipient=recipient,
-        toInternalBalance=False,
     )
 
     swapParams = sp.record(

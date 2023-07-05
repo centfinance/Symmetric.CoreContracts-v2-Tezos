@@ -15,6 +15,9 @@ import contracts.utils.math.FixedPoint as FixedPoint
 
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
+f = open(".taq/config.local.testing.json")
+
+data = json.load(f)
 # class Types:
 
 MIN_TOKENS = 2
@@ -80,11 +83,10 @@ class WeightedPoolFactory(
     def __init__(
         self,
         admin=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
-        vault=sp.address('KT1N5qYdthynXLfGbteRVHgKy4m6q2NGjt57'),
-        weightedMathLib=sp.address('KT1TSNcEvQhX5wQyThfvVXzRaCbno5bkkUPs'),
-        weightedProtocolFeesLib=sp.address(
-            'KT1VRdB2qWdGoj2ansGAsyDAFwVyerEAHGUg'),
-        protocolFeeProvider=sp.address('KT1HXtHSmaSGbz3JEtucqiyshVzu79rQQEzC'),
+        vault=sp.address(data["contracts"]["Vault"]["address"]),
+        weightedMathLib=sp.address(data["contracts"]["ExternalWeightedMath"]["address"]),
+        weightedProtocolFeesLib=sp.address(data["contracts"]["ExternalWeightedProtocolFees"]["address"]),
+        protocolFeeProvider=sp.address(data["contracts"]["ProtocolFeesCollector"]["address"]),
         feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
         metadata=CONTRACT_METADATA,
     ):

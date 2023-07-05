@@ -130,7 +130,7 @@ class PoolBalances(
 
         # Call BasePool view to get amounts
         t = sp.compute(sp.view('beforeExitPool', pool,
-                               sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some(Errors.BEFORE_EXIT_POOL_INVALID)
+                               sp.record(balances=totalBalances, userData=request.userData), t=sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some(Errors.BEFORE_EXIT_POOL_INVALID))
         sptAmountIn, amountsOut, invariant = sp.match_tuple(
             t, 'sptAmountIn', 'amountsOut', 'invariant')
 

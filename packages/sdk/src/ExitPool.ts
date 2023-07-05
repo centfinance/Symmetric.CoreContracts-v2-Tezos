@@ -3,15 +3,13 @@ import { TezosToolkit } from "@taquito/taquito";
 import { tas } from "../../../types/type-aliases";
 import { VaultContractType as ContractType } from "../../../types/Vault.types";
 
-const config = require("../../../.taq/config.local.development.json");
+const Tezos = new TezosToolkit("https://ghostnet.smartpy.io");
 
-const Tezos = new TezosToolkit(config.rpcUrl);
+const config = require("../../../.taq/config.local.testing.json");
 
-const poolAddress = "KT1ELPXpfFSpk1AJVQ9m8t5uudGvVrvCgVHU";
+const tokenAddress = "KT1JA3UQ6R4C84mH3FqS3G5mKFeEdLumrDc3";
 
-const tokenAddress = "KT1HV453GKwd6M2PKkxHy7Tnajdorisv268q";
-
-InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
+InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
   .then((theSigner) => {
     Tezos.setProvider({ signer: theSigner });
   })
@@ -22,10 +20,10 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
     const exitPoolRequest = await contract.methodsObject
       .exitPool({
         poolId: {
-          0: tas.address(poolAddress),
-          1: tas.nat(1),
+          0: tas.address("KT1VHbP2ska1R5goBCER1W8n1CNDKRPXSpn1"),
+          1: tas.nat("1"),
         },
-        recipient: tas.address("tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6"),
+        recipient: tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
         request: {
           assets: tas.map([
             {
@@ -39,128 +37,30 @@ InMemorySigner.fromSecretKey(config.accounts.bob.secretKey.slice(12))
               key: tas.nat("1"),
               value: {
                 0: tas.address(tokenAddress),
-                1: tas.nat("2"),
-              },
-            },
-            {
-              key: tas.nat("2"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("3"),
-              },
-            },
-            {
-              key: tas.nat("3"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("4"),
-              },
-            },
-            {
-              key: tas.nat("4"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("5"),
-              },
-            },
-            {
-              key: tas.nat("5"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("6"),
-              },
-            },
-            {
-              key: tas.nat("6"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("7"),
-              },
-            },
-            {
-              key: tas.nat("7"),
-              value: {
-                0: tas.address(tokenAddress),
-                1: tas.nat("8"),
+                1: tas.nat("0"),
               },
             },
           ]),
           limits: tas.map([
             {
               key: tas.nat("0"),
-              value: tas.nat(200 * 10 ** 18),
+              value: tas.nat(1),
             },
             {
               key: tas.nat("1"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("2"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("3"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("4"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("5"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("6"),
-              value: tas.nat(200 * 10 ** 18),
-            },
-            {
-              key: tas.nat("7"),
-              value: tas.nat(200 * 10 ** 18),
+              value: tas.nat(1),
             },
           ]),
-          useInternalBalance: false,
           userData: {
-            amountsOut: tas.map([
-              {
-                key: tas.nat("0"),
-                value: tas.nat(20 * 10 ** 18),
-              },
-              {
-                key: tas.nat("1"),
-                value: tas.nat(20 * 10 ** 18),
-              },
-              {
-                key: tas.nat("2"),
-                value: tas.nat(20 * 10 ** 18),
-              },
-              {
-                key: tas.nat("3"),
-                value: tas.nat(20 * 10 ** 18),
-              },
-              {
-                key: tas.nat("4"),
-                value: tas.nat(20 * 10 ** 18),
-              },
-              {
-                key: tas.nat("5"),
-                value: tas.nat(20 * 10 ** 18),
-              },
-              {
-                key: tas.nat("6"),
-                value: tas.nat(20 * 10 ** 18),
-              },
-              {
-                key: tas.nat("7"),
-                value: tas.nat(20 * 10 ** 18),
-              },
-            ]),
-            maxSPTAmountIn: tas.nat("0"),
-            kind: "SPT_IN_FOR_EXACT_TOKENS_OUT",
+            amountsOut: undefined,
+            maxSPTAmountIn: undefined,
+            sptAmountIn: tas.nat(10000000000000000000),
+            tokenIndex: undefined,
+            kind: "EXACT_SPT_IN_FOR_TOKENS_OUT",
             recoveryModeExit: false,
           },
         },
-        sender: tas.address("tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6"),
+        sender: tas.address("tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B"),
       })
       .send();
     // const estimate = await Tezos.estimate.transfer(exitPoolRequest);

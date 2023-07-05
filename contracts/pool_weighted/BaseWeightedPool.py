@@ -115,12 +115,12 @@ class BaseWeightedPool(
         upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
             amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])))
 
-        invariantAfterJoin = sp.compute(IExternalWeightedMath.calculateInvariant(
+        invariantAfterJoin = IExternalWeightedMath.calculateInvariant(
             self.data.weightedMathLib,
             sp.record(
                 normalizedWeights=self.data.normalizedWeights,
                 balances=upscaledAmounts,
-            )))
+            ))
 
         sptAmountOut = invariantAfterJoin * length
 
@@ -197,7 +197,7 @@ class BaseWeightedPool(
         upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
             amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])))
 
-        sptAmountOut = sp.compute(IExternalWeightedMath.calcSptOutGivenExactTokensIn(
+        sptAmountOut = IExternalWeightedMath.calcSptOutGivenExactTokensIn(
             self.data.weightedMathLib,
             sp.record(
                 balances=params.balances,
@@ -206,7 +206,7 @@ class BaseWeightedPool(
                 totalSupply=params.totalSupply,
                 swapFeePercentage=self.data.entries['swapFeePercentage'],
             )
-        ))
+        )
 
         sp.verify(sptAmountOut >= params.userData.minSPTAmountOut.open_some(),
                   Errors.SPT_OUT_MIN_AMOUNT)
@@ -223,7 +223,7 @@ class BaseWeightedPool(
         sp.verify(tokenIndex < sp.len(
             params.balances), Errors.OUT_OF_BOUNDS)
 
-        amountIn = sp.compute(IExternalWeightedMath.calcTokenInGivenExactSptOut(
+        amountIn = IExternalWeightedMath.calcTokenInGivenExactSptOut(
             self.data.weightedMathLib,
             sp.record(
                 balance=params.balances[tokenIndex],
@@ -232,7 +232,7 @@ class BaseWeightedPool(
                 sptTotalSupply=params.totalSupply,
                 swapFeePercentage=self.data.entries['swapFeePercentage'],
             )
-        ))
+        )
 
         # // We join in a single token, so we initialize amountsIn with zeros
         amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
