@@ -2,7 +2,7 @@
 //   let vaultContract = Vault.bind(VAULT_ADDRESS);
 //   let tokensCall = vaultContract.try_getPoolTokens(poolId);
 
-import { MichelsonMap } from "@taquito/michelson-encoder";
+import { MichelsonMap } from "@tezos-dappetizer/indexer/node_modules/@taquito/michelson-encoder";
 import { DbContext } from "@tezos-dappetizer/database";
 import BigNumber from "bignumber.js";
 import { Pool } from "../entities/Pool";

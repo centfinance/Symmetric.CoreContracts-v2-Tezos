@@ -1,4 +1,4 @@
-import { MichelsonMap } from "@taquito/michelson-encoder";
+import { MichelsonMap } from "@tezos-dappetizer/indexer/node_modules/@taquito/michelson-encoder";
 import { DbContext } from "@tezos-dappetizer/database";
 import {
   contractFilter,

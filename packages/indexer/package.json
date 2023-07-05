@@ -21,7 +21,8 @@
   "homepage": "https://github.com/centfinance/Symmetric.CoreContracts-v2-Tezos#readme",
   "dependencies": {
     "@taquito/michelson-encoder": "^16.1.1",
-    "@taquito/taquito": "^16.1.1",
+    "@taquito/taquito": "^17.0.0",
+    "@taquito/tzip12": "^17.0.0",
     "@tezos-dappetizer/cli": "^2.7.1",
     "@tezos-dappetizer/database": "^2.7.1",
     "@tezos-dappetizer/decorators": "^2.7.1",

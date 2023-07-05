@@ -15,7 +15,7 @@ export class Pool {
   @Column("varchar", { length: 36 })
   address!: string;
 
-  @Column("numeric")
+  @Column("numeric", { nullable: true })
   index?: string;
 
   @Column("text")
