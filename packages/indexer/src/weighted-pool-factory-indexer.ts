@@ -134,8 +134,8 @@ async function createWeightedLikePool(
   pool.poolType = "Weighted";
   pool.poolTypeVersion = 1;
   pool.owner = poolStorage.admin;
-  pool.tokensList = [...params.tokens.values()].map((t) =>
-    t[0].concat(t[1] ? t[1].toString() : "0")
+  pool.tokensList = [...params.tokens.values()].map((t: any) =>
+    t[0].concat(t[1] ? t[1].Some.toString() : "0")
   );
   pool.totalWeight = "100";
   pool.holdersCount = BigInt(0);
@@ -169,10 +169,12 @@ async function handleNewPoolTokens(
   for (let i: number = 0; i < tokens.size; i++) {
     const tokenData = tokens.get(BigNumber(i))!;
     const weight = weights.get(BigNumber(i))!;
+    const tokenIdEvent = tokenData?.[1] as any;
+    const tokenId = tokenIdEvent ? (tokenIdEvent.Some as BigNumber) : null;
     await createPoolTokenEntity(
       pool,
       tokenData?.[0],
-      tokenData?.[1],
+      tokenId,
       weight,
       i,
       dbContext

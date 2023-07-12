@@ -504,9 +504,13 @@ export async function handleSwapEvent(
 
   let poolAddress = pool.address;
   let tokenInAddress: string = event.tokenIn[4];
-  let tokenInId = event.tokenIn[5];
+  const tokenIdEvent = event.tokenIn[5] as any;
+  let tokenInId = event.tokenIn[5] ? (tokenIdEvent.Some as BigNumber) : null;
   let tokenOutAddress = event.tokenOut[6];
-  let tokenOutId = event.tokenOut[7];
+  const tokenOutIdEvent = event.tokenOut[7] as any;
+  let tokenOutId = event.tokenOut[7]
+    ? (tokenOutIdEvent.Some as BigNumber)
+    : null;
 
   let tokenIn = (await dbContext.transaction.findOneBy(Token, {
     address: tokenInAddress,
