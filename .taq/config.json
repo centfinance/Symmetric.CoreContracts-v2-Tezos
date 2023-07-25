@@ -44,7 +44,7 @@
         "testing": {
             "type": "simple",
             "label": "ghostnet",
-            "rpcUrl": "https://ghostnet.ecadinfra.com"
+            "rpcUrl": "https://rpc.tzkt.io/ghostnet/"
         },
         "production": {
             "type": "simple",
