@@ -69,7 +69,6 @@ class BaseMinimalSwapInfoPool(BasePool):
             # upscale
             swapAmount.value = self.data.fixedPoint['mulDown'](
                 (swapAmount.value, scalingFactorTokenIn))
-
             swapRequest = sp.record(
                 tokenIn=params.request.tokenIn,
                 tokenOut=params.request.tokenOut,

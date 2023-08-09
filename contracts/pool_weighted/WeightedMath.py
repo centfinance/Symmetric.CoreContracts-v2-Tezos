@@ -39,7 +39,7 @@ class WeightedMath:
         sp.set_type(balances, sp.TMap(sp.TNat, sp.TNat))
 
         # Create an initial invariant
-        # TODO: Fix LogExpMath
+
         invariant = sp.local('invariant', FixedPoint.ONE)
         # invariant = sp.local('invariant', 1)
 
@@ -48,7 +48,6 @@ class WeightedMath:
             # Calculate the power of down from the balance and normalized weight
             power = math['powDown']((balances[i], normalizedWeights[i]))
             # Multiply the previous invariant to give a new invariant
-            # TODO: Fix LogExpMath
             invariant.value = math['mulDown']((
                 invariant.value, power))
 
@@ -74,7 +73,6 @@ class WeightedMath:
         base = math['divUp']((balanceIn, denominator))
         exponent = math['divDown']((weightIn, weightOut))
         power = math['powUp']((base, exponent))
-
         return math['mulDown']((balanceOut, WeightedMath.complement(power)))
 
     def _calcInGivenOut(
@@ -85,12 +83,12 @@ class WeightedMath:
         amountOut,
         math,
     ):
-        sp.verify(amountOut <= math['mulDown']((balanceIn,
+        sp.verify(amountOut <= math['mulDown']((balanceOut,
                                                 WeightedMath._MAX_IN_RATIO)), Errors.MAX_IN_RATIO)
 
         base = math['divUp']((
             (balanceOut, sp.as_nat(balanceOut - amountOut))))
-        exponent = math['divUp']((weightIn, weightOut))
+        exponent = math['divUp']((weightOut, weightIn))
         power = math['powUp']((base, exponent))
 
         ratio = sp.as_nat(power - FixedPoint.ONE)

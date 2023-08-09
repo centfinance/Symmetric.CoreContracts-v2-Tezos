@@ -51,7 +51,7 @@ export const config: DappetizerConfigUsingDb = {
   //   dropExistingTracking: true,
   // },
   usageStatistics: {
-    enabled: true,
+    enabled: false,
   },
 };
 

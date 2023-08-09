@@ -7,8 +7,8 @@ HALF = 500000000000000000
 
 
 
-def power(input, power):
-    return exp2((power * sp.as_nat(log2(input))) // ONE)
+def power(base, power):
+    return exp2((sp.to_int(power) * log2(base)) // ONE)
 
 def _exp2(x):
     _exp2_result = sp.local('_exp2_result', sp.nat(0x800000000000000000000000000000000000000000000000))
@@ -110,23 +110,33 @@ def _exp2(x):
     return _exp2_result.value
 
 def exp2(x):
-    # xInt = sp.to_int(x)
-    exp2_result = sp.local('exp2_result', 0)
-    # with sp.if_(xInt < 0):
-    #     with sp.if_(xInt < -59_794705707972522261):
-    #         result.value = sp.nat(0)
-    #     with sp.else_():
-    #         # Do the fixed-point inversion 1 / 2^x inline to save gas. 1e36 is UNIT * UNIT.
-    #         result.value = (10 ** 36) // exp2(-xInt)
-    # with sp.else_():
-    with sp.if_(x >= 192 * ONE):
-            sp.failwith("PRBMath_SD59x18_Exp2_InputTooBig")
+    exp2_result = sp.local('exp2_result', sp.nat(0))
+ 
+    with sp.if_(x < -59_794705707972522261):
+            exp2_result.value = sp.nat(0)
+        # with sp.else_():
+        #     # Do the fixed-point inversion 1 / 2^x inline to save gas. 1e36 is UNIT * UNIT.
+        #     exp2_result.value = (10 ** 36)
     with sp.else_():
-            # Convert x to the 192.64-bit fixed-point format.
-            x_192x64 = (x << 64) // ONE
+        new_x = sp.local('new_x', 0)
+        negative = sp.local('negative', False)
 
-            # It is safe to convert the result to int256 with no checks because the maximum input allowed in this function is 192.
-            exp2_result.value = _exp2(x_192x64)
+        with sp.if_(x < 0):
+            negative.value = True
+            new_x.value = abs(x)
+        with sp.else_():
+            new_x.value = sp.as_nat(x)
+
+        with sp.if_(new_x.value >= 192 * ONE):
+                sp.failwith("PRBMath_SD59x18_Exp2_InputTooBig")
+        with sp.else_():
+                # Convert x to the 192.64-bit fixed-point format.
+                x_192x64 = (new_x.value << 64) // ONE
+
+                with sp.if_(negative.value == True):
+                    exp2_result.value = (10 ** 36) // _exp2(x_192x64)
+                with sp.else_():
+                    exp2_result.value = _exp2(x_192x64)
 
     return exp2_result.value
 
@@ -162,11 +172,10 @@ def log2(x):
     with sp.else_():
         sign.value = -1
         new_x.value = (10 ** 36) // x
-
-    n = msb(x // ONE)
+    
+    n = msb(new_x.value // ONE)
     result_int = sp.local('result_int', sp.to_int(n) * sp.to_int(ONE))
-    y = sp.local('y', x >> n)
-
+    y = sp.local('y', new_x.value >> n)
     with sp.if_(y.value == ONE):
         log2_result.value = result_int.value * sign.value
     
@@ -177,12 +186,12 @@ def log2(x):
         with sp.while_(delta.value > 0):
             y.value = (y.value * y.value) // ONE
 
-            with sp.if_( y.value >= double_unit):
+            with sp.if_(y.value >= double_unit):
                 result_int.value = result_int.value + sp.to_int(delta.value)
                 y.value >>= 1
 
             delta.value >>= 1
 
         log2_result.value = result_int.value * sign.value
-    
+
     return log2_result.value
