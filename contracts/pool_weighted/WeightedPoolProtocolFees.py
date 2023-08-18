@@ -1,12 +1,6 @@
 import smartpy as sp
 
-from contracts.pool_utils.external_fees.InvariantGrowthProtocolSwapFees import InvariantGrowthProtocolSwapFees
-
-from contracts.interfaces.IRateProvider import IRateProvider
-
-import contracts.utils.math.FixedPoint as FixedPoint
-
-from contracts.pool_weighted.WeightedMath import WeightedMath
+import contracts.interfaces.SymmetricEnums as Enums
 
 from contracts.pool_weighted.ExternalWeightedProtocolFees import IExternalWeightedProtocolFees
 
@@ -38,10 +32,10 @@ class WeightedPoolProtocolFees:
             preJoinExitSupply=preJoinExitSupply,
             preJoinExitInvariant=preJoinExitInvariant,
             swapFee=swapFee,
-            postJoinExitInvariant=entries['postJoinExitInvariant'],
+            postJoinExitInvariant=entries[Enums.POST_JOIN_EXIT_INVARIANT],
             normalizedWeights=normalizedWeights,
             rateProviders=sp.compute(self.data.rateProviders),
-            athRateProduct=entries['athRateProduct'],
+            athRateProduct=entries[Enums.ATH_RATE_PRODUCT],
             yieldFee=yieldFee,
             exemptFromYieldFees=self.data.exemptFromYieldFees
         ))
@@ -66,6 +60,6 @@ class WeightedPoolProtocolFees:
             swapFee=sp.fst(self.data.feeCache),
         ))
 
-        self.data.entries['postJoinExitInvariant'] = sp.snd(pair)
+        self.data.entries[Enums.POST_JOIN_EXIT_INVARIANT] = sp.snd(pair)
 
         return sp.fst(pair)

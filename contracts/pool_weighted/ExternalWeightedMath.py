@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 import contracts.utils.math.FixedPoint as FixedPoint
 
 from contracts.pool_weighted.WeightedMath import WeightedMath
@@ -141,14 +143,13 @@ class ExternalWeightedMath(sp.Contract):
         sp.Contract.__init__(self)
         self.init(
             fixedPoint=sp.big_map({
-                "mulDown": FixedPoint.mulDown,
-                "mulUp": FixedPoint.mulUp,
-                "divDown": FixedPoint.divDown,
-                "divUp": FixedPoint.divUp,
-                "powDown": FixedPoint.powDown,
-                "powUp": FixedPoint.powUp,
-                "pow": FixedPoint.pow,
-            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat))
+                Enums.MUL_DOWN: FixedPoint.mulDown,
+                Enums.MUL_UP: FixedPoint.mulUp,
+                Enums.DIV_DOWN: FixedPoint.divDown,
+                Enums.DIV_UP: FixedPoint.divUp,
+                Enums.POW_DOWN: FixedPoint.powDown,
+                Enums.POW_UP: FixedPoint.powUp,
+            }, tkey=sp.TNat, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
         )
 
     @sp.onchain_view()

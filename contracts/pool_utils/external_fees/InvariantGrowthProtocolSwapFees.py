@@ -1,5 +1,7 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 import contracts.utils.math.FixedPoint as FixedPoint
 
 
@@ -14,7 +16,7 @@ class InvariantGrowthProtocolSwapFees:
             ((supplyGrowthRatio >= invariantGrowthRatio)
              | (protocolSwapFeePercentage == sp.nat(0))),
             sp.nat(0),
-            math['mulDown']((sp.as_nat(FixedPoint.ONE - math['divDown']
+            math[Enums.MUL_DOWN]((sp.as_nat(FixedPoint.ONE - math[Enums.DIV_DOWN]
                                        ((supplyGrowthRatio, invariantGrowthRatio))), protocolSwapFeePercentage)),
         )
 
@@ -27,7 +29,7 @@ class InvariantGrowthProtocolSwapFees:
     ):
         protocolOwnershipPercentage = InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
             invariantGrowthRatio,
-            math['divDown']((currentSupply, previousSupply)),
+            math[Enums.DIV_DOWN]((currentSupply, previousSupply)),
             protocolSwapFeePercentage,
             math,
         )

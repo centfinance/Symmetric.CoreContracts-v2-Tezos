@@ -1,6 +1,6 @@
 import smartpy as sp
 
-import contracts.utils.math.FixedPoint as FixedPoint
+import contracts.interfaces.SymmetricEnums as Enums
 
 
 class BasePoolMath:
@@ -23,11 +23,11 @@ class BasePoolMath:
         #  Since we're computing amounts in, we round up overall. This means rounding up on both the
         #  multiplication and division.
 
-        sptRatio = math['divUp']((sptAmountOut, sptTotalSupply))
+        sptRatio = math[Enums.DIV_UP]((sptAmountOut, sptTotalSupply))
 
         amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         with sp.for_('i', sp.range(0, sp.len(balances)))as i:
-            amountsIn[i] = math['mulUp']((balances[i], sptRatio))
+            amountsIn[i] = math[Enums.MUL_UP]((balances[i], sptRatio))
 
         return amountsIn
 
@@ -49,10 +49,10 @@ class BasePoolMath:
         #  Since we're computing an amount out, we round down overall. This means rounding down on both the
         #  multiplication and division.
 
-        sptRatio = math['divDown']((sptAmountIn, sptTotalSupply))
+        sptRatio = math[Enums.DIV_DOWN]((sptAmountIn, sptTotalSupply))
 
         amountsOut = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         with sp.for_('i', sp.range(0, sp.len(balances)))as i:
-            amountsOut[i] = math['mulDown']((balances[i], sptRatio))
+            amountsOut[i] = math[Enums.MUL_DOWN]((balances[i], sptRatio))
 
         return amountsOut

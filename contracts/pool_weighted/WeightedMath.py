@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 import contracts.utils.math.FixedPoint as FixedPoint
 
 
@@ -46,9 +48,9 @@ class WeightedMath:
         # Iterate through each index in the normalized weights
         with sp.for_('i', sp.range(0, sp.len(normalizedWeights))) as i:
             # Calculate the power of down from the balance and normalized weight
-            power = math['powDown']((balances[i], normalizedWeights[i]))
+            power = math[Enums.POW_DOWN]((balances[i], normalizedWeights[i]))
             # Multiply the previous invariant to give a new invariant
-            invariant.value = math['mulDown']((
+            invariant.value = math[Enums.MUL_DOWN]((
                 invariant.value, power))
 
             # invariant.value *= power
@@ -66,14 +68,14 @@ class WeightedMath:
         amountIn,
         math
     ):
-        sp.verify(amountIn <= math['mulDown']((balanceIn,
+        sp.verify(amountIn <= math[Enums.MUL_DOWN]((balanceIn,
                                                WeightedMath._MAX_IN_RATIO)), Errors.MAX_IN_RATIO)
 
         denominator = balanceIn + amountIn
-        base = math['divUp']((balanceIn, denominator))
-        exponent = math['divDown']((weightIn, weightOut))
-        power = math['powUp']((base, exponent))
-        return math['mulDown']((balanceOut, WeightedMath.complement(power)))
+        base = math[Enums.DIV_UP]((balanceIn, denominator))
+        exponent = math[Enums.DIV_DOWN]((weightIn, weightOut))
+        power = math[Enums.POW_UP]((base, exponent))
+        return math[Enums.MUL_DOWN]((balanceOut, WeightedMath.complement(power)))
 
     def _calcInGivenOut(
         balanceIn,
@@ -83,17 +85,17 @@ class WeightedMath:
         amountOut,
         math,
     ):
-        sp.verify(amountOut <= math['mulDown']((balanceOut,
+        sp.verify(amountOut <= math[Enums.MUL_DOWN]((balanceOut,
                                                 WeightedMath._MAX_IN_RATIO)), Errors.MAX_IN_RATIO)
 
-        base = math['divUp']((
+        base = math[Enums.DIV_UP]((
             (balanceOut, sp.as_nat(balanceOut - amountOut))))
-        exponent = math['divUp']((weightOut, weightIn))
-        power = math['powUp']((base, exponent))
+        exponent = math[Enums.DIV_UP]((weightOut, weightIn))
+        power = math[Enums.POW_UP]((base, exponent))
 
         ratio = sp.as_nat(power - FixedPoint.ONE)
 
-        return math['mulUp']((balanceIn, ratio))
+        return math[Enums.MUL_UP]((balanceIn, ratio))
 
     def _calcSptOutGivenExactTokensIn(
             balances,
@@ -111,10 +113,10 @@ class WeightedMath:
         invariantRatioWithFees = sp.local('invariantRatioWithFees', 0)
 
         with sp.for_('i', sp.range(0, sp.len(balances))) as i:
-            balanceRatiosWithFee.value[i] = math['divDown']((
+            balanceRatiosWithFee.value[i] = math[Enums.DIV_DOWN]((
                 (balances[i] + amountsIn[i]), balances[i]))
             invariantRatioWithFees.value = invariantRatioWithFees.value + \
-                math['mulDown'](
+                math[Enums.MUL_DOWN](
                     (balanceRatiosWithFee.value[i], normalizedWeights[i]))
 
         invariantRatio = WeightedMath._computeJoinExactTokensInInvariantRatio(
@@ -129,7 +131,7 @@ class WeightedMath:
 
         sptOut = sp.local('sptOut', 0)
         with sp.if_(invariantRatio > FixedPoint.ONE):
-            sptOut.value = math['mulDown']((
+            sptOut.value = math[Enums.MUL_DOWN]((
                 totalSupply, sp.as_nat(invariantRatio - FixedPoint.ONE)))
 
         return sptOut.value
@@ -157,27 +159,27 @@ class WeightedMath:
 
         #  Calculate the factor by which the invariant will increase after minting SPTAmountOut
 
-        invariantRatio = math['divUp']((
+        invariantRatio = math[Enums.DIV_UP]((
             (sptTotalSupply + sptAmountOut), sptTotalSupply))
 
         sp.verify(invariantRatio <= WeightedMath._MAX_INVARIANT_RATIO,
                   Errors.MAX_OUT_SPT_FOR_TOKEN_IN)
 
         #  Calculate by how much the token balance has to increase to match the invariantRatio
-        balanceRatio = math['powUp']((invariantRatio,
-                                      math['divUp']((FixedPoint.ONE, normalizedWeight))))
+        balanceRatio = math[Enums.POW_UP]((invariantRatio,
+                                      math[Enums.DIV_UP]((FixedPoint.ONE, normalizedWeight))))
 
-        amountInWithoutFee = math['mulUp']((
+        amountInWithoutFee = math[Enums.MUL_UP]((
             balance, sp.as_nat(balanceRatio - FixedPoint.ONE)))
 
         #  We can now compute how much extra balance is being deposited and used in virtual swaps, and charge swap fees
         #  accordingly.
-        taxableAmount = math['mulUp']((
+        taxableAmount = math[Enums.MUL_UP]((
             amountInWithoutFee, complement(normalizedWeight)))
 
         nonTaxableAmount = sp.as_nat(amountInWithoutFee - taxableAmount)
 
-        taxableAmountPlusFees = math['divUp']((
+        taxableAmountPlusFees = math[Enums.DIV_UP]((
             taxableAmount, complement(swapFeePercentage)))
 
         return (nonTaxableAmount + taxableAmountPlusFees)
@@ -201,21 +203,21 @@ class WeightedMath:
 
                 nta = sp.local('nta', 0)
                 with sp.if_(invariantRatioWithFees > FixedPoint.ONE):
-                    nta.value = math['mulDown']((
+                    nta.value = math[Enums.MUL_DOWN]((
                         balances[i], sp.as_nat(invariantRatioWithFees - FixedPoint.ONE)))
-                swapFee = math['mulUp']((
+                swapFee = math[Enums.MUL_UP]((
                     sp.as_nat(amountsIn[i] - nta.value), swapFeePercentage))
                 amountInWithoutFee.value = sp.as_nat(
                     amountsIn[i] - swapFee)
             with sp.else_():
                 amountInWithoutFee.value = amountsIn[i]
 
-            balanceRatio = math['divDown']((
+            balanceRatio = math[Enums.DIV_DOWN]((
                 (balances[i] + amountInWithoutFee.value), balances[i]))
 
-            ir.value = math['mulDown']((ir.value, math['powDown']((
+            ir.value = math[Enums.MUL_DOWN]((ir.value, math[Enums.POW_DOWN]((
             balanceRatio, normalizedWeights[i]))))
-            # ir.value *= math['powDown']((
+            # ir.value *= math[Enums.POW_DOWN]((
             #     balanceRatio, normalizedWeights[i]))
 
         return ir.value
@@ -237,10 +239,10 @@ class WeightedMath:
 
         invariantRatioWithoutFees = sp.local('invariantRatioWithoutFees', 0)
         with sp.for_('i', sp.range(0, sp.len(balances))) as i:
-            balanceRatiosWithoutFee.value[i] = math['divUp']((
+            balanceRatiosWithoutFee.value[i] = math[Enums.DIV_UP]((
                 sp.as_nat(balances[i] - amountsOut[i]), balances[i]))
             invariantRatioWithoutFees.value = invariantRatioWithoutFees.value + \
-                math['mulUp']((
+                math[Enums.MUL_UP]((
                     balanceRatiosWithoutFee.value[i], normalizedWeights[i]))
 
         invariantRatio = WeightedMath._computeExitExactTokensOutInvariantRatio(
@@ -253,7 +255,7 @@ class WeightedMath:
             math,
         )
 
-        return math['mulUp']((
+        return math[Enums.MUL_UP]((
             totalSupply, complement(invariantRatio)))
 
     def _calcTokenOutGivenExactSptIn(
@@ -279,27 +281,27 @@ class WeightedMath:
 
         #  Calculate the factor by which the invariant will increase after minting SPTAmountOut
 
-        invariantRatio = math['divUp']((
+        invariantRatio = math[Enums.DIV_UP]((
             sp.as_nat(sptTotalSupply - sptAmountIn), sptTotalSupply))
 
         sp.verify(invariantRatio >= WeightedMath._MIN_INVARIANT_RATIO,
                   Errors.MIN_SPT_IN_FOR_TOKEN_OUT)
 
         #  Calculate by how much the token balance has to increase to match the invariantRatio
-        balanceRatio = math['powUp']((invariantRatio,
-                                      math['divDown']((FixedPoint.ONE, normalizedWeight))))
+        balanceRatio = math[Enums.POW_UP]((invariantRatio,
+                                      math[Enums.DIV_DOWN]((FixedPoint.ONE, normalizedWeight))))
 
-        amountOutWithoutFee = math['mulDown']((
+        amountOutWithoutFee = math[Enums.MUL_DOWN]((
             balance, complement(balanceRatio)))
 
         #  We can now compute how much extra balance is being deposited and used in virtual swaps, and charge swap fees
         #  accordingly.
-        taxableAmount = math['mulUp']((
+        taxableAmount = math[Enums.MUL_UP]((
             amountOutWithoutFee, complement(normalizedWeight)))
 
         nonTaxableAmount = sp.as_nat(amountOutWithoutFee - taxableAmount)
 
-        taxableAmountMinusFees = math['mulUp']((
+        taxableAmountMinusFees = math[Enums.MUL_UP]((
             taxableAmount, complement(swapFeePercentage)))
 
         return (nonTaxableAmount + taxableAmountMinusFees)
@@ -322,22 +324,22 @@ class WeightedMath:
 
             with sp.if_(invariantRatioWithoutFees > balanceRatiosWithoutFee[i]):
 
-                nonTaxableAmount = math['mulDown']((
+                nonTaxableAmount = math[Enums.MUL_DOWN]((
                     balances[i], WeightedMath.complement(invariantRatioWithoutFees)))
                 taxableAmount = sp.as_nat(amountsOut[i] - nonTaxableAmount)
-                taxableAmountPlusFees = math['divUp']((
+                taxableAmountPlusFees = math[Enums.DIV_UP]((
                     taxableAmount, WeightedMath.complement(swapFeePercentage)))
 
                 amountOutWithFee.value = nonTaxableAmount + taxableAmountPlusFees
             with sp.else_():
                 amountOutWithFee.value = amountsOut[i]
 
-            balanceRatio = math['divDown']((
+            balanceRatio = math[Enums.DIV_DOWN]((
                 sp.as_nat(balances[i] - amountOutWithFee.value), balances[i]))
 
-            ir.value = math['mulDown']((ir.value, math['powDown']((
+            ir.value = math[Enums.MUL_DOWN]((ir.value, math[Enums.POW_DOWN]((
             balanceRatio, normalizedWeights[i]))))
-            # ir.value *= math['powDown']((
+            # ir.value *= math[Enums.POW_DOWN]((
             #     balanceRatio, normalizedWeights[i]))
 
         return ir.value

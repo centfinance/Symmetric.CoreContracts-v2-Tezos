@@ -15,6 +15,8 @@ import contracts.utils.math.FixedPoint as FixedPoint
 
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 f = open(".taq/config.local.testing.json")
 
 data = json.load(f)
@@ -183,22 +185,18 @@ class WeightedPoolFactory(
             vault=self.data.vault,
             getTokenValue=sp.compute(getTokenValue),
             fixedPoint=sp.big_map({
-                "mulDown": FixedPoint.mulDown,
-                "mulUp": FixedPoint.mulUp,
-                "divDown": FixedPoint.divDown,
-                "divUp": FixedPoint.divUp,
-                "powDown": FixedPoint.powDown,
-                "powUp": FixedPoint.powUp,
-                "pow": FixedPoint.pow,
-            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
+                Enums.MUL_DOWN: FixedPoint.mulDown,
+                Enums.MUL_UP: FixedPoint.mulUp,
+                Enums.DIV_DOWN: FixedPoint.divDown,
+                Enums.DIV_UP: FixedPoint.divUp,
+            }, tkey=sp.TNat, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
             entries=sp.big_map({
-                'totalTokens': numTokens,
-                'athRateProduct': sp.nat(0),
-                'postJoinExitInvariant': sp.nat(0),
-                'swapFeePercentage': params.swapFeePercentage,
+                Enums.ATH_RATE_PRODUCT: sp.nat(0),
+                Enums.POST_JOIN_EXIT_INVARIANT: sp.nat(0),
+                Enums.SWAP_FEE_PERCENTAGE: params.swapFeePercentage,
             }),
             scaling_helpers=sp.big_map({
-                "scale": ScalingHelpers.scale_amounts,
+                0: ScalingHelpers.scale_amounts,
             }),
             weightedMathLib=self.data.weightedMathLib,
             weightedProtocolFeesLib=self.data.weightedProtocolFeesLib,

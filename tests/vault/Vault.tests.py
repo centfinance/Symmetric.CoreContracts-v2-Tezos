@@ -10,6 +10,7 @@ from contracts.pool_weighted.ExternalWeightedMath import ExternalWeightedMath
 
 from contracts.pool_weighted.ExternalWeightedProtocolFees import ExternalWeightedProtocolFees
 
+import contracts.interfaces.SymmetricEnums as Enums
 
 def normalize_metadata(metadata):
     meta = {}
@@ -166,7 +167,7 @@ def test():
     }
 
     userData = sp.record(
-        kind='INIT',
+        kind=Enums.INIT,
         amountsIn=sp.some(amountsIn),
         minSPTAmountOut=sp.none,
         tokenIndex=sp.none,
@@ -210,7 +211,7 @@ def test():
     )
 
     joinUserData = sp.record(
-        kind='EXACT_TOKENS_IN_FOR_SPT_OUT',
+        kind=Enums.EXACT_TOKENS_IN_FOR_SPT_OUT,
         amountsIn=sp.some(amountsIn),
         minSPTAmountOut=sp.some(sp.nat(1)),
         tokenIndex=sp.none,
@@ -253,7 +254,7 @@ def test():
         # 7: 1000000,
     }
     exitUserData = sp.record(
-        kind='EXACT_SPT_IN_FOR_TOKENS_OUT',
+        kind=Enums.EXACT_SPT_IN_FOR_TOKENS_OUT,
         amountsOut=sp.none,
         maxSPTAmountIn=sp.none,
         sptAmountIn=sp.some(sp.nat(999999997888455688)),
@@ -287,7 +288,7 @@ def test():
 
     singleSwap = sp.record(
         poolId=sp.pair(p.address, sp.nat(1)),
-        kind='GIVEN_IN',
+        kind=Enums.GIVEN_IN,
         assetIn=tokens[0],
         assetOut=tokens[1],
         amount=sp.nat(1987670000000000000),
@@ -295,7 +296,7 @@ def test():
 
     singleSwap2 = sp.record(
         poolId=sp.pair(p2.address, sp.nat(2)),
-        kind='GIVEN_IN',
+        kind=Enums.GIVEN_IN,
         assetIn=tokens[0],
         assetOut=tokens[1],
         amount=sp.nat(1987670000000000000),

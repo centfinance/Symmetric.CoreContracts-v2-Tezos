@@ -1,5 +1,7 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
 from contracts.pool_utils.BasePool import BasePool
@@ -12,7 +14,7 @@ class Types:
         balanceTokenIn=sp.TNat,
         balanceTokenOut=sp.TNat,
         request=sp.TRecord(
-            kind=sp.TString,
+            kind=sp.TNat,
             tokenIn=TOKEN,
             tokenOut=TOKEN,
             amount=sp.TNat,
@@ -45,7 +47,7 @@ class BaseMinimalSwapInfoPool(BasePool):
     ):
         sp.set_type(params, Types.t_onSwap_params)
         self.onlyUnpaused()
-        # TODO: Check it's not paused
+
         scalingFactorTokenIn = sp.compute(self.data.getTokenValue((
             params.request.tokenIn,
             self.data.tokens,
@@ -57,17 +59,17 @@ class BaseMinimalSwapInfoPool(BasePool):
             self.data.scalingFactors,
         )))
 
-        balanceTokenIn = sp.compute(self.data.fixedPoint['mulDown']((
+        balanceTokenIn = sp.compute(self.data.fixedPoint[Enums.MUL_DOWN]((
             params.balanceTokenIn, scalingFactorTokenIn)))
-        balanceTokenOut = sp.compute(self.data.fixedPoint['mulDown']((
+        balanceTokenOut = sp.compute(self.data.fixedPoint[Enums.MUL_DOWN]((
             params.balanceTokenOut, scalingFactorTokenOut)))
 
-        swapAmount = sp.local('swapAmount.value', 0)
-        with sp.if_(params.request.kind == 'GIVEN_IN'):
+        swapAmount = sp.local('swapAmount', 0)
+        with sp.if_(params.request.kind == Enums.GIVEN_IN):
             swapAmount.value = self._subtractSwapFeeAmount(
                 params.request.amount)
             # upscale
-            swapAmount.value = self.data.fixedPoint['mulDown'](
+            swapAmount.value = self.data.fixedPoint[Enums.MUL_DOWN](
                 (swapAmount.value, scalingFactorTokenIn))
             swapRequest = sp.record(
                 tokenIn=params.request.tokenIn,
@@ -81,12 +83,12 @@ class BaseMinimalSwapInfoPool(BasePool):
                 currentBalanceTokenOut=balanceTokenOut,
             ))
 
-            swapAmount.value = self.data.fixedPoint['divDown']((
+            swapAmount.value = self.data.fixedPoint[Enums.DIV_DOWN]((
                 amountOut, scalingFactorTokenOut))
 
         with sp.else_():
             # upscale
-            swapAmount.value = self.data.fixedPoint['mulDown']((
+            swapAmount.value = self.data.fixedPoint[Enums.MUL_DOWN]((
                 params.request.amount, scalingFactorTokenOut))
 
             swapRequest = sp.record(
@@ -101,7 +103,7 @@ class BaseMinimalSwapInfoPool(BasePool):
                 currentBalanceTokenOut=balanceTokenOut,
             ))
 
-            downscaleAmount = self.data.fixedPoint['divUp']((
+            downscaleAmount = self.data.fixedPoint[Enums.DIV_UP]((
                 amountIn, scalingFactorTokenIn))
 
             swapAmount.value = self._addSwapFeeAmount(downscaleAmount)

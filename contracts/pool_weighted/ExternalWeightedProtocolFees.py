@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 from contracts.pool_utils.external_fees.InvariantGrowthProtocolSwapFees import InvariantGrowthProtocolSwapFees
 
 import contracts.utils.math.FixedPoint as FixedPoint
@@ -64,14 +66,10 @@ class ExternalWeightedProtocolFees(sp.Contract):
         sp.Contract.__init__(self)
         self.init(
             fixedPoint=sp.big_map({
-                "mulDown": FixedPoint.mulDown,
-                "mulUp": FixedPoint.mulUp,
-                "divDown": FixedPoint.divDown,
-                "divUp": FixedPoint.divUp,
-                "powDown": FixedPoint.powDown,
-                "powUp": FixedPoint.powUp,
-                "pow": FixedPoint.pow,
-            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat))
+                Enums.MUL_DOWN: FixedPoint.mulDown,
+                Enums.DIV_DOWN: FixedPoint.divDown,
+                Enums.POW_DOWN: FixedPoint.powDown,
+            }, tkey=sp.TNat, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat))
         )
 
     @sp.onchain_view()
@@ -129,7 +127,7 @@ class ExternalWeightedProtocolFees(sp.Contract):
         protocolFeeAmount = sp.local('protocolSwapFeeAmount', 0)
         with sp.if_(params.swapFee != 0):
             protocolFeeAmount.value = InvariantGrowthProtocolSwapFees.calcDueProtocolFees(
-                sp.compute(fpm['divDown']((
+                sp.compute(fpm[Enums.DIV_DOWN]((
                     postJoinExitInvariant, params.preJoinExitInvariant))),
                 params.preJoinExitSupply,
                 params.postJoinExitSupply,
@@ -159,7 +157,7 @@ class ExternalWeightedProtocolFees(sp.Contract):
 
     ):
         return InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
-            sp.compute(fpm['divDown']((preJoinExitInvariant,
+            sp.compute(fpm[Enums.DIV_DOWN]((preJoinExitInvariant,
                                        postJoinExitInvariant))),
             ONE,
             protocolSwapFeePercentage,
@@ -182,7 +180,7 @@ class ExternalWeightedProtocolFees(sp.Contract):
                 normalizedWeights, rateProviders.open_some(), fpm)
             with sp.if_(rateProduct.value > athRateProduct):
                 percentages.value = InvariantGrowthProtocolSwapFees.getProtocolOwnershipPercentage(
-                    fpm['divDown']((rateProduct.value, athRateProduct)),
+                    fpm[Enums.DIV_DOWN]((rateProduct.value, athRateProduct)),
                     ONE,
                     yieldFee,
                     fpm,
@@ -193,7 +191,7 @@ class ExternalWeightedProtocolFees(sp.Contract):
         )
 
     def _getRateFactor(self, weight, provider, fpm):
-        powDown = fpm['powDown']
+        powDown = fpm[Enums.POW_DOWN]
         return (powDown((IRateProvider.getRate(provider.open_some()), weight)))
 
     def _getRateProduct(self, normalizedWeights, rateProviders, fpm):
@@ -203,14 +201,14 @@ class ExternalWeightedProtocolFees(sp.Contract):
             self._getRateFactor(normalizedWeights[i], rp, fpm),
         )
         rps = sp.compute(rateProviders)
-        product = sp.local('product', fpm['mulDown']((
+        product = sp.local('product', fpm[Enums.MUL_DOWN]((
             sp.compute(rateFactor(rps[0], 0)),
             sp.compute(rateFactor(rps[1], 1)),
         )))
 
         with sp.if_(sp.len(normalizedWeights) > 2):
             with sp.for_('i', sp.range(2, sp.len(normalizedWeights))) as i:
-                product.value = fpm['mulDown']((
+                product.value = fpm[Enums.MUL_DOWN]((
                     product.value,
                     sp.compute(rateFactor(rps[i], i))
                 ))

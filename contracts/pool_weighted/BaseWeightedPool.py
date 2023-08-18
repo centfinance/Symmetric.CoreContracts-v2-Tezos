@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 
 from contracts.pool_weighted.ExternalWeightedMath import IExternalWeightedMath
@@ -40,8 +42,8 @@ class BaseWeightedPool(
             sp.TMap(sp.TNat, sp.TNat),
         )).open_some(Errors.GET_POOL_TOKENS_INVALID))
 
-        upscaledBalances = sp.compute(self.data.scaling_helpers['scale']((
-            sp.snd(p), self.data.scalingFactors, self.data.fixedPoint['mulDown'])))
+        upscaledBalances = sp.compute(self.data.scaling_helpers[0]((
+            sp.snd(p), self.data.scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
         invariant = IExternalWeightedMath.calculateInvariant(self.data.weightedMathLib, sp.record(
             normalizedWeights=self.data.normalizedWeights,
@@ -105,15 +107,15 @@ class BaseWeightedPool(
     def _beforeInitializePool(self, params):
         kind = params.userData.kind
         # TODO: Use an enum
-        sp.verify(kind == 'INIT', Errors.UNINITIALIZED)
+        sp.verify(kind == Enums.INIT, Errors.UNINITIALIZED)
 
         amountsIn = params.userData.amountsIn.open_some()
 
         length = sp.len(amountsIn)
         sp.verify(length == sp.len(params.scalingFactors))
 
-        upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])))
+        upscaledAmounts = sp.compute(self.data.scaling_helpers[0]((
+            amountsIn, params.scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
         invariantAfterJoin = IExternalWeightedMath.calculateInvariant(
             self.data.weightedMathLib,
@@ -128,7 +130,7 @@ class BaseWeightedPool(
 
     def _afterInitializePool(self, invariant):
 
-        self.data.entries['postJoinExitInvariant'] = invariant
+        self.data.entries[Enums.POST_JOIN_EXIT_INVARIANT] = invariant
 
         # return (sptAmountOut, amountsIn)
 
@@ -165,9 +167,9 @@ class BaseWeightedPool(
 
     def _doJoin(self, params):
         doJoin = sp.local('doJoin', (0, {}))
-        with sp.if_(params.userData.kind == 'EXACT_TOKENS_IN_FOR_SPT_OUT'):
+        with sp.if_(params.userData.kind == Enums.EXACT_TOKENS_IN_FOR_SPT_OUT):
             doJoin.value = self._joinExactTokensInForSPTOut(params)
-        with sp.if_(params.userData.kind == 'TOKEN_IN_FOR_EXACT_SPT_OUT'):
+        with sp.if_(params.userData.kind == Enums.TOKEN_IN_FOR_EXACT_SPT_OUT):
             doJoin.value = self._joinTokenInForExactSPTOut(
                 sp.record(
                     balances=params.balances,
@@ -176,7 +178,7 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
-        with sp.if_(params.userData.kind == 'ALL_TOKENS_IN_FOR_EXACT_SPT_OUT'):
+        with sp.if_(params.userData.kind == Enums.ALL_TOKENS_IN_FOR_EXACT_SPT_OUT):
             doJoin.value = self._joinAllTokensInForExactSPTOut(
                 sp.record(
                     balances=params.balances,
@@ -194,8 +196,8 @@ class BaseWeightedPool(
         amountsIn = params.userData.amountsIn.open_some()
         sp.verify(sp.len(params.balances) == sp.len(amountsIn))
 
-        upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-            amountsIn, params.scalingFactors, self.data.fixedPoint['mulDown'])))
+        upscaledAmounts = sp.compute(self.data.scaling_helpers[0]((
+            amountsIn, params.scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
         sptAmountOut = IExternalWeightedMath.calcSptOutGivenExactTokensIn(
             self.data.weightedMathLib,
@@ -204,7 +206,7 @@ class BaseWeightedPool(
                 normalizedWeights=params.normalizedWeights,
                 amountsIn=upscaledAmounts,
                 totalSupply=params.totalSupply,
-                swapFeePercentage=self.data.entries['swapFeePercentage'],
+                swapFeePercentage=self.data.entries[Enums.SWAP_FEE_PERCENTAGE],
             )
         )
 
@@ -230,7 +232,7 @@ class BaseWeightedPool(
                 normalizedWeight=params.normalizedWeights[tokenIndex],
                 sptAmountOut=sptAmountOut,
                 sptTotalSupply=params.totalSupply,
-                swapFeePercentage=self.data.entries['swapFeePercentage'],
+                swapFeePercentage=self.data.entries[Enums.SWAP_FEE_PERCENTAGE],
             )
         )
 
@@ -288,7 +290,7 @@ class BaseWeightedPool(
 
     def _doExit(self, params):
         doExit = sp.local('doExit', (0, {}))
-        with sp.if_(params.userData.kind == 'EXACT_SPT_IN_FOR_ONE_TOKEN_OUT'):
+        with sp.if_(params.userData.kind == Enums.EXACT_SPT_IN_FOR_ONE_TOKEN_OUT):
             (doExit.value) = self._exitExactSPTInForTokenOut(
                 sp.record(
                     balances=params.balances,
@@ -297,7 +299,7 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
-        with sp.if_(params.userData.kind == 'EXACT_SPT_IN_FOR_TOKENS_OUT'):
+        with sp.if_(params.userData.kind == Enums.EXACT_SPT_IN_FOR_TOKENS_OUT):
             doExit.value = self._exitExactSPTInForTokensOut(
                 sp.record(
                     balances=params.balances,
@@ -305,7 +307,7 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
-        with sp.if_(params.userData.kind == 'SPT_IN_FOR_EXACT_TOKENS_OUT'):
+        with sp.if_(params.userData.kind == Enums.SPT_IN_FOR_EXACT_TOKENS_OUT):
             doExit.value = self._exitSPTInForExactTokensOut(params)
 
         # TODO: add fail if no kind matches
@@ -329,7 +331,7 @@ class BaseWeightedPool(
                 normalizedWeight=params.normalizedWeights[tokenIndex],
                 sptAmountIn=sptAmountIn,
                 sptTotalSupply=params.totalSupply,
-                swapFeePercentage=self.data.entries['swapFeePercentage'],
+                swapFeePercentage=self.data.entries[Enums.SWAP_FEE_PERCENTAGE],
             )
         )
 
@@ -359,8 +361,8 @@ class BaseWeightedPool(
         sp.verify(sp.len(params.balances) ==
                   sp.len(amountsOut))
 
-        upscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-            amountsOut, params.scalingFactors, self.data.fixedPoint['mulDown'])))
+        upscaledAmounts = sp.compute(self.data.scaling_helpers[0]((
+            amountsOut, params.scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
         sptAmountIn = IExternalWeightedMath.calcSptInGivenExactTokensOut(
             self.data.weightedMathLib,
@@ -369,7 +371,7 @@ class BaseWeightedPool(
                 normalizedWeights=params.normalizedWeights,
                 amountsOut=upscaledAmounts,
                 totalSupply=params.totalSupply,
-                swapFeePercentage=self.data.entries['swapFeePercentage'],
+                swapFeePercentage=self.data.entries[Enums.SWAP_FEE_PERCENTAGE],
             )
         )
 

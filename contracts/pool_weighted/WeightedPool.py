@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 import contracts.utils.math.FixedPoint as FixedPoint
 
 import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
@@ -9,8 +11,6 @@ import contracts.utils.helpers.ScalingHelpers as ScalingHelpers
 from contracts.pool_weighted.BaseWeightedPool import BaseWeightedPool
 
 from contracts.pool_weighted.WeightedPoolProtocolFees import WeightedPoolProtocolFees
-
-from contracts.pool_weighted.WeightedMath import WeightedMath
 
 from contracts.pool_weighted.ExternalWeightedMath import IExternalWeightedMath
 
@@ -54,7 +54,7 @@ class Types:
         sp.TMap(sp.TNat, sp.TNat)
     )
 
-    scaling_helpers = sp.TBigMap(sp.TString, helper)
+    scaling_helpers = sp.TBigMap(sp.TNat, helper)
 
     STORAGE = sp.TRecord(
         normalizedWeights=sp.TMap(sp.TNat, sp.TNat),
@@ -81,9 +81,9 @@ class Types:
             TOKEN,
             sp.TMap(sp.TNat, TOKEN),
             sp.TMap(sp.TNat, sp.TNat)), sp.TNat),
-        fixedPoint=sp.TBigMap(sp.TString, sp.TLambda(
+        fixedPoint=sp.TBigMap(sp.TNat, sp.TLambda(
             sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
-        entries=sp.TBigMap(sp.TString, sp.TNat),
+        entries=sp.TBigMap(sp.TNat, sp.TNat),
         weightedMathLib=sp.TAddress,
         weightedProtocolFeesLib=sp.TAddress
     )
@@ -150,22 +150,18 @@ class WeightedPool(
             recoveryMode=sp.bool(False),
             getTokenValue=getTokenValue,
             fixedPoint=sp.big_map({
-                "mulDown": FixedPoint.mulDown,
-                "mulUp": FixedPoint.mulUp,
-                "divDown": FixedPoint.divDown,
-                "divUp": FixedPoint.divUp,
-                "powDown": FixedPoint.powDown,
-                "powUp": FixedPoint.powUp,
-                "pow": FixedPoint.pow,
-            }, tkey=sp.TString, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
+                Enums.MUL_DOWN: FixedPoint.mulDown,
+                Enums.MUL_UP: FixedPoint.mulUp,
+                Enums.DIV_DOWN: FixedPoint.divDown,
+                Enums.DIV_UP: FixedPoint.divUp,
+            }, tkey=sp.TNat, tvalue=sp.TLambda(sp.TPair(sp.TNat, sp.TNat), sp.TNat)),
             entries=sp.big_map({
-                'totalTokens': sp.len(tokens),
-                'athRateProduct': sp.nat(0),
-                'postJoinExitInvariant': sp.nat(0),
-                'swapFeePercentage': swapFeePercentage,
+                Enums.ATH_RATE_PRODUCT: sp.nat(0),
+                Enums.POST_JOIN_EXIT_INVARIANT: sp.nat(0),
+                Enums.SWAP_FEE_PERCENTAGE: swapFeePercentage,
             }),
             scaling_helpers=sp.big_map({
-                "scale": ScalingHelpers.scale_amounts,
+                0: ScalingHelpers.scale_amounts,
             }),
             weightedMathLib=weightedMathLib,
             weightedProtocolFeesLib=weightedProtocolFeesLib,
@@ -196,7 +192,7 @@ class WeightedPool(
     ):
         with sp.if_(self.data.exemptFromYieldFees == False):
 
-            self.data.entries['athRateProduct'] = IExternalWeightedProtocolFees.getRateProduct(
+            self.data.entries[Enums.ATH_RATE_PRODUCT] = IExternalWeightedProtocolFees.getRateProduct(
                 self.data.weightedProtocolFeesLib,
                 sp.record(
                     normalizedWeights=self.data.normalizedWeights,
@@ -204,7 +200,7 @@ class WeightedPool(
                 )
             )
 
-        self.data.entries['postJoinExitInvariant'] = invariant
+        self.data.entries[Enums.POST_JOIN_EXIT_INVARIANT] = invariant
 
     def _beforeJoinExit(
         self,
@@ -240,7 +236,7 @@ class WeightedPool(
         )
         protocolFeesToBeMinted, athRateProduct = sp.match_pair(pair)
         with sp.if_(athRateProduct > 0):
-            self.data.entries['athRateProduct'] = sp.compute(athRateProduct)
+            self.data.entries[Enums.ATH_RATE_PRODUCT] = sp.compute(athRateProduct)
 
         self._payProtocolFees(sp.compute(protocolFeesToBeMinted))
 
@@ -294,16 +290,16 @@ class WeightedPool(
 
         self._payProtocolFees(protocolFeesToBeMinted)
 
-        self.data.entries['postJoinExitInvariant'] = invariant
+        self.data.entries[Enums.POST_JOIN_EXIT_INVARIANT] = invariant
 
-        with sp.if_(self.data.entries['athRateProduct'] > 0):
-            self.data.entries['athRateProduct'] = athRateProduct
+        with sp.if_(self.data.entries[Enums.ATH_RATE_PRODUCT] > 0):
+            self.data.entries[Enums.ATH_RATE_PRODUCT] = athRateProduct
 
     def _onDisableRecoveryMode(self):
-        self.data.entries['postJoinExitInvariant'] = self._getInvariant()
+        self.data.entries[Enums.POST_JOIN_EXIT_INVARIANT] = self._getInvariant()
 
         with sp.if_(self.data.exemptFromYieldFees == False):
-            athRateProduct = self.data.entries['athRateProduct']
+            athRateProduct = self.data.entries[Enums.ATH_RATE_PRODUCT]
             rateProduct = IExternalWeightedProtocolFees.getRateProduct(
                 self.data.weightedProtocolFeesLib,
                 sp.record(
@@ -313,7 +309,7 @@ class WeightedPool(
             )
 
             with sp.if_(rateProduct > athRateProduct):
-                self.data.entries['athRateProduct'] = rateProduct
+                self.data.entries[Enums.ATH_RATE_PRODUCT] = rateProduct
 
 
 sp.add_compilation_target('Symmetric', WeightedPool())

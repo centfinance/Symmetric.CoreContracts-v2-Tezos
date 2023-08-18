@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 import contracts.vault.balances.BalanceAllocation as BalanceAllocation
 
 from contracts.vault.PoolBalances import PoolBalances
@@ -14,7 +16,7 @@ class ISwaps:
 
     SINGLE_SWAP = sp.TRecord(
         poolId=sp.TPair(sp.TAddress, sp.TNat),
-        kind=sp.TString,
+        kind=sp.TNat,
         assetIn=TOKEN,
         assetOut=TOKEN,
         amount=sp.TNat,
@@ -40,7 +42,7 @@ class ISwaps:
     )
 
     t_batch_swap_params = sp.TRecord(
-        kind=sp.TString,
+        kind=sp.TNat,
         swaps=sp.TMap(sp.TNat, BATCH_SWAP_STEP),
         assets=sp.TMap(sp.TNat, TOKEN),
         funds=FUND_MANAGEMENT,
@@ -83,7 +85,7 @@ class Swaps(PoolBalances):
 
         (amountCalculated, amountIn, amountOut) = self._swapWithPool(request)
         checkLimits = sp.eif(
-            singleSwap.kind == 'GIVEN_IN',
+            singleSwap.kind == Enums.GIVEN_IN,
             (amountOut >= limit),
             (amountIn <= limit),
         )
@@ -166,7 +168,7 @@ class Swaps(PoolBalances):
             with sp.if_(params.swaps[i].amount == sp.nat(0)):
                 sp.verify(i > 0, Errors.UNKNOWN_AMOUNT_IN_FIRST_SWAP)
                 usingPreviousToken = (previousTokenCalculated.value == sp.compute(
-                    sp.eif(params.kind == 'GIVEN_IN', tokenIn, tokenOut)))
+                    sp.eif(params.kind == Enums.GIVEN_IN, tokenIn, tokenOut)))
 
                 sp.verify(usingPreviousToken,
                           Errors.MALCONSTRUCTED_MULTIHOP_SWAP)
@@ -186,7 +188,7 @@ class Swaps(PoolBalances):
             previousAmountCalculated.value = amountCalculated
 
             previousTokenCalculated.value = sp.compute(
-                sp.eif(params.kind == 'GIVEN_IN', tokenOut, tokenIn))
+                sp.eif(params.kind == Enums.GIVEN_IN, tokenOut, tokenIn))
 
             assetDeltas[params.swaps[i].assetInIndex] = (assetDeltas.get(
                 params.swaps[i].assetInIndex, default_value=sp.int(0)) + sp.to_int(amountIn))
@@ -205,7 +207,7 @@ class Swaps(PoolBalances):
             ))
 
         amountsIn, amountsOut = sp.match_pair(sp.eif(
-            request.kind == 'GIVEN_IN',
+            request.kind == Enums.GIVEN_IN,
             (request.amount, amountCalculated),
             (amountCalculated, request.amount),
         ))
@@ -261,7 +263,7 @@ class Swaps(PoolBalances):
                                               swapParams, t=sp.TNat).open_some(Errors.ON_SWAP_INVALID))
 
         amountIn, amountOut = sp.match_pair(sp.compute(sp.eif(
-            params.request.kind == 'GIVEN_IN',
+            params.request.kind == Enums.GIVEN_IN,
             (params.request.amount, amountCalculated),
             (amountCalculated, params.request.amount),
         )))

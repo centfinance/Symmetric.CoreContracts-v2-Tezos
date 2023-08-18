@@ -2,6 +2,8 @@ import smartpy as sp
 
 import contracts.interfaces.SymmetricErrors as Errors
 
+import contracts.interfaces.SymmetricEnums as Enums
+
 import contracts.utils.math.FixedPoint as FixedPoint
 
 import contracts.pool_utils.lib.PoolRegistrationLib as PoolRegistrationLib
@@ -23,7 +25,7 @@ _SWAP_FEE_PERCENTAGE_BIT_LENGTH = 100000000000000000
 
 class IBasePool:
     JOIN_USER_DATA = sp.TRecord(
-        kind=sp.TString,
+        kind=sp.TNat,
         amountsIn=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
         minSPTAmountOut=sp.TOption(sp.TNat),
         sptAmountOut=sp.TOption(sp.TNat),
@@ -32,7 +34,7 @@ class IBasePool:
     )
 
     EXIT_USER_DATA = sp.TRecord(
-        kind=sp.TString,
+        kind=sp.TNat,
         amountsOut=sp.TOption(sp.TMap(sp.TNat, sp.TNat)),
         maxSPTAmountIn=sp.TOption(sp.TNat),
         sptAmountIn=sp.TOption(sp.TNat),
@@ -191,11 +193,11 @@ class BasePool(
         with sp.else_():
             scalingFactors = self.data.scalingFactors
 
-            upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
-                balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+            upScaledBalances = sp.compute(self.data.scaling_helpers[0]((
+                balances, scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
-            upScaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-                amountsIn, scalingFactors, self.data.fixedPoint['mulDown'])))
+            upScaledAmounts = sp.compute(self.data.scaling_helpers[0]((
+                amountsIn, scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
             self._afterJoinPool(
                 sp.record(
@@ -230,11 +232,11 @@ class BasePool(
         with sp.else_():
             scalingFactors = self.data.scalingFactors
 
-            upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
-                balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+            upScaledBalances = sp.compute(self.data.scaling_helpers[0]((
+                balances, scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
-            upScaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-                amountsOut, scalingFactors, self.data.fixedPoint['mulDown'])))
+            upScaledAmounts = sp.compute(self.data.scaling_helpers[0]((
+                amountsOut, scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
             self._afterExitPool(
                 sp.record(
@@ -269,8 +271,8 @@ class BasePool(
             )
 
         with sp.else_():
-            upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
-                params.balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+            upScaledBalances = sp.compute(self.data.scaling_helpers[0]((
+                params.balances, scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
             result.value = self._beforeJoinPool(
                 sp.record(
                     balances=upScaledBalances,
@@ -281,8 +283,8 @@ class BasePool(
         # amountsIn are amounts entering the Pool, so we round up.
         sptAmountOut, amountsIn, invariant = sp.match_tuple(
             result.value, 'sptAmountOut', 'amountsIn', 'invariant')
-        downscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-            amountsIn, scalingFactors, self.data.fixedPoint['divUp'])))
+        downscaledAmounts = sp.compute(self.data.scaling_helpers[0]((
+            amountsIn, scalingFactors, self.data.fixedPoint[Enums.DIV_UP])))
 
         # This Pool ignores the `dueProtocolFees` return value, so we simply return a zeroed-out array.
         sp.result((sptAmountOut, downscaledAmounts, invariant))
@@ -309,8 +311,8 @@ class BasePool(
         with sp.else_():
             scalingFactors = self.data.scalingFactors
 
-            upScaledBalances = sp.compute(self.data.scaling_helpers['scale']((
-                params.balances, scalingFactors, self.data.fixedPoint['mulDown'])))
+            upScaledBalances = sp.compute(self.data.scaling_helpers[0]((
+                params.balances, scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
             result.value = self._beforeExitPool(
                 sp.record(
@@ -322,8 +324,8 @@ class BasePool(
         sptAmountIn, amountsOut, invariant = sp.match_tuple(
             result.value, 'sptAmountIn', 'amountsOut', 'invariant')
 
-        downscaledAmounts = sp.compute(self.data.scaling_helpers['scale']((
-            amountsOut, scalingFactors, self.data.fixedPoint['divDown'])))
+        downscaledAmounts = sp.compute(self.data.scaling_helpers[0]((
+            amountsOut, scalingFactors, self.data.fixedPoint[Enums.DIV_DOWN])))
 
         sp.result((sptAmountIn, downscaledAmounts, invariant))
 
@@ -356,12 +358,12 @@ class BasePool(
 
     def _addSwapFeeAmount(self, amount):
         # This returns amount + fee amount, so we round up (favoring a higher fee amount).
-        return self.data.fixedPoint['divUp']((amount, FixedPoint.complement(self.data.entries['swapFeePercentage'])))
+        return self.data.fixedPoint[Enums.DIV_UP]((amount, FixedPoint.complement(self.data.entries[Enums.SWAP_FEE_PERCENTAGE])))
 
     def _subtractSwapFeeAmount(self, amount):
         # This returns amount - fee amount, so we round up (favoring a higher fee amount).
-        feeAmount = self.data.fixedPoint['mulUp'](
-            (amount, self.data.entries['swapFeePercentage']))
+        feeAmount = self.data.fixedPoint[Enums.MUL_UP](
+            (amount, self.data.entries[Enums.SWAP_FEE_PERCENTAGE]))
         return sp.as_nat(amount - feeAmount)
 
     def _setSwapFeePercentage(self, swapFeePercentage):
@@ -370,14 +372,14 @@ class BasePool(
         sp.verify(swapFeePercentage <= _MAX_SWAP_FEE_PERCENTAGE,
                   Errors.MAX_SWAP_FEE_PERCENTAGE)
 
-        self.data.entries['swapFeePercentage'] = swapFeePercentage
+        self.data.entries[Enums.SWAP_FEE_PERCENTAGE] = swapFeePercentage
 
         sp.emit(swapFeePercentage, 'SwapFeePercentageChanged')
 
-    def _computeScalingFactor(self, decimals):
-        sp.set_type(decimals, sp.TNat)
-        decimalsDifference = sp.as_nat(18 - decimals)
-        return FixedPoint.ONE * (self.data.fixedPoint['pow']((sp.nat(10), decimalsDifference)))
+    # def _computeScalingFactor(self, decimals):
+    #     sp.set_type(decimals, sp.TNat)
+    #     decimalsDifference = sp.as_nat(18 - decimals)
+    #     return FixedPoint.ONE * (self.data.fixedPoint['pow']((sp.nat(10), decimalsDifference)))
 
     def _payProtocolFees(self, sptAmount):
         with sp.if_(sptAmount > 0):
