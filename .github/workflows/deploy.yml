@@ -1,0 +1,52 @@
+name: Deploy to EC2
+
+on:
+  push:
+    paths:
+      - 'packages/indexer/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Decrypt .env file
+      env:
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        echo "$GPG_PASSPHRASE" | gpg --quiet --batch --yes --decrypt --passphrase-fd 0 --output /tmp/.env packages/indexer/.env.gpg
+
+    - name: Transfer .env to EC2
+      env:
+        PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        echo "$PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+        scp -i private_key.pem -o StrictHostKeyChecking=no /tmp/.env ubuntu@ec2-35-171-27-49.compute-1.amazonaws.com:/opt/tezos-indexer/.env
+        rm -f private_key.pem
+
+    - name: Transfer code to EC2
+      env:
+        PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        echo "$PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+        scp -i private_key.pem -o StrictHostKeyChecking=no -r ./packages/indexer ubuntu@ec2-35-171-27-49.compute-1.amazonaws.com:/opt/tezos-indexer/.env
+        rm -f private_key.pem
+
+    - name: Build and run Docker container on EC2
+      env:
+        PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        echo "$PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+        ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@ec2-35-171-27-49.compute-1.amazonaws.com "
+          cd /opt/tezos-indexer/.env;
+          docker-compose down;
+          docker-compose build;
+          docker-compose up -d;
+        "
+        rm -f private_key.pem
