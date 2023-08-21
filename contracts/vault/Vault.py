@@ -27,7 +27,7 @@ class Vault(
 ):
     def __init__(
             self,
-            owner=sp.address('tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6'),
+            owner=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),
             metadata=CONTRACT_METADATA,
     ):
         self.init(

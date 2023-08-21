@@ -1,6 +1,6 @@
 
 import { ContractAbstractionFromContractType, WalletContractAbstractionFromContractType } from './type-utils';
-import { address, BigMap, bytes, int, MMap, nat, timestamp, unit } from './type-aliases';
+import { address, BigMap, bytes, Instruction, int, MMap, nat, timestamp, unit } from './type-aliases';
 
 export type Storage = {
     admin: address;
@@ -43,7 +43,7 @@ type Methods = {
             recipient: address;
             sender: address;
         },
-        kind: string,
+        kind: nat,
         limits: MMap<nat, int>,
         swaps: MMap<nat, {
             amount: nat;
@@ -69,7 +69,7 @@ type Methods = {
             limits: MMap<nat, nat>;
             userData: {
                 amountsOut?: MMap<nat, nat>;
-                kind: string;
+                kind: nat;
                 maxSPTAmountIn?: nat;
                 recoveryModeExit: boolean;
                 sptAmountIn?: nat;
@@ -93,7 +93,7 @@ type Methods = {
             userData: {
                 allT?: nat;
                 amountsIn?: MMap<nat, nat>;
-                kind: string;
+                kind: nat;
                 minSPTAmountOut?: nat;
                 sptAmountOut?: nat;
                 tokenIndex?: nat;
@@ -113,6 +113,7 @@ type Methods = {
             1?: nat;
         }>,
     ) => Promise<void>;
+    run_lambda: (param: Instruction[]) => Promise<void>;
     set_paused: (param: boolean) => Promise<void>;
     swap: (
         deadline: timestamp,
@@ -131,7 +132,7 @@ type Methods = {
                 0: address;
                 1?: nat;
             };
-            kind: string;
+            kind: nat;
             poolId: {
                 0: address;
                 1: nat;
@@ -153,7 +154,7 @@ type MethodsObject = {
             recipient: address;
             sender: address;
         },
-        kind: string,
+        kind: nat,
         limits: MMap<nat, int>,
         swaps: MMap<nat, {
             amount: nat;
@@ -179,7 +180,7 @@ type MethodsObject = {
             limits: MMap<nat, nat>;
             userData: {
                 amountsOut?: MMap<nat, nat>;
-                kind: string;
+                kind: nat;
                 maxSPTAmountIn?: nat;
                 recoveryModeExit: boolean;
                 sptAmountIn?: nat;
@@ -203,7 +204,7 @@ type MethodsObject = {
             userData: {
                 allT?: nat;
                 amountsIn?: MMap<nat, nat>;
-                kind: string;
+                kind: nat;
                 minSPTAmountOut?: nat;
                 sptAmountOut?: nat;
                 tokenIndex?: nat;
@@ -223,6 +224,7 @@ type MethodsObject = {
             1?: nat;
         }>,
     }) => Promise<void>;
+    run_lambda: (param: Instruction[]) => Promise<void>;
     set_paused: (param: boolean) => Promise<void>;
     swap: (params: {
         deadline: timestamp,
@@ -241,7 +243,7 @@ type MethodsObject = {
                 0: address;
                 1?: nat;
             };
-            kind: string;
+            kind: nat;
             poolId: {
                 0: address;
                 1: nat;

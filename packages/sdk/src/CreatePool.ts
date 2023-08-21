@@ -17,7 +17,7 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
   })
   .then(async () => {
     const contract = await Tezos.contract.at<ContractType>(
-      config.contracts.WeightedPoolFactory.address
+      config.contracts.WeightedPoolFactoryNoAdmin.address
     );
     const createRequest = await contract.methodsObject
       .create({
@@ -27,7 +27,7 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
           )
         ),
         token_metadata: tas.map({
-          name: tas.bytes(char2Bytes("SYMM / CTEZ 50/50")),
+          name: tas.bytes(char2Bytes("SYMM Liquidity Pool")),
           symbol: tas.bytes(char2Bytes("SYMMLP")),
           decimals: tas.bytes(char2Bytes("18")),
           thumbnailUri: tas.bytes(
@@ -39,11 +39,11 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
         normalizedWeights: tas.map([
           {
             key: tas.nat("0"),
-            value: tas.nat("500000000000000000"),
+            value: tas.nat("800000000000000000"),
           },
           {
             key: tas.nat("1"),
-            value: tas.nat("500000000000000000"),
+            value: tas.nat("200000000000000000"),
           },
         ]),
         swapFeePercentage: tas.nat("10000000000000000"),

@@ -17,7 +17,7 @@ InMemorySigner.fromSecretKey(config.accounts.taqOperatorAccount.privateKey)
   })
   .then(async () => {
     const contract = await tezos.contract.at<ContractType>(
-      config.contracts.WeightedPoolFactory.address
+      config.contracts.WeightedPoolFactoryNoAdmin.address
     );
     const initRequest = await contract.methods.initialize().send();
     await initRequest.confirmation(1);

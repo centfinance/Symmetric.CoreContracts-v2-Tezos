@@ -1,6 +1,6 @@
 
 import { ContractAbstractionFromContractType, WalletContractAbstractionFromContractType } from './type-utils';
-import { address, MMap, nat } from './type-aliases';
+import { address, Instruction, MMap, nat } from './type-aliases';
 
 export type Storage = {
     admin: address;
@@ -12,8 +12,7 @@ export type Storage = {
 
 type Methods = {
     accept_admin: () => Promise<void>;
-    setFlashLoanFeePercentage: (param: nat) => Promise<void>;
-    setSwapFeePercentage: (param: nat) => Promise<void>;
+    run_lambda: (param: Instruction[]) => Promise<void>;
     transfer_admin: (param: address) => Promise<void>;
     withdrawCollectedFees: (
         amounts: MMap<nat, nat>,
@@ -27,8 +26,7 @@ type Methods = {
 
 type MethodsObject = {
     accept_admin: () => Promise<void>;
-    setFlashLoanFeePercentage: (param: nat) => Promise<void>;
-    setSwapFeePercentage: (param: nat) => Promise<void>;
+    run_lambda: (param: Instruction[]) => Promise<void>;
     transfer_admin: (param: address) => Promise<void>;
     withdrawCollectedFees: (params: {
         amounts: MMap<nat, nat>,

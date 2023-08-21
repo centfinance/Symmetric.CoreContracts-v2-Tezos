@@ -1,8 +1,8 @@
 
 import { ContractAbstractionFromContractType, WalletContractAbstractionFromContractType } from './type-utils';
-import { BigMap, Instruction } from './type-aliases';
+import { BigMap, Instruction, nat } from './type-aliases';
 
-export type Storage = BigMap<string, Instruction[]>;
+export type Storage = BigMap<nat, Instruction[]>;
 
 type Methods = {
     
