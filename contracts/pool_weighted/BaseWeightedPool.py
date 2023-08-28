@@ -387,4 +387,4 @@ class BaseWeightedPool(
         sptAmountIn = params.userData.sptAmountIn.open_some()
         amountsOut = BasePoolMath.computeProportionalAmountsOut(
             params.balances, params.totalSupply, sptAmountIn, self.data.fixedPoint)
-        return (sptAmountIn, amountsOut, 0)
+        return (sptAmountIn, amountsOut)

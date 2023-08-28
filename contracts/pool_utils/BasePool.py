@@ -141,11 +141,6 @@ class BasePool(
     @sp.entry_point(lazify=False)
     def initializePool(self):
         sp.verify(self.data.initialized == False)
-        # tokensAmount = sp.len(self.data.tokens)
-        # sp.verify(tokensAmount >= _MIN_TOKENS, Errors.MIN_TOKENS)
-        # sp.verify(tokensAmount <= self.MAX_TOKENS, Errors.MAX_TOKENS)
-
-        # self._setSwapFeePercentage(params.swapFeePercentage)
 
         poolId = PoolRegistrationLib.registerPool(
             vault=self.data.vault,
@@ -249,9 +244,6 @@ class BasePool(
 
             self._burnPoolTokens(sender, sptAmountIn)
 
-    # # @ sp.entry_point
-    # # def setSwapFeePercentage(self, swapFeePercentage):
-    # #     pass
 
     @sp.onchain_view()
     def beforeJoinPool(
@@ -298,8 +290,8 @@ class BasePool(
         self.onlyUnpaused()
         result = sp.local('result', (0, {}, 0))
         with sp.if_(params.userData.recoveryModeExit):
-            # TODO: Check that it's in recovery mode
-            # _ensureInRecoveryMode();
+
+            sp.verify(self.data.recoveryMode == True, Errors.NOT_IN_RECOVERY_MODE)
 
             result.value = self._doRecoveryModeExit(
                 sp.record(
@@ -329,28 +321,17 @@ class BasePool(
 
         sp.result((sptAmountIn, downscaledAmounts, invariant))
 
-    # @ sp.onchain_view()
-    # def getPoolId(self):
-    #     """
-    #     * @dev  this Pool's ID, used when interacting with the Vault (to e.g. join the Pool or swap with it).
-    #     *"""
-    #     pass
+    @sp.entry_point(lazify=False)
+    def enableRecoveryMode(self):
+        self.onlyAdministrator()
+        sp.verify(self.data.recoveryMode == False, Errors.IN_RECOVERY_MODE)
+        self._setRecoveryMode(True)
 
-    # @ sp.onchain_view()
-    # def getSwapFeePercentage(self):
-    #     """
-    #     @dev  the current swap fee percentage as a 18 decimal fixed point number, so e.g. 1e17 corresponds to a
-    #     10% swap fee.
-    #     """
-    #     pass
-
-    # @ sp.onchain_view()
-    # def getScalingFactors(self):
-    #     """
-    #     * @dev  the scaling factors of each of the Pool's tokens. This is an implementation detail that is typically
-    #     * not relevant for outside parties, but which might be useful for some types of Pools.
-    #     """
-    #     pass
+    @sp.entry_point(lazify=False)
+    def disableRecoveryMode(self):
+        self.onlyAdministrator()
+        sp.verify(self.data.recoveryMode == True, Errors.NOT_IN_RECOVERY_MODE)
+        self._setRecoveryMode(False)
 
 ###########
 # Internal Functions
@@ -376,10 +357,6 @@ class BasePool(
 
         sp.emit(swapFeePercentage, 'SwapFeePercentageChanged')
 
-    # def _computeScalingFactor(self, decimals):
-    #     sp.set_type(decimals, sp.TNat)
-    #     decimalsDifference = sp.as_nat(18 - decimals)
-    #     return FixedPoint.ONE * (self.data.fixedPoint['pow']((sp.nat(10), decimalsDifference)))
 
     def _payProtocolFees(self, sptAmount):
         with sp.if_(sptAmount > 0):
