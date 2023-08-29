@@ -16,6 +16,7 @@ from contracts.pool_weighted.ExternalWeightedMath import IExternalWeightedMath
 
 from contracts.pool_weighted.ExternalWeightedProtocolFees import IExternalWeightedProtocolFees
 
+from contracts.vault.ProtocolFeesCollector import IProtocolFeesCollector
 
 class IWeightedPool:
     def initialize(pool, params):
@@ -182,9 +183,16 @@ class WeightedPool(
             protocolFeesCollector,
         )
 
-    @sp.entry_point
+    @sp.entry_point(lazify = False)
     def updateProtocolFeePercentageCache(self):
         self._beforeProtocolFeeCacheUpdate()
+
+        swapFee = IProtocolFeesCollector.getSwapFeePercentage(self.data.protocolFeesCollector)
+        yielFee = IProtocolFeesCollector.getYieldFeePercentage(self.data.protocolFeesCollector)
+
+        self.data.feeCache = (swapFee, yielFee)
+
+        
 
     def _afterInitializePool(
         self,
@@ -277,7 +285,8 @@ class WeightedPool(
         sp.result(supply + protocolFeesToBeMinted)
 
     def _beforeProtocolFeeCacheUpdate(self):
-        # TODO: Ensure not Paused
+        self.onlyUnpaused()
+        
         supply = sp.compute(self.data.totalSupply)
 
         invariant = self._getInvariant()

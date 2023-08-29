@@ -306,20 +306,25 @@ class BasePool(
             upScaledBalances = sp.compute(self.data.scaling_helpers[0]((
                 params.balances, scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
 
-            result.value = self._beforeExitPool(
+            exitValues = self._beforeExitPool(
                 sp.record(
                     balances=upScaledBalances,
                     scalingFactors=scalingFactors,
                     userData=params.userData
                 )
             )
-        sptAmountIn, amountsOut, invariant = sp.match_tuple(
-            result.value, 'sptAmountIn', 'amountsOut', 'invariant')
 
-        downscaledAmounts = sp.compute(self.data.scaling_helpers[0]((
+            sptAmountIn, amountsOut, invariant = sp.match_tuple(
+            exitValues, 'sptAmountIn', 'amountsOut', 'invariant')
+
+            downscaledAmounts = sp.compute(self.data.scaling_helpers[0]((
             amountsOut, scalingFactors, self.data.fixedPoint[Enums.DIV_DOWN])))
 
-        sp.result((sptAmountIn, downscaledAmounts, invariant))
+            result.value = (sptAmountIn, downscaledAmounts, invariant)
+
+
+
+        sp.result(result.value)
 
     @sp.entry_point(lazify=False)
     def enableRecoveryMode(self):
