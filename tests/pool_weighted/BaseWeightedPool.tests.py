@@ -2,16 +2,18 @@ import smartpy as sp
 
 from contracts.pool_weighted.BaseWeightedPool import BaseWeightedPool
 
+import contracts.interfaces.SymmetricEnums as Enums
 
 class MockBaseWeightedPool(BaseWeightedPool):
     MAX_TOKENS = 8
 
     def __init__(
         self,
+        owner,
         vault,
         name,
         symbol,
-        owner,
+        protocolFeesCollector,
         normalizedWeights
     ):
         self.init(
@@ -21,10 +23,11 @@ class MockBaseWeightedPool(BaseWeightedPool):
         )
         BaseWeightedPool.__init__(
             self,
+            owner,
             vault,
             name,
             symbol,
-            owner,
+            protocolFeesCollector,
         )
 
     @sp.entry_point
@@ -81,7 +84,7 @@ def test():
 
     userData = sp.record(
         amountsIn=amounts,
-        kind='INIT',
+        kind=Enums.INIT,
     )
 
     params = sp.record(
@@ -102,7 +105,7 @@ def test():
     })
     userData2 = sp.record(
         amountsIn=amounts2,
-        kind='EXACT_TOKENS_IN_FOR_SPT_OUT',
+        kind=Enums.EXACT_TOKENS_IN_FOR_SPT_OUT,
         minSPTAmountOut=1,
         tokenIndex=0,
         sptAmountOut=1,
@@ -118,7 +121,7 @@ def test():
 
     userData3 = sp.record(
         amountsIn=amounts2,
-        kind='TOKEN_IN_FOR_EXACT_SPT_OUT',
+        kind=Enums.TOKEN_IN_FOR_EXACT_SPT_OUT,
         minSPTAmountOut=1,
         tokenIndex=0,
         sptAmountOut=1000000000000000000,
@@ -134,7 +137,7 @@ def test():
 
     userData4 = sp.record(
         amountsIn=amounts2,
-        kind='TOKEN_IN_FOR_EXACT_SPT_OUT',
+        kind=Enums.TOKEN_IN_FOR_EXACT_SPT_OUT,
         minSPTAmountOut=1,
         tokenIndex=0,
         sptAmountOut=1000000000000000000,
@@ -149,7 +152,7 @@ def test():
     c.onJoinPool(params4)
 
     exitUserData = sp.record(
-        kind='SPT_IN_FOR_EXACT_TOKENS_OUT',
+        kind=Enums.SPT_IN_FOR_EXACT_TOKENS_OUT,
         maxSPTAmountIn=1000000000000000000,
         amountsOut={0: 1000000000000000000, 1: 1000000000000000000},
         tokenIndex=0,
@@ -164,7 +167,7 @@ def test():
     c.onExitPool(exitParams)
 
     exitUserData = sp.record(
-        kind='EXACT_SPT_IN_FOR_TOKENS_OUT',
+        kind=Enums.EXACT_SPT_IN_FOR_TOKENS_OUT,
         maxSPTAmountIn=1000000000000000000,
         amountsOut={0: 1000000000000000000, 1: 1000000000000000000},
         tokenIndex=0,
@@ -180,7 +183,7 @@ def test():
     c.onExitPool(exitParams2)
 
     exitUserData = sp.record(
-        kind='SPT_IN_FOR_EXACT_TOKENS_OUT',
+        kind=Enums.SPT_IN_FOR_EXACT_TOKENS_OUT,
         maxSPTAmountIn=1000000000000000000,
         amountsOut={0: 1000000000000000000, 1: 1000000000000000000},
         tokenIndex=0,

@@ -12,6 +12,8 @@ from contracts.pool_weighted.ExternalWeightedProtocolFees import ExternalWeighte
 
 import contracts.interfaces.SymmetricEnums as Enums
 
+import tests.helpers.MockSymmetric as helpers 
+
 def normalize_metadata(metadata):
     meta = {}
     for key in metadata:
@@ -31,23 +33,28 @@ class MockRateProvider(sp.Contract):
 
 @sp.add_test(name="VaultIntegrationTest_1", profile=True)
 def test():
-    sc = sp.test_scenario()
-    admin = sp.test_account('Admin')
+    env = helpers.setup_test_environment()
 
-    m = ExternalWeightedMath()
-    sc += m
+    sc = env["scenario"]
 
-    pf = ExternalWeightedProtocolFees()
-    sc += pf
+    v = env["vault"]
+    # sc = sp.test_scenario()
+    # admin = sp.test_account('Admin')
 
-    CONTRACT_METADATA = {
-        "": "ipfs://QmbEE3NYTuhE2Vk8sQap4kkKyFQ2P1X6GDRCufxDCpBkLa",
-    }
-    v = Vault(
-        admin.address,
-        CONTRACT_METADATA,
-    )
-    sc += v
+    # m = ExternalWeightedMath()
+    # sc += m
+
+    # pf = ExternalWeightedProtocolFees()
+    # sc += pf
+
+    # CONTRACT_METADATA = {
+    #     "": "ipfs://QmbEE3NYTuhE2Vk8sQap4kkKyFQ2P1X6GDRCufxDCpBkLa",
+    # }
+    # v = Vault(
+    #     admin.address,
+    #     CONTRACT_METADATA,
+    # )
+    # sc += v
 
     tokens = sp.map({
         0: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(0))),
@@ -109,12 +116,12 @@ def test():
     }))
 
     p = WeightedPool(
-        owner=admin.address,
-        vault=v.address,
+        owner=env["admin"].address,
+        vault=env["vault"].address,
         name="Symm Liqudidty Pool Token",
         symbol="SYMMLP",
-        weightedMathLib=m.address,
-        weightedProtocolFeesLib=pf.address,
+        weightedMathLib=env["math"].address,
+        weightedProtocolFeesLib=env["protocol_fees"].address,
         tokens=tokens,
         normalizedWeights=weights,
         scalingFactors=scalingFactors,
@@ -122,8 +129,7 @@ def test():
         rateProviders=rateProviders,
         exemptFromYieldFees=False,
         feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
-        protocolFeesCollector=sp.address(
-            'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
+        protocolFeesCollector=env["fees_collector"].address,
     )
 
     sc += p
@@ -131,12 +137,12 @@ def test():
     p.initializePool()
 
     p2 = WeightedPool(
-        owner=admin.address,
-        vault=v.address,
+        owner=env["admin"].address,
+        vault=env["vault"].address,
         name="Symm Liqudidty Pool Token",
         symbol="SYMMLP",
-        weightedMathLib=m.address,
-        weightedProtocolFeesLib=pf.address,
+        weightedMathLib=env["math"].address,
+        weightedProtocolFeesLib=env["protocol_fees"].address,
         tokens=tokens,
         normalizedWeights=weights2,
         scalingFactors=scalingFactors,
@@ -144,8 +150,7 @@ def test():
         rateProviders=rateProviders,
         exemptFromYieldFees=False,
         feeCache=(sp.nat(400000000000000000), sp.nat(400000000000000000)),
-        protocolFeesCollector=sp.address(
-            'KT1N5Qpp5DaJzEgEXY1TW6Zne6Eehbxp83XF'),
+        protocolFeesCollector=env["fees_collector"].address,
     )
 
     sc += p2
