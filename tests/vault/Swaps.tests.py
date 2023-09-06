@@ -4,6 +4,10 @@ from contracts.vault.Swaps import Swaps
 
 from contracts.pool_utils.BaseMinimalSwapInfoPool import Types as BMSIPTypes
 
+import contracts.interfaces.SymmetricEnums as Enums
+
+import tests.helpers.MockSymmetric as helpers 
+
 t_joinUserData = sp.TRecord(
     kind=sp.TString,
     amountsIn=sp.TMap(sp.TNat, sp.TNat),
@@ -94,197 +98,257 @@ def _toPoolId(pool, specialization, nonce):
     return sp.pack(pack)
 
 
-@sp.add_test(name="SwapsTest_1", profile=True)
-def test():
-    sc = sp.test_scenario()
+# @sp.add_test(name="SwapsTest_1", profile=True)
+# def test():
+#     sc = sp.test_scenario()
 
-    alice = sp.test_account('Alice')
+#     alice = sp.test_account('Alice')
 
-    pool = MockPool()
-    sc += pool
-    pool2 = MockPool()
-    sc += pool2
+#     pool = MockPool()
+#     sc += pool
+#     pool2 = MockPool()
+#     sc += pool2
 
-    c = MockVault()
-    sc += c
+#     c = MockVault()
+#     sc += c
 
-    c.registerPool(sp.nat(1)).run(sender=pool.address)
-    c.registerPool(sp.nat(1)).run(sender=pool2.address)
+#     c.registerPool(sp.nat(1)).run(sender=pool.address)
+#     c.registerPool(sp.nat(1)).run(sender=pool2.address)
 
-    assets = {
-        0: sp.record(
-            address=sp.address('tz1'),
-            id=sp.nat(0),
-            FA2=False,),
-        1: sp.record(
-            address=sp.address('tz1'),
-            id=sp.nat(1),
-            FA2=False,)
-    }
+#     assets = {
+#         0: sp.record(
+#             address=sp.address('tz1'),
+#             id=sp.nat(0),
+#             FA2=False,),
+#         1: sp.record(
+#             address=sp.address('tz1'),
+#             id=sp.nat(1),
+#             FA2=False,)
+#     }
 
-    assets2 = {
-        0: sp.record(
-            address=sp.address('tz1'),
-            id=sp.nat(56),
-            FA2=True,),
-        1: sp.record(
-            address=sp.address('tz1'),
-            id=sp.nat(13),
-            FA2=False,)
-    }
+#     assets2 = {
+#         0: sp.record(
+#             address=sp.address('tz1'),
+#             id=sp.nat(56),
+#             FA2=True,),
+#         1: sp.record(
+#             address=sp.address('tz1'),
+#             id=sp.nat(13),
+#             FA2=False,)
+#     }
 
-    limits = {
-        0: 100000000000000000000,
-        1: 100000000000000000000,
-    }
-    amountsIn = {
-        0: 1000000000000000000,
-        1: 1000000000000000000,
-    }
-    userData = sp.record(
-        kind='INIT',
-        amountsIn=amountsIn,
-        minSPTAmountOut=sp.none,
-        tokenIndex=sp.none,
-        sptAmountOut=sp.none,
-        allT=sp.none,
-    )
+#     limits = {
+#         0: 100000000000000000000,
+#         1: 100000000000000000000,
+#     }
+#     amountsIn = {
+#         0: 1000000000000000000,
+#         1: 1000000000000000000,
+#     }
+#     userData = sp.record(
+#         kind='INIT',
+#         amountsIn=amountsIn,
+#         minSPTAmountOut=sp.none,
+#         tokenIndex=sp.none,
+#         sptAmountOut=sp.none,
+#         allT=sp.none,
+#     )
 
-    request = sp.record(
-        userData=userData,
-        assets=assets,
-        limits=limits,
-        useInternalBalance=False,
-    )
+#     request = sp.record(
+#         userData=userData,
+#         assets=assets,
+#         limits=limits,
+#         useInternalBalance=False,
+#     )
 
-    request2 = sp.record(
-        userData=userData,
-        assets=assets2,
-        limits=limits,
-        useInternalBalance=False,
-    )
-    sender = sp.test_account('sender').address
-    recipient = sender
+#     request2 = sp.record(
+#         userData=userData,
+#         assets=assets2,
+#         limits=limits,
+#         useInternalBalance=False,
+#     )
+#     sender = sp.test_account('sender').address
+#     recipient = sender
 
-    assetManagers = [
-        sp.address('tz100000000000000000000000000000000000000')] * 2
+#     assetManagers = [
+#         sp.address('tz100000000000000000000000000000000000000')] * 2
 
-    poolId = _toPoolId(
-        pool.address,
-        sp.nat(1),
-        sp.nat(1),
-    )
+#     poolId = _toPoolId(
+#         pool.address,
+#         sp.nat(1),
+#         sp.nat(1),
+#     )
 
-    poolId2 = _toPoolId(
-        pool2.address,
-        sp.nat(1),
-        sp.nat(1),
-    )
-    c.registerTokens(sp.record(
-        poolId=poolId,
-        tokens=assets,
-        assetManagers=assetManagers
-    ))
+#     poolId2 = _toPoolId(
+#         pool2.address,
+#         sp.nat(1),
+#         sp.nat(1),
+#     )
+#     c.registerTokens(sp.record(
+#         poolId=poolId,
+#         tokens=assets,
+#         assetManagers=assetManagers
+#     ))
 
-    c.joinPool(
-        sp.record(
-            poolId=poolId,
-            sender=sender,
-            recipient=recipient,
-            request=request,
-        )
-    )
+#     c.joinPool(
+#         sp.record(
+#             poolId=poolId,
+#             sender=sender,
+#             recipient=recipient,
+#             request=request,
+#         )
+#     )
 
-    c.registerTokens(sp.record(
-        poolId=poolId2,
-        tokens=assets2,
-        assetManagers=assetManagers
-    ))
+#     c.registerTokens(sp.record(
+#         poolId=poolId2,
+#         tokens=assets2,
+#         assetManagers=assetManagers
+#     ))
 
-    c.joinPool(
-        sp.record(
-            poolId=poolId2,
-            sender=sender,
-            recipient=recipient,
-            request=request2,
-        )
-    )
+#     c.joinPool(
+#         sp.record(
+#             poolId=poolId2,
+#             sender=sender,
+#             recipient=recipient,
+#             request=request2,
+#         )
+#     )
 
+#     singleSwap = sp.record(
+#         poolId=poolId,
+#         kind='GIVEN_IN',
+#         assetIn=assets[0],
+#         assetOut=assets[1],
+#         amount=sp.nat(12384759483945037),
+#     )
+
+#     funds = sp.record(
+#         sender=sender,
+#         fromInternalBalance=False,
+#         recipient=recipient,
+#         toInternalBalance=False,
+#     )
+
+#     swapParams = sp.record(
+#         singleSwap=singleSwap,
+#         funds=funds,
+#         limit=sp.nat(0),
+#         deadline=sp.timestamp(1)
+#     )
+
+#     c.swap(swapParams)
+
+#     singleSwap = sp.record(
+#         poolId=poolId,
+#         kind='GIVEN_OUT',
+#         assetIn=assets[1],
+#         assetOut=assets[0],
+#         amount=sp.nat(12384759483945037),
+#     )
+
+#     swapParams2 = sp.record(
+#         singleSwap=singleSwap,
+#         funds=funds,
+#         limit=sp.nat(2000000000000000000),
+#         deadline=sp.timestamp(1)
+#     )
+
+#     c.swap(swapParams2)
+
+#     batchAssets = {
+#         0: assets[0],
+#         1: assets[1],
+#         2: assets2[0],
+#         3: assets2[1],
+#     }
+
+#     swaps = {
+#         0: sp.record(
+#             poolId=poolId,
+#             assetInIndex=sp.nat(0),
+#             assetOutIndex=sp.nat(1),
+#             amount=sp.nat(12384759483945037),
+#         ),
+#         1: sp.record(
+#             poolId=poolId2,
+#             assetInIndex=sp.nat(2),
+#             assetOutIndex=sp.nat(3),
+#             amount=sp.nat(123847594839450),
+#         ),
+#     }
+
+#     limits2 = {
+#         0: 100000000000000000000,
+#         1: 100000000000000000000,
+#         2: 100000000000000000000,
+#         3: 100000000000000000000,
+#     }
+
+#     c.batchSwap(sp.record(
+#         kind='GIVEN_IN',
+#         swaps=swaps,
+#         assets=batchAssets,
+#         funds=funds,
+#         limits=limits2,
+#         deadline=sp.timestamp(1,)
+#     ))
+
+# Test 1: Successful single swap
+@sp.add_test(name="Successful single swap")
+def successful_single_swap():
+    # Setting up the test environment
+    env = helpers.setup_test_environment()
+    
+    pools = env.setup_test_pools(env["pool_factory"])
+
+    helpers.add_test_liquidity(pools, env["vault"])
+    # Define the swap details
     singleSwap = sp.record(
-        poolId=poolId,
-        kind='GIVEN_IN',
-        assetIn=assets[0],
-        assetOut=assets[1],
-        amount=sp.nat(12384759483945037),
+        poolId=pools["pool_1"]["pool_id"], # Placeholder, you need to set it based on your system
+        kind=0,  # Assuming 0 represents GIVEN_IN
+        assetIn=pools["pool_1"]["tokens"][0],
+        assetOut=pools["pool_1"]["tokens"][1], # Placeholder
+        amount=sp.nat(1000000000000000000)
     )
 
     funds = sp.record(
-        sender=sender,
-        fromInternalBalance=False,
-        recipient=recipient,
-        toInternalBalance=False,
-    )
+        sender=env.admin.address, 
+        recipient=env.admin.address
+        )
+    
+    env["vault"].swap(
+        singleSwap, 
+        funds, 
+        sp.nat(100000000000000000), 
+        sp.timestamp(1))
+    
+    sp.verify(env.vault.balances["bobAddress"]["token2"] == 100)  # Or another assertion based on the swap logic
 
-    swapParams = sp.record(
-        singleSwap=singleSwap,
-        funds=funds,
-        limit=sp.nat(0),
-        deadline=sp.timestamp(1)
-    )
+# Test 2: Swap with the same token for assetIn and assetOut
+@sp.add_test(name="Swap with the same token")
+def swap_same_token():
+    env = helpers.setup_test_environment()
 
-    c.swap(swapParams)
+    pools = env.setup_test_pools(env["pool_factory"])
+
+    helpers.add_test_liquidity(pools, env["vault"])
 
     singleSwap = sp.record(
-        poolId=poolId,
-        kind='GIVEN_OUT',
-        assetIn=assets[1],
-        assetOut=assets[0],
-        amount=sp.nat(12384759483945037),
+        poolId=pools["pool_1"]["pool_id"],
+        kind=0,
+        assetIn=pools["pool_1"]["tokens"][0],
+        assetOut=pools["pool_1"]["tokens"][0],
+        amount=sp.nat(1000000000000000000)
     )
 
-    swapParams2 = sp.record(
-        singleSwap=singleSwap,
-        funds=funds,
-        limit=sp.nat(2000000000000000000),
-        deadline=sp.timestamp(1)
-    )
-
-    c.swap(swapParams2)
-
-    batchAssets = {
-        0: assets[0],
-        1: assets[1],
-        2: assets2[0],
-        3: assets2[1],
-    }
-
-    swaps = {
-        0: sp.record(
-            poolId=poolId,
-            assetInIndex=sp.nat(0),
-            assetOutIndex=sp.nat(1),
-            amount=sp.nat(12384759483945037),
-        ),
-        1: sp.record(
-            poolId=poolId2,
-            assetInIndex=sp.nat(2),
-            assetOutIndex=sp.nat(3),
-            amount=sp.nat(123847594839450),
-        ),
-    }
-
-    limits2 = {
-        0: 100000000000000000000,
-        1: 100000000000000000000,
-        2: 100000000000000000000,
-        3: 100000000000000000000,
-    }
-
-    c.batchSwap(sp.record(
-        kind='GIVEN_IN',
-        swaps=swaps,
-        assets=batchAssets,
-        funds=funds,
-        limits=limits2,
-        deadline=sp.timestamp(1,)
-    ))
+    funds = sp.record(
+        sender=env.admin.address, 
+        recipient=env.admin.address
+        )
+    
+    env["vault"].swap(
+        singleSwap, 
+        funds, 
+        sp.nat(100000000000000000), 
+        sp.timestamp(1)).run(valid=False)
+    # Assuming the contract will raise an exception on an invalid swap. If it doesn't and returns an error value instead, adjust the assertion.

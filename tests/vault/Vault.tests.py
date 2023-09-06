@@ -38,23 +38,10 @@ def test():
     sc = env["scenario"]
 
     v = env["vault"]
-    # sc = sp.test_scenario()
-    # admin = sp.test_account('Admin')
 
-    # m = ExternalWeightedMath()
-    # sc += m
+    pools = helpers.setup_test_pools(env["pool_factory"])
 
-    # pf = ExternalWeightedProtocolFees()
-    # sc += pf
-
-    # CONTRACT_METADATA = {
-    #     "": "ipfs://QmbEE3NYTuhE2Vk8sQap4kkKyFQ2P1X6GDRCufxDCpBkLa",
-    # }
-    # v = Vault(
-    #     admin.address,
-    #     CONTRACT_METADATA,
-    # )
-    # sc += v
+    print("pools:", pools)
 
     tokens = sp.map({
         0: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(0))),
@@ -199,7 +186,7 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(p.address, sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(8)),
             sender=sender,
             recipient=recipient,
             request=request,
@@ -208,7 +195,7 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(p2.address, sp.nat(2)),
+            poolId=sp.pair(p2.address, sp.nat(9)),
             sender=sender,
             recipient=recipient,
             request=request,
@@ -232,7 +219,7 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(p.address, sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(8)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
@@ -241,7 +228,7 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(p2.address, sp.nat(2)),
+            poolId=sp.pair(p2.address, sp.nat(9)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
@@ -275,7 +262,7 @@ def test():
 
     v.exitPool(
         sp.record(
-            poolId=sp.pair(p.address, sp.nat(1)),
+            poolId=sp.pair(p.address, sp.nat(8)),
             sender=sender,
             recipient=recipient,
             request=exitRequest,
@@ -284,7 +271,7 @@ def test():
 
     v.exitPool(
         sp.record(
-            poolId=sp.pair(p2.address, sp.nat(2)),
+            poolId=sp.pair(p2.address, sp.nat(9)),
             sender=sender,
             recipient=recipient,
             request=exitRequest,
@@ -292,7 +279,7 @@ def test():
     )
 
     singleSwap = sp.record(
-        poolId=sp.pair(p.address, sp.nat(1)),
+        poolId=sp.pair(p.address, sp.nat(8)),
         kind=Enums.GIVEN_IN,
         assetIn=tokens[0],
         assetOut=tokens[1],
@@ -300,7 +287,7 @@ def test():
     )
 
     singleSwap2 = sp.record(
-        poolId=sp.pair(p2.address, sp.nat(2)),
+        poolId=sp.pair(p2.address, sp.nat(9)),
         kind=Enums.GIVEN_IN,
         assetIn=tokens[0],
         assetOut=tokens[1],

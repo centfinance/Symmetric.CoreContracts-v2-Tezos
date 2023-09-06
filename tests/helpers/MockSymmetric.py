@@ -12,10 +12,7 @@ from contracts.pool_weighted.ExternalWeightedMath import ExternalWeightedMath
 
 from contracts.pool_weighted.ExternalWeightedProtocolFees import ExternalWeightedProtocolFees
 
-from tests.tokens.fa12 import FA12
-
-from tests.tokens.fa2 import FA2
-
+import contracts.interfaces.SymmetricEnums as Enums
 
 def setup_test_environment():
     # Initialize test scenario and accounts
@@ -82,7 +79,7 @@ def setup_test_environment():
 #     }
 
 #     # Add fa12_tokens to sc
-def normalize_metadata(self, metadata):
+def normalize_metadata(metadata):
         meta = {}
         for key in metadata:
             meta[key] = sp.utils.bytes_of_string(metadata[key])
@@ -92,12 +89,8 @@ def normalize_metadata(self, metadata):
 
 
 
-def setup_test_pools(sc, factory):
+def setup_test_pools(factory):
     
-    CONTRACT_METADATA= {
-        "": "<ipfs://....>",
-    }
-
     TOKEN_METADATA = {
             "name": "SYMM LP",
             "symbol": "SLP",
@@ -151,31 +144,260 @@ def setup_test_pools(sc, factory):
         normalizedWeights_map = {}
         tokenDecimals_map = {}
         rateProviders_map = {}
-        token_metadata_map = {}
         
         for idx, token_key in enumerate(tokens_list):
             tokens_map[idx] = TOKENS[token_key]
-            normalizedWeights_map[idx] = sp.nat(weights_list[idx] * (10 ** 18))
+            normalizedWeights_map[idx] = sp.nat(int(weights_list[idx] * (10 ** 18)))
             tokenDecimals_map[idx] = DECIMALS[token_key]
             rateProviders_map[idx] = RATE_PROVIDERS[token_key]
-            token_metadata_map[idx] = sp.record(token_id=idx, token_info=normalize_metadata(TOKEN_METADATA))
             
         factory.create(
             tokens=sp.map(tokens_map),
             normalizedWeights=sp.map(normalizedWeights_map),
             tokenDecimals=sp.map(tokenDecimals_map),
-            rateProviders=sp.map(rateProviders_map),
-            swapFeePercentage=sp.nat(swapFeePercentage * (10 ** 18)),
-            metadata=sp.big_map(normalize_metadata(CONTRACT_METADATA)),
-            token_metadata=sp.big_map(token_metadata_map)
+            rateProviders=sp.some(sp.map(rateProviders_map)),
+            swapFeePercentage=sp.nat(int(swapFeePercentage * (10 ** 18))),
+            metadata=sp.utils.bytes_of_string("<ipfs://....>"),
+            token_metadata=normalize_metadata(TOKEN_METADATA)
         )
-        factory.init()
+        address = factory.data.lastPool
+
+        factory.initialize()
+
+        return address
     
     # Pools with varied weights
-    create_pool(["SYMM", "CTZ"], 0.01, [0.4, 0.6])
-    create_pool(["SYMM", "USDT", "uBTC"], 0.02, [0.3, 0.5, 0.2])
-    create_pool(["SYMM", "USDT", "uBTC", "uXTZ"], 0.025, [0.25, 0.25, 0.3, 0.2])
-    create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU"], 0.03, [0.2, 0.2, 0.2, 0.2, 0.2])
-    create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC"], 0.035, [0.2, 0.15, 0.15, 0.15, 0.15, 0.2])
-    create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY"], 0.04, [0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.25])
-    create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY", "wUSDC"], 0.045, [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2])
+    pool_1 = create_pool(["SYMM", "CTZ"], 0.01, [0.4, 0.6])
+    pool_2 = create_pool(["SYMM", "USDT", "uBTC"], 0.02, [0.3, 0.5, 0.2])
+    pool_3 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ"], 0.025, [0.25, 0.25, 0.3, 0.2])
+    pool_4 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU"], 0.03, [0.2, 0.2, 0.2, 0.2, 0.2])
+    pool_5 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC"], 0.035, [0.2, 0.15, 0.15, 0.15, 0.15, 0.2])
+    pool_6 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY"], 0.04, [0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.25])
+    pool_7 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY", "wUSDC"], 0.045, [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2])
+
+    return {
+        "pool_1": {
+          "pool_id": sp.pair(pool_1, sp.nat(1)),
+          "tokens": {
+            0: TOKENS['SYMM'],
+            1: TOKENS['CTZ'],
+          },
+          "decimals": {
+            0: DECIMALS['SYMM'],
+            1: DECIMALS['CTZ'],
+            },
+          "weights": [0.4, 0.6],
+          },
+        "pool_2": {
+          "pool_id": sp.pair(pool_2, sp.nat(2)),
+          "tokens": {
+            0: TOKENS['SYMM'],
+            1: TOKENS['USDT'],
+            2: TOKENS['uBTC'],
+          },
+          "decimals": {
+            0: DECIMALS['SYMM'],
+            1: DECIMALS['CTZ'],
+            2: DECIMALS['uBTC'],
+            },
+          "weights": [0.3, 0.5, 0.2],
+          },
+        "pool_3": {
+          "pool_id": sp.pair(pool_3, sp.nat(3)),
+          "tokens": {
+            0: TOKENS['SYMM'],
+            1: TOKENS['USDT'],
+            2: TOKENS['uBTC'],
+            3: TOKENS['uXTZ'],
+          },
+          "decimals": {
+            0: DECIMALS['SYMM'],
+            1: DECIMALS['USDT'],
+            2: DECIMALS['uBTC'],
+            3: DECIMALS['uXTZ'],
+          },
+          "weights": [0.25, 0.25, 0.3, 0.2],
+          },
+        "pool_4": {
+          "pool_id": sp.pair(pool_4, sp.nat(4)),
+          "tokens": {
+            0: TOKENS['SYMM'],
+            1: TOKENS['USDT'],
+            2: TOKENS['uBTC'],
+            3: TOKENS['uXTZ'],
+            4: TOKENS['YOU'],
+          },
+          "decimals": {
+            0: DECIMALS['SYMM'],
+            1: DECIMALS['USDT'],
+            2: DECIMALS['uBTC'],
+            3: DECIMALS['uXTZ'],
+            4: DECIMALS['YOU'],
+          },
+          "weights": [0.2, 0.2, 0.2, 0.2, 0.2],
+          },
+        "pool_5": {
+          "pool_id": sp.pair(pool_5, sp.nat(5)),
+          "tokens": {
+            0: TOKENS['SYMM'],
+            1: TOKENS['USDT'],
+            2: TOKENS['uBTC'],
+            3: TOKENS['uXTZ'],
+            4: TOKENS['YOU'],
+            5: TOKENS['tzBTC'],
+          },
+          "decimals": {
+            0: DECIMALS['SYMM'],
+            1: DECIMALS['USDT'],
+            2: DECIMALS['uBTC'],
+            3: DECIMALS['uXTZ'],
+            4: DECIMALS['YOU'],
+            5: DECIMALS['tzBTC'],
+          },
+          "weights": [0.2, 0.15, 0.15, 0.15, 0.15, 0.2],
+          },
+        "pool_6": {
+          "pool_id": sp.pair(pool_6, sp.nat(6)),
+          "tokens": {
+            0: TOKENS['SYMM'],
+            1: TOKENS['USDT'],
+            2: TOKENS['uBTC'],
+            3: TOKENS['uXTZ'],
+            4: TOKENS['YOU'],
+            5: TOKENS['tzBTC'],
+            6: TOKENS['PLY'],
+          },
+          "decimals": {
+            0: DECIMALS['SYMM'],
+            1: DECIMALS['USDT'],
+            2: DECIMALS['uBTC'],
+            3: DECIMALS['uXTZ'],
+            4: DECIMALS['YOU'],
+            5: DECIMALS['tzBTC'],
+            6: DECIMALS['PLY'],
+          },
+          "weights": [0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.25],
+          },
+        "pool_7": {
+          "pool_id": sp.pair(pool_7, sp.nat(7)),
+          "tokens": {
+            0: TOKENS['SYMM'],
+            1: TOKENS['USDT'],
+            2: TOKENS['uBTC'],
+            3: TOKENS['uXTZ'],
+            4: TOKENS['YOU'],
+            5: TOKENS['tzBTC'],
+            6: TOKENS['PLY'],
+            7: TOKENS['wUSDC'],
+          },
+          "decimals": {
+            0: DECIMALS['SYMM'],
+            1: DECIMALS['USDT'],
+            2: DECIMALS['uBTC'],
+            3: DECIMALS['uXTZ'],
+            4: DECIMALS['YOU'],
+            5: DECIMALS['tzBTC'],
+            6: DECIMALS['PLY'],
+            7: DECIMALS['wUSDC'],
+          },
+          "weights": [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2],
+          },
+    }
+
+def add_test_liquidity(pools, vault):
+    sender = sp.test_account('sender').address
+    recipient = sender
+
+    # Mock prices for tokens
+    PRICES = {
+        "SYMM": 1,
+        "CTZ": 1.2,
+        "USDT": 1,
+        "uUSD": 1,
+        "uBTC": 50000,
+        "uXTZ": 3,
+        "YOU": 2,
+        "tzBTC": 50000,
+        "PLY": 0.5,
+        "wUSDC": 1,
+    }
+
+    BASE_AMOUNT = 1000000000000000000  # Representing 1 in the 18 decimal format
+
+    # Loop through each pool and add liquidity
+    for pool_name, pool_data in pools.items():
+        amountsIn = {}
+        limits = {}
+
+        for token_idx, token_key in pool_data["tokens"].items():
+            weight = pool_data["weights"][token_idx]
+            decimal = pool_data["decimals"][token_idx]
+            mock_price = PRICES[token_key[0]]  # [0] to get the token name
+            amount = int(BASE_AMOUNT * weight * mock_price)
+
+            # Adjust for token decimals
+            amountsIn[token_idx] = sp.nat(amount * (10 ** decimal))
+            limits[token_idx] = sp.nat(amount * (10 ** (decimal + 2)))  # +2 for 100x limit
+
+        userData = sp.record(
+            kind=Enums.INIT,
+            amountsIn=sp.some(amountsIn),
+            minSPTAmountOut=sp.none,
+            tokenIndex=sp.none,
+            sptAmountOut=sp.none,
+            allT=sp.none,
+        )
+
+        request = sp.record(
+            userData=userData,
+            assets=pool_data["tokens"],
+            limits=limits,
+        )
+
+        vault.joinPool(
+            sp.record(
+                poolId=pool_data["pool_id"],
+                sender=sender,
+                recipient=recipient,
+                request=request,
+            )
+        )
+
+
+# def add_test_liquidity(pools, vault):
+#     sender = sp.test_account('sender').address
+#     recipient = sender
+
+#     amountsIn = {
+#         0: sp.nat(1000000000000000000000),
+#         1: sp.nat(1000000000000000000000),
+#     }
+
+#     userData = sp.record(
+#         kind=Enums.INIT,
+#         amountsIn=sp.some(amountsIn),
+#         minSPTAmountOut=sp.none,
+#         tokenIndex=sp.none,
+#         sptAmountOut=sp.none,
+#         allT=sp.none,
+#     )
+
+#     limits = {
+#         0: 100000000000000000000000,
+#         1: 100000000000000000000000,
+#     }
+
+#     request = sp.record(
+#         userData=userData,
+#         assets=pools["pool_1"]["tokens"],
+#         limits=limits,
+#     )
+
+#     vault.joinPool(
+#         sp.record(
+#             poolId=pools["pool_1"]["pool_id"],
+#             sender=sender,
+#             recipient=recipient,
+#             request=request,
+#         )
+#     )
