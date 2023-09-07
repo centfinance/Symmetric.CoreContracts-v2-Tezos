@@ -70,11 +70,11 @@ class WeightedMath:
     ):
         sp.verify(amountIn <= math[Enums.MUL_DOWN]((balanceIn,
                                                WeightedMath._MAX_IN_RATIO)), Errors.MAX_IN_RATIO)
-
         denominator = balanceIn + amountIn
         base = math[Enums.DIV_UP]((balanceIn, denominator))
         exponent = math[Enums.DIV_DOWN]((weightIn, weightOut))
         power = math[Enums.POW_UP]((base, exponent))
+
         return math[Enums.MUL_DOWN]((balanceOut, WeightedMath.complement(power)))
 
     def _calcInGivenOut(

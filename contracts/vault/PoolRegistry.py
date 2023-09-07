@@ -1,5 +1,8 @@
 import smartpy as sp
 
+import contracts.interfaces.SymmetricErrors as Errors
+
+
 
 class PoolRegistry:
     def __init__(self):
@@ -30,3 +33,6 @@ class PoolRegistry:
     @sp.onchain_view()
     def getNextPoolNonce(self):
         sp.result(self.data.nextPoolNonce)
+
+    def _ensureRegisteredPool(self, poolId):
+        sp.verify(self.data.isPoolRegistered.contains(poolId), Errors.INVALID_POOL_ID)

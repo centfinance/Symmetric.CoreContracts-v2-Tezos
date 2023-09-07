@@ -58,6 +58,9 @@ class PoolBalances(
         recipient,
         request
     ):
+        sp.verify(sender == sp.source, Errors.SENDER_NOT_ALLOWED)
+        self._ensureRegisteredPool(poolId)
+        
         balances = self._validateTokensAndGetBalances(
             sp.record(
                 poolId=poolId,
@@ -117,6 +120,8 @@ class PoolBalances(
         recipient,
         request
     ):
+        sp.verify(sender == sp.source, Errors.SENDER_NOT_ALLOWED )
+        self._ensureRegisteredPool(poolId)
         balances = self._validateTokensAndGetBalances(
             sp.record(
                 poolId=poolId,
@@ -177,7 +182,6 @@ class PoolBalances(
         balances,
         amountsIn,
     ):
-       #  wrappedXtz = sp.compute(0)
 
         joinBalances = sp.compute(
             sp.map(l={}, tkey=sp.TNat, tvalue=sp.TPair(sp.TNat, sp.TNat)))

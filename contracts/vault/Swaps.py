@@ -65,6 +65,8 @@ class Swaps(PoolBalances):
         deadline,
     ):
         self.onlyUnpaused()
+        sp.verify(funds.sender == sp.source, Errors.SENDER_NOT_ALLOWED )
+
         sp.verify(sp.now <= deadline, Errors.SWAP_DEADLINE)
 
         sp.verify(singleSwap.amount > 0,
@@ -115,6 +117,9 @@ class Swaps(PoolBalances):
         deadline,
     ):
         self.onlyUnpaused()
+        
+        sp.verify(funds.sender == sp.source, Errors.SENDER_NOT_ALLOWED )
+        
         sp.verify(sp.now <= deadline, Errors.SWAP_DEADLINE)
 
         sp.verify(sp.len(assets) == sp.len(limits),
@@ -126,8 +131,7 @@ class Swaps(PoolBalances):
                 assets=assets,
                 funds=funds,
                 kind=kind))
-        # TODO: Handle remaining Tez
-        # wrappedTez = 0
+
         with sp.for_('i', sp.range(0, sp.len(assets))) as i:
             asset = assets[i]
             delta = assetDeltas[i]
@@ -137,9 +141,7 @@ class Swaps(PoolBalances):
                 toReceive = sp.as_nat(delta)
                 AssetTransfersHandler._receiveAsset(
                     asset, toReceive, funds.sender)
-                # TODO: Handle remaining Tez
-                # if (_isETH(asset)) {
-                #     wrappedEth = wrappedEth.add(toReceive);
+
             with sp.if_(delta < 0):
                 toSend = abs(delta)
                 AssetTransfersHandler._sendAsset(

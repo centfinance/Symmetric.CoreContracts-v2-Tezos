@@ -41,8 +41,6 @@ def test():
 
     pools = helpers.setup_test_pools(env["pool_factory"])
 
-    print("pools:", pools)
-
     tokens = sp.map({
         0: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(0))),
         1: (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.some(sp.nat(1))),
@@ -66,8 +64,8 @@ def test():
     })
 
     weights2 = sp.map({
-        0: sp.nat(800000000000000000),
-        1: sp.nat(200000000000000000),
+        0: sp.nat(600000000000000000),
+        1: sp.nat(400000000000000000),
         # 2: sp.nat(125000000000000000),
         # 3: sp.nat(125000000000000000),
         # 4: sp.nat(125000000000000000),
@@ -186,21 +184,21 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(p.address, sp.nat(8)),
+            poolId=sp.pair(p.address, sp.nat(2)),
             sender=sender,
             recipient=recipient,
             request=request,
         )
-    )
+    ).run(source=sender)
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(p2.address, sp.nat(9)),
+            poolId=sp.pair(p2.address, sp.nat(3)),
             sender=sender,
             recipient=recipient,
             request=request,
         )
-    )
+    ).run(source=sender)
 
     joinUserData = sp.record(
         kind=Enums.EXACT_TOKENS_IN_FOR_SPT_OUT,
@@ -219,21 +217,21 @@ def test():
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(p.address, sp.nat(8)),
+            poolId=sp.pair(p.address, sp.nat(2)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
         )
-    )
+    ).run(source=sender)
 
     v.joinPool(
         sp.record(
-            poolId=sp.pair(p2.address, sp.nat(9)),
+            poolId=sp.pair(p2.address, sp.nat(3)),
             sender=sender,
             recipient=recipient,
             request=joinRequest,
         )
-    )
+    ).run(source=sender)
     
     exitLimits = {
         0: 1000000,
@@ -262,24 +260,24 @@ def test():
 
     v.exitPool(
         sp.record(
-            poolId=sp.pair(p.address, sp.nat(8)),
+            poolId=sp.pair(p.address, sp.nat(2)),
             sender=sender,
             recipient=recipient,
             request=exitRequest,
         )
-    )
+    ).run(source=sender)
 
     v.exitPool(
         sp.record(
-            poolId=sp.pair(p2.address, sp.nat(9)),
+            poolId=sp.pair(p2.address, sp.nat(3)),
             sender=sender,
             recipient=recipient,
             request=exitRequest,
         )
-    )
+    ).run(source=sender)
 
     singleSwap = sp.record(
-        poolId=sp.pair(p.address, sp.nat(8)),
+        poolId=sp.pair(p.address, sp.nat(2)),
         kind=Enums.GIVEN_IN,
         assetIn=tokens[0],
         assetOut=tokens[1],
@@ -287,7 +285,7 @@ def test():
     )
 
     singleSwap2 = sp.record(
-        poolId=sp.pair(p2.address, sp.nat(9)),
+        poolId=sp.pair(p2.address, sp.nat(3)),
         kind=Enums.GIVEN_IN,
         assetIn=tokens[0],
         assetOut=tokens[1],
@@ -313,9 +311,9 @@ def test():
         deadline=sp.timestamp(1)
     )
 
-    v.swap(swapParams)
+    v.swap(swapParams).run(source=sender)
 
-    v.swap(swapParams2)
+    v.swap(swapParams2).run(source=sender)
 
     # supply = p.getActualSupply()
     # sc.show(supply)

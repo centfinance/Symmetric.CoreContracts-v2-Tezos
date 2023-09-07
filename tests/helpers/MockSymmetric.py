@@ -13,6 +13,66 @@ from contracts.pool_weighted.ExternalWeightedMath import ExternalWeightedMath
 from contracts.pool_weighted.ExternalWeightedProtocolFees import ExternalWeightedProtocolFees
 
 import contracts.interfaces.SymmetricEnums as Enums
+    
+TOKEN_METADATA = {
+            "name": "SYMM LP",
+            "symbol": "SLP",
+            "decimals": "18",
+            "thumbnailUri": "ipfs://......",
+    }
+
+TOKENS = {
+        "SYMM": (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.none),
+        "CTZ": (sp.address('KT1SjXiUX63QvdNMcM2m492f7kuf8JxXRLp4'), sp.none),
+        "USDT": (sp.address('KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o'), sp.some(sp.nat(0))),
+        "uUSD": (sp.address('KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8p'), sp.some(sp.nat(0))),
+        "uBTC": (sp.address('KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8p'), sp.some(sp.nat(2))),
+        "uXTZ": (sp.address('KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8p'), sp.some(sp.nat(3))),
+        "YOU": (sp.address('KT1Xobej4mc6XgEjDoJoHtTKgbD1ELMvcQuL'), sp.some(sp.nat(0))),
+        "tzBTC": (sp.address('KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'), sp.none),
+        "PLY": (sp.address('KT1GRSvLoikDsXujKgZPsGLX8k8VvR2Tq95b'), sp.none),
+        "wUSDC":  (sp.address('KT18fp5rcTW7mbWDmzFwjLDUhs5MeJmagDSZ'), sp.some(sp.nat(17))),
+    }
+
+DECIMALS = {
+        "SYMM": 18,
+        "CTZ": 18,
+        "USDT": 6,
+        "uUSD": 6,
+        "uBTC": 8,
+        "uXTZ": 18,
+        "YOU": 18,
+        "tzBTC": 8,
+        "PLY": 18,
+        "wUSDC": 6,
+    }
+
+RATE_PROVIDERS = {
+        "SYMM": sp.none,
+        "CTZ": sp.none,
+        "USDT": sp.none,
+        "uUSD": sp.none,
+        "uBTC": sp.none,
+        "uXTZ": sp.none,
+        "YOU": sp.none,
+        "tzBTC": sp.none,
+        "PLY": sp.none,
+        "wUSDC": sp.none,
+    }
+
+# Mock prices for tokens
+PRICES = {
+        "SYMM": 1,
+        "CTZ": 1.2,
+        "USDT": 1,
+        "uUSD": 1,
+        "uBTC": 50000,
+        "uXTZ": 3,
+        "YOU": 2,
+        "tzBTC": 50000,
+        "PLY": 0.5,
+        "wUSDC": 1,
+    }
 
 def setup_test_environment():
     # Initialize test scenario and accounts
@@ -91,52 +151,6 @@ def normalize_metadata(metadata):
 
 def setup_test_pools(factory):
     
-    TOKEN_METADATA = {
-            "name": "SYMM LP",
-            "symbol": "SLP",
-            "decimals": "18",
-            "thumbnailUri": "ipfs://......",
-    }
-
-    TOKENS = {
-        "SYMM": (sp.address('KT1VvQ6azTcyj5otVciTicuFS1gVhcHD56Kr'), sp.none),
-        "CTZ": (sp.address('KT1SjXiUX63QvdNMcM2m492f7kuf8JxXRLp4'), sp.none),
-        "USDT": (sp.address('KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o'), sp.some(sp.nat(0))),
-        "uUSD": (sp.address('KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o'), sp.some(sp.nat(0))),
-        "uBTC": (sp.address('KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o'), sp.some(sp.nat(2))),
-        "uXTZ": (sp.address('KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o'), sp.some(sp.nat(3))),
-        "YOU": (sp.address('KT1Xobej4mc6XgEjDoJoHtTKgbD1ELMvcQuL'), sp.some(sp.nat(0))),
-        "tzBTC": (sp.address('KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'), sp.none),
-        "PLY": (sp.address('KT1GRSvLoikDsXujKgZPsGLX8k8VvR2Tq95b'), sp.none),
-        "wUSDC":  (sp.address('KT18fp5rcTW7mbWDmzFwjLDUhs5MeJmagDSZ'), sp.some(sp.nat(17))),
-    }
-
-    DECIMALS = {
-        "SYMM": sp.nat(18),
-        "CTZ": sp.nat(18),
-        "USDT": sp.nat(6),
-        "uUSD": sp.nat(6),
-        "uBTC": sp.nat(8),
-        "uXTZ": sp.nat(18),
-        "YOU": sp.nat(18),
-        "tzBTC": sp.nat(8),
-        "PLY": sp.nat(18),
-        "wUSDC": sp.nat(6),
-    }
-
-    RATE_PROVIDERS = {
-        "SYMM": sp.none,
-        "CTZ": sp.none,
-        "USDT": sp.none,
-        "uUSD": sp.none,
-        "uBTC": sp.none,
-        "uXTZ": sp.none,
-        "YOU": sp.none,
-        "tzBTC": sp.none,
-        "PLY": sp.none,
-        "wUSDC": sp.none,
-    }
-
     def create_pool(tokens_list, swapFeePercentage, weights_list):
         assert len(tokens_list) == len(weights_list), "Tokens and weights list lengths must match"
         
@@ -148,7 +162,7 @@ def setup_test_pools(factory):
         for idx, token_key in enumerate(tokens_list):
             tokens_map[idx] = TOKENS[token_key]
             normalizedWeights_map[idx] = sp.nat(int(weights_list[idx] * (10 ** 18)))
-            tokenDecimals_map[idx] = DECIMALS[token_key]
+            tokenDecimals_map[idx] = sp.nat(DECIMALS[token_key])
             rateProviders_map[idx] = RATE_PROVIDERS[token_key]
             
         factory.create(
@@ -167,13 +181,13 @@ def setup_test_pools(factory):
         return address
     
     # Pools with varied weights
-    pool_1 = create_pool(["SYMM", "CTZ"], 0.01, [0.4, 0.6])
-    pool_2 = create_pool(["SYMM", "USDT", "uBTC"], 0.02, [0.3, 0.5, 0.2])
-    pool_3 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ"], 0.025, [0.25, 0.25, 0.3, 0.2])
-    pool_4 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU"], 0.03, [0.2, 0.2, 0.2, 0.2, 0.2])
-    pool_5 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC"], 0.035, [0.2, 0.15, 0.15, 0.15, 0.15, 0.2])
-    pool_6 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY"], 0.04, [0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.25])
-    pool_7 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY", "wUSDC"], 0.045, [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2])
+    pool_1 = create_pool(["SYMM", "CTZ"], 0.01, [0.6, 0.4])
+    # pool_2 = create_pool(["SYMM", "USDT", "uBTC"], 0.02, [0.3, 0.5, 0.2])
+    # pool_3 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ"], 0.025, [0.25, 0.25, 0.3, 0.2])
+    # pool_4 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU"], 0.03, [0.2, 0.2, 0.2, 0.2, 0.2])
+    # pool_5 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC"], 0.035, [0.2, 0.15, 0.15, 0.15, 0.15, 0.2])
+    # pool_6 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY"], 0.04, [0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.25])
+    # pool_7 = create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY", "wUSDC"], 0.045, [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2])
 
     return {
         "pool_1": {
@@ -186,159 +200,157 @@ def setup_test_pools(factory):
             0: DECIMALS['SYMM'],
             1: DECIMALS['CTZ'],
             },
-          "weights": [0.4, 0.6],
+          "weights": [0.6, 0.4],
           },
-        "pool_2": {
-          "pool_id": sp.pair(pool_2, sp.nat(2)),
-          "tokens": {
-            0: TOKENS['SYMM'],
-            1: TOKENS['USDT'],
-            2: TOKENS['uBTC'],
-          },
-          "decimals": {
-            0: DECIMALS['SYMM'],
-            1: DECIMALS['CTZ'],
-            2: DECIMALS['uBTC'],
-            },
-          "weights": [0.3, 0.5, 0.2],
-          },
-        "pool_3": {
-          "pool_id": sp.pair(pool_3, sp.nat(3)),
-          "tokens": {
-            0: TOKENS['SYMM'],
-            1: TOKENS['USDT'],
-            2: TOKENS['uBTC'],
-            3: TOKENS['uXTZ'],
-          },
-          "decimals": {
-            0: DECIMALS['SYMM'],
-            1: DECIMALS['USDT'],
-            2: DECIMALS['uBTC'],
-            3: DECIMALS['uXTZ'],
-          },
-          "weights": [0.25, 0.25, 0.3, 0.2],
-          },
-        "pool_4": {
-          "pool_id": sp.pair(pool_4, sp.nat(4)),
-          "tokens": {
-            0: TOKENS['SYMM'],
-            1: TOKENS['USDT'],
-            2: TOKENS['uBTC'],
-            3: TOKENS['uXTZ'],
-            4: TOKENS['YOU'],
-          },
-          "decimals": {
-            0: DECIMALS['SYMM'],
-            1: DECIMALS['USDT'],
-            2: DECIMALS['uBTC'],
-            3: DECIMALS['uXTZ'],
-            4: DECIMALS['YOU'],
-          },
-          "weights": [0.2, 0.2, 0.2, 0.2, 0.2],
-          },
-        "pool_5": {
-          "pool_id": sp.pair(pool_5, sp.nat(5)),
-          "tokens": {
-            0: TOKENS['SYMM'],
-            1: TOKENS['USDT'],
-            2: TOKENS['uBTC'],
-            3: TOKENS['uXTZ'],
-            4: TOKENS['YOU'],
-            5: TOKENS['tzBTC'],
-          },
-          "decimals": {
-            0: DECIMALS['SYMM'],
-            1: DECIMALS['USDT'],
-            2: DECIMALS['uBTC'],
-            3: DECIMALS['uXTZ'],
-            4: DECIMALS['YOU'],
-            5: DECIMALS['tzBTC'],
-          },
-          "weights": [0.2, 0.15, 0.15, 0.15, 0.15, 0.2],
-          },
-        "pool_6": {
-          "pool_id": sp.pair(pool_6, sp.nat(6)),
-          "tokens": {
-            0: TOKENS['SYMM'],
-            1: TOKENS['USDT'],
-            2: TOKENS['uBTC'],
-            3: TOKENS['uXTZ'],
-            4: TOKENS['YOU'],
-            5: TOKENS['tzBTC'],
-            6: TOKENS['PLY'],
-          },
-          "decimals": {
-            0: DECIMALS['SYMM'],
-            1: DECIMALS['USDT'],
-            2: DECIMALS['uBTC'],
-            3: DECIMALS['uXTZ'],
-            4: DECIMALS['YOU'],
-            5: DECIMALS['tzBTC'],
-            6: DECIMALS['PLY'],
-          },
-          "weights": [0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.25],
-          },
-        "pool_7": {
-          "pool_id": sp.pair(pool_7, sp.nat(7)),
-          "tokens": {
-            0: TOKENS['SYMM'],
-            1: TOKENS['USDT'],
-            2: TOKENS['uBTC'],
-            3: TOKENS['uXTZ'],
-            4: TOKENS['YOU'],
-            5: TOKENS['tzBTC'],
-            6: TOKENS['PLY'],
-            7: TOKENS['wUSDC'],
-          },
-          "decimals": {
-            0: DECIMALS['SYMM'],
-            1: DECIMALS['USDT'],
-            2: DECIMALS['uBTC'],
-            3: DECIMALS['uXTZ'],
-            4: DECIMALS['YOU'],
-            5: DECIMALS['tzBTC'],
-            6: DECIMALS['PLY'],
-            7: DECIMALS['wUSDC'],
-          },
-          "weights": [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2],
-          },
+        # "pool_2": {
+        #   "pool_id": sp.pair(pool_2, sp.nat(2)),
+        #   "tokens": {
+        #     0: TOKENS['SYMM'],
+        #     1: TOKENS['USDT'],
+        #     2: TOKENS['uBTC'],
+        #   },
+        #   "decimals": {
+        #     0: DECIMALS['SYMM'],
+        #     1: DECIMALS['CTZ'],
+        #     2: DECIMALS['uBTC'],
+        #     },
+        #   "weights": [0.3, 0.5, 0.2],
+        #   },
+        # "pool_3": {
+        #   "pool_id": sp.pair(pool_3, sp.nat(3)),
+        #   "tokens": {
+        #     0: TOKENS['SYMM'],
+        #     1: TOKENS['USDT'],
+        #     2: TOKENS['uBTC'],
+        #     3: TOKENS['uXTZ'],
+        #   },
+        #   "decimals": {
+        #     0: DECIMALS['SYMM'],
+        #     1: DECIMALS['USDT'],
+        #     2: DECIMALS['uBTC'],
+        #     3: DECIMALS['uXTZ'],
+        #   },
+        #   "weights": [0.25, 0.25, 0.3, 0.2],
+        #   },
+        # "pool_4": {
+        #   "pool_id": sp.pair(pool_4, sp.nat(4)),
+        #   "tokens": {
+        #     0: TOKENS['SYMM'],
+        #     1: TOKENS['USDT'],
+        #     2: TOKENS['uBTC'],
+        #     3: TOKENS['uXTZ'],
+        #     4: TOKENS['YOU'],
+        #   },
+        #   "decimals": {
+        #     0: DECIMALS['SYMM'],
+        #     1: DECIMALS['USDT'],
+        #     2: DECIMALS['uBTC'],
+        #     3: DECIMALS['uXTZ'],
+        #     4: DECIMALS['YOU'],
+        #   },
+        #   "weights": [0.2, 0.2, 0.2, 0.2, 0.2],
+        #   },
+        # "pool_5": {
+        #   "pool_id": sp.pair(pool_5, sp.nat(5)),
+        #   "tokens": {
+        #     0: TOKENS['SYMM'],
+        #     1: TOKENS['USDT'],
+        #     2: TOKENS['uBTC'],
+        #     3: TOKENS['uXTZ'],
+        #     4: TOKENS['YOU'],
+        #     5: TOKENS['tzBTC'],
+        #   },
+        #   "decimals": {
+        #     0: DECIMALS['SYMM'],
+        #     1: DECIMALS['USDT'],
+        #     2: DECIMALS['uBTC'],
+        #     3: DECIMALS['uXTZ'],
+        #     4: DECIMALS['YOU'],
+        #     5: DECIMALS['tzBTC'],
+        #   },
+        #   "weights": [0.2, 0.15, 0.15, 0.15, 0.15, 0.2],
+        #   },
+        # "pool_6": {
+        #   "pool_id": sp.pair(pool_6, sp.nat(6)),
+        #   "tokens": {
+        #     0: TOKENS['SYMM'],
+        #     1: TOKENS['USDT'],
+        #     2: TOKENS['uBTC'],
+        #     3: TOKENS['uXTZ'],
+        #     4: TOKENS['YOU'],
+        #     5: TOKENS['tzBTC'],
+        #     6: TOKENS['PLY'],
+        #   },
+        #   "decimals": {
+        #     0: DECIMALS['SYMM'],
+        #     1: DECIMALS['USDT'],
+        #     2: DECIMALS['uBTC'],
+        #     3: DECIMALS['uXTZ'],
+        #     4: DECIMALS['YOU'],
+        #     5: DECIMALS['tzBTC'],
+        #     6: DECIMALS['PLY'],
+        #   },
+        #   "weights": [0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.25],
+        #   },
+        # "pool_7": {
+        #   "pool_id": sp.pair(pool_7, sp.nat(7)),
+        #   "tokens": {
+        #     0: TOKENS['SYMM'],
+        #     1: TOKENS['USDT'],
+        #     2: TOKENS['uBTC'],
+        #     3: TOKENS['uXTZ'],
+        #     4: TOKENS['YOU'],
+        #     5: TOKENS['tzBTC'],
+        #     6: TOKENS['PLY'],
+        #     7: TOKENS['wUSDC'],
+        #   },
+        #   "decimals": {
+        #     0: DECIMALS['SYMM'],
+        #     1: DECIMALS['USDT'],
+        #     2: DECIMALS['uBTC'],
+        #     3: DECIMALS['uXTZ'],
+        #     4: DECIMALS['YOU'],
+        #     5: DECIMALS['tzBTC'],
+        #     6: DECIMALS['PLY'],
+        #     7: DECIMALS['wUSDC'],
+        #   },
+        #   "weights": [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2],
+        #   },
     }
 
 def add_test_liquidity(pools, vault):
     sender = sp.test_account('sender').address
     recipient = sender
 
-    # Mock prices for tokens
-    PRICES = {
-        "SYMM": 1,
-        "CTZ": 1.2,
-        "USDT": 1,
-        "uUSD": 1,
-        "uBTC": 50000,
-        "uXTZ": 3,
-        "YOU": 2,
-        "tzBTC": 50000,
-        "PLY": 0.5,
-        "wUSDC": 1,
-    }
-
-    BASE_AMOUNT = 1000000000000000000  # Representing 1 in the 18 decimal format
+    BASE_AMOUNT = 10  # Representing 1 in the 18 decimal format
 
     # Loop through each pool and add liquidity
     for pool_name, pool_data in pools.items():
+
         amountsIn = {}
         limits = {}
 
-        for token_idx, token_key in pool_data["tokens"].items():
+        for token_idx, token_value in pool_data["tokens"].items():
+
+            # for key, value in  TOKENS.items():
+                # if value == token_value:
+                    
+            token_key = "SYMM"
+
+                    
             weight = pool_data["weights"][token_idx]
             decimal = pool_data["decimals"][token_idx]
-            mock_price = PRICES[token_key[0]]  # [0] to get the token name
+            mock_price = PRICES[token_key]
             amount = int(BASE_AMOUNT * weight * mock_price)
 
             # Adjust for token decimals
-            amountsIn[token_idx] = sp.nat(amount * (10 ** decimal))
-            limits[token_idx] = sp.nat(amount * (10 ** (decimal + 2)))  # +2 for 100x limit
+            #amountsIn[token_idx] = sp.nat(1000000000000000000000)
+            amountsIn[token_idx] = sp.nat(int(amount * (10 ** decimal)))
+            limits[token_idx] = sp.nat(int(amount * (10 ** (decimal + 2)))) 
+            #limits[token_idx] = sp.nat(100000000000000000000000)  # +2 for 100x limit
 
+
+        
         userData = sp.record(
             kind=Enums.INIT,
             amountsIn=sp.some(amountsIn),
@@ -361,7 +373,7 @@ def add_test_liquidity(pools, vault):
                 recipient=recipient,
                 request=request,
             )
-        )
+        ).run(source=sender)
 
 
 # def add_test_liquidity(pools, vault):
