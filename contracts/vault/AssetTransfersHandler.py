@@ -87,22 +87,24 @@ class AssetTransfersHandler:
                 sender, receiver, amount, tokenAddress)
 
     def _receiveAsset(asset, amount, sender):
-        AssetTransfersHandler.TransferToken(
-            sender,
-            sp.self_address,
-            amount,
-            sp.fst(asset),
-            sp.snd(asset),
-        )
+        with sp.if_(amount > 0 ):
+            AssetTransfersHandler.TransferToken(
+                sender,
+                sp.self_address,
+                amount,
+                sp.fst(asset),
+                sp.snd(asset),
+            )
 
     def _sendAsset(asset, amount, recipient):
-        AssetTransfersHandler.TransferToken(
-            sp.self_address,
-            recipient,
-            amount,
-            sp.fst(asset),
-            sp.snd(asset),
-        )
+        with sp.if_(amount > 0 ):
+            AssetTransfersHandler.TransferToken(
+                sp.self_address,
+                recipient,
+                amount,
+                sp.fst(asset),
+                sp.snd(asset),
+            )
 
     def _handleRemainingTez(amountUsed):
         amount = sp.utils.mutez_to_nat(sp.amount)

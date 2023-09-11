@@ -126,7 +126,7 @@ class BaseWeightedPool(
 
         sptAmountOut = invariantAfterJoin * length
 
-        return (sptAmountOut, amountsIn, invariantAfterJoin)
+        return (sptAmountOut, upscaledAmounts, invariantAfterJoin)
 
     def _afterInitializePool(self, invariant):
 
@@ -238,6 +238,8 @@ class BaseWeightedPool(
 
         # // We join in a single token, so we initialize amountsIn with zeros
         amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
+        with sp.for_('x', sp.range(0, sp.len(params.balances))) as x:
+            amountsIn[x] =sp.nat(0)
         # // And then assign the result to the selected token
         amountsIn[tokenIndex] = amountIn
 
@@ -337,6 +339,8 @@ class BaseWeightedPool(
 
         # // We join in a single token, so we initialize amountsIn with zeros
         amountsOut = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
+        with sp.for_('x', sp.range(0, sp.len(params.balances))) as x:
+            amountsOut[x] =sp.nat(0)
         # // And then assign the result to the selected token
         amountsOut[tokenIndex] = amountOut
 
@@ -375,7 +379,7 @@ class BaseWeightedPool(
             )
         )
 
-        sp.verify(sptAmountIn >= params.userData.maxSPTAmountIn.open_some(),
+        sp.verify(sptAmountIn <= params.userData.maxSPTAmountIn.open_some(),
                   Errors.SPT_OUT_MIN_AMOUNT)
 
         return (sptAmountIn, upscaledAmounts)

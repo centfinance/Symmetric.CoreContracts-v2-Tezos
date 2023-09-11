@@ -300,8 +300,7 @@ def successful_single_swap():
     env = helpers.setup_test_environment()
     
     pools = helpers.setup_test_pools(env["pool_factory"])
-
-    helpers.add_test_liquidity(pools, env["vault"])
+    helpers.add_test_liquidity(pools, env["vault"], env["admin"].address)    
     # Define the swap details
     singleSwap = sp.record(
         poolId=pools["pool_1"]["pool_id"], # Placeholder, you need to set it based on your system
@@ -333,8 +332,7 @@ def swap_same_token():
 
     pools = helpers.setup_test_pools(env["pool_factory"])
 
-    helpers.add_test_liquidity(pools, env["vault"])
-
+    helpers.add_test_liquidity(pools, env["vault"], env["admin"].address)
     singleSwap = sp.record(
         poolId=pools["pool_1"]["pool_id"], # Placeholder, you need to set it based on your system
         kind=Enums.GIVEN_IN,  # Assuming 0 represents GIVEN_IN
@@ -364,8 +362,7 @@ def swap_same_token():
 def swap_zero_amount():
     env = helpers.setup_test_environment()
     pools = helpers.setup_test_pools(env["pool_factory"])
-    helpers.add_test_liquidity(pools, env["vault"])
-
+    helpers.add_test_liquidity(pools, env["vault"], env["admin"].address)
     singleSwap = sp.record(
         poolId=pools["pool_1"]["pool_id"],
         kind=Enums.GIVEN_IN,
@@ -394,8 +391,7 @@ def swap_zero_amount():
 def swap_after_deadline():
     env = helpers.setup_test_environment()
     pools = helpers.setup_test_pools(env["pool_factory"])
-    helpers.add_test_liquidity(pools, env["vault"])
-
+    helpers.add_test_liquidity(pools, env["vault"], env["admin"].address)
     singleSwap = sp.record(
         poolId=pools["pool_1"]["pool_id"],
         kind=Enums.GIVEN_IN,
@@ -427,8 +423,7 @@ def swap_after_deadline():
 def swap_unsatisfied_limit():
     env = helpers.setup_test_environment()
     pools = helpers.setup_test_pools(env["pool_factory"])
-    helpers.add_test_liquidity(pools, env["vault"])
-
+    helpers.add_test_liquidity(pools, env["vault"], env["admin"].address)
     singleSwap = sp.record(
         poolId=pools["pool_1"]["pool_id"],
         kind=Enums.GIVEN_IN,

@@ -209,7 +209,7 @@ def setup_test_pools(factory):
           },
           "decimals": {
             0: DECIMALS['SYMM'],
-            1: DECIMALS['CTZ'],
+            1: DECIMALS['USDT'],
             2: DECIMALS['uBTC'],
             },
           "weights": [0.3, 0.5, 0.2],
@@ -316,8 +316,7 @@ def setup_test_pools(factory):
           },
     }
 
-def add_test_liquidity(pools, vault):
-    sender = sp.test_account('sender').address
+def add_test_liquidity(pools, vault, sender):
     recipient = sender
 
     BASE_AMOUNT = 1000000000  # Representing 1 in the 18 decimal format
@@ -342,10 +341,10 @@ def add_test_liquidity(pools, vault):
             amount = int(BASE_AMOUNT * weight * mock_price)
 
             # Adjust for token decimals
-            #amountsIn[token_idx] = sp.nat(1000000000000000000000)
+
             amountsIn[token_idx] = sp.nat(int(amount * (10 ** decimal)))
+
             limits[token_idx] = sp.nat(int(amount * (10 ** (decimal + 2)))) 
-            #limits[token_idx] = sp.nat(100000000000000000000000)  # +2 for 100x limit
 
 
         
