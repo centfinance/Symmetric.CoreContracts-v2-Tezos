@@ -188,9 +188,9 @@ class WeightedPool(
         self._beforeProtocolFeeCacheUpdate()
 
         swapFee = IProtocolFeesCollector.getSwapFeePercentage(self.data.protocolFeesCollector)
-        yielFee = IProtocolFeesCollector.getYieldFeePercentage(self.data.protocolFeesCollector)
+        yieldFee = IProtocolFeesCollector.getYieldFeePercentage(self.data.protocolFeesCollector)
 
-        self.data.feeCache = (swapFee, yielFee)
+        self.data.feeCache = (swapFee, yieldFee)
 
         
 
@@ -286,7 +286,7 @@ class WeightedPool(
 
     def _beforeProtocolFeeCacheUpdate(self):
         self.onlyUnpaused()
-        
+
         supply = sp.compute(self.data.totalSupply)
 
         invariant = self._getInvariant()

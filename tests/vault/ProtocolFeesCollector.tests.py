@@ -4,7 +4,7 @@ from contracts.vault.ProtocolFeesCollector import ProtocolFeesCollector
 
 from contracts.pool_utils.SymmetricPoolToken import SymmetricPoolToken
 
-
+import tests.helpers.MockSymmetric as helpers 
 class MockPoolToken(
     SymmetricPoolToken
 ):
@@ -26,8 +26,8 @@ class MockPoolToken(
         return super()._mintPoolTokens(recipient, amount)
 
 
-@sp.add_test(name="ProtocolFeesCollectorTest_1", profile=True)
-def test():
+@sp.add_test(name="Can withdraw collected fees", profile=True)
+def can_withdraw_collected_fees():
     sc = sp.test_scenario()
 
     vault = sp.test_account('Vault')
@@ -65,20 +65,14 @@ def test():
     sc.verify(pt3Balance == sp.nat(57400000000000000000000))
 
     tokens = sp.map({
-        0: sp.record(
-            address=pt1.address,
-            id=sp.nat(0),
-            FA2=False
+        0: sp.pair(
+            pt1.address, sp.none,
         ),
-        1: sp.record(
-            address=pt2.address,
-            id=sp.nat(0),
-            FA2=False
+        1: sp.pair(
+            pt2.address, sp.none,
         ),
-        2: sp.record(
-            address=pt3.address,
-            id=sp.nat(0),
-            FA2=False
+        2: sp.pair(
+            pt3.address, sp.none,
         ),
     })
 
@@ -107,10 +101,21 @@ def test():
     pt3Balance = pt3.getBalance(pfc.address)
     sc.verify(pt3Balance == sp.nat(56400000000000000000000))
 
-    pfc.setSwapFeePercentage(sp.nat(10000000000000000)).run(
-        sender=protocolFeeWithdrawer.address
-    )
 
-    pfc.setFlashLoanFeePercentage(sp.nat(1000000000000000)).run(
-        sender=protocolFeeWithdrawer.address
-    )
+
+@sp.add_test(name="Can update swap fee", profile=True)
+def can_update_swap_fee():
+    env = helpers.setup_test_environment()
+    sc = env["scenario"]
+    pools = helpers.setup_test_pools(env["pool_factory"])
+    helpers.add_test_liquidity(pools, env["vault"], env["admin"].address)
+
+    env["fees_collector"].setSwapFeePercentage(sp.nat(500000000000000000)).run(sender=env["admin"].address)
+        
+    env["fees_collector"].setYieldFeePercentage(sp.nat(500000000000000000)).run(sender=env["admin"].address)
+
+    weighted_pool = sc.dynamic_contract(0, env["pool_factory"]._creationCode)
+
+    weighted_pool.call("updateProtocolFeePercentageCache", sp.unit).run(sender=env["admin"])
+
+    sc.verify(weighted_pool.data.feeCache == (sp.nat(500000000000000000), sp.nat(500000000000000000)))

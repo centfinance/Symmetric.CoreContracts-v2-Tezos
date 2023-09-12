@@ -149,9 +149,6 @@ class BasePool(
         )
 
         self.data.poolId = sp.some(poolId)
-
-        # TODO: Add protocolFeesCollector call to vault
-        # self.data.protocolFeesCollector = vault.getProtocolFeesCollector()
         self.data.initialized = True
 
     @sp.private_lambda(with_storage='read-only')
@@ -219,8 +216,7 @@ class BasePool(
         self.onlyVault(poolId)
         self.onlyUnpaused()
         with sp.if_(recoveryModeExit):
-            # TODO: Check that it's in recovery mode
-            # _ensureInRecoveryMode();
+            sp.verify(self.data.recoveryMode == True, Errors.NOT_IN_RECOVERY_MODE)
 
             self._burnPoolTokens(sender, sptAmountIn)
 
@@ -367,11 +363,12 @@ class BasePool(
         with sp.if_(sptAmount > 0):
             self._mintPoolTokens(
                 self.data.protocolFeesCollector, sptAmount)
-
+    
+    # @sp.private_lambda(with_storage='read-write')
     def _setRecoveryMode(self, enabled):
         self.data.recoveryMode = enabled
 
         with sp.if_(enabled == False):
             self._onDisableRecoveryMode()
 
-        sp.emit(enabled, 'RecoverModeStateChanged', with_type=True)
+        sp.emit(enabled, 'RecoveryModeStateChanged', with_type=True)

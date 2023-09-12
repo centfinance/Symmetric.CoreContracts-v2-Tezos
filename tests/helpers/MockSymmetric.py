@@ -110,7 +110,9 @@ def setup_test_environment():
         (sp.nat(400000000000000000), sp.nat(400000000000000000)),
         CONTRACT_METADATA
     )
+
     sc += wpf
+    sc += wpf._creationCode
     
     # Return the test environment for use in tests
     return {
@@ -186,6 +188,7 @@ def setup_test_pools(factory):
     create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC"], 0.035, [0.2, 0.15, 0.15, 0.15, 0.15, 0.2])
     create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY"], 0.04, [0.15, 0.15, 0.15, 0.1, 0.1, 0.1, 0.25])
     create_pool(["SYMM", "USDT", "uBTC", "uXTZ", "YOU", "tzBTC", "PLY", "wUSDC"], 0.045, [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.15, 0.2])
+    
 
     return {
         "pool_1": {
