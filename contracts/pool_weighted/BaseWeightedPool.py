@@ -19,6 +19,15 @@ TOKEN = sp.TPair(sp.TAddress, sp.TOption(sp.TNat))
 class BaseWeightedPool(
     BaseMinimalSwapInfoPool
 ):
+    """
+    Base class for WeightedPools.
+    
+    Contains swap, join, and exit logic, while delegating the storage and management of the weights to subclasses.
+    Derived contracts can opt to:
+    - Make weights immutable
+    - Allow weights to be mutable
+    - Make weights dynamic based on local or external logic.
+    """
     def __init__(
         self,
         owner,
