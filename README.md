@@ -7,7 +7,7 @@ This repository contains the Symmetric Protocol V2 core smart contracts for Tezo
 This package requires the following software to be installed on your system:
 
 1.  [Poetry](https://python-poetry.org/docs/#installation) for dependency management and packaging in Python.
-2.  [SmartPy CLI](https://smartpy.io/docs/introduction/project_management/) for Tezos smart contract development.
+2.  [SmartPy CLI](https://legacy.smartpy.io/docs/introduction/project_management) for Tezos smart contract development.
 3.  [Taqueria](https://taqueria.io/docs/getting-started/installation/) for building, testing, and deploying the contracts.
 
 Please make sure you have these software installed on your system before proceeding.
