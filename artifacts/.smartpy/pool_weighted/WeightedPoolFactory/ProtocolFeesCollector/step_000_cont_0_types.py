@@ -1,0 +1,6 @@
+import smartpy as sp
+
+tstorage = sp.TRecord(admin = sp.TAddress, proposed_admin = sp.TOption(sp.TAddress), swapFeePercentage = sp.TNat, vault = sp.TAddress, yieldFeePercentage = sp.TNat).layout((("admin", "proposed_admin"), ("swapFeePercentage", ("vault", "yieldFeePercentage"))))
+tparameter = sp.TVariant(accept_admin = sp.TUnit, run_lambda = sp.TLambda(sp.TUnit, sp.TList(sp.TOperation), with_storage="read-write", tstorage=sp.TRecord(admin = sp.TAddress, proposed_admin = sp.TOption(sp.TAddress), swapFeePercentage = sp.TNat, vault = sp.TAddress, yieldFeePercentage = sp.TNat).layout((("admin", "proposed_admin"), ("swapFeePercentage", ("vault", "yieldFeePercentage")))), with_operations=True), setSwapFeePercentage = sp.TNat, setYieldFeePercentage = sp.TNat, transfer_admin = sp.TAddress, withdrawCollectedFees = sp.TRecord(amounts = sp.TMap(sp.TNat, sp.TNat), recipient = sp.TAddress, tokens = sp.TMap(sp.TNat, sp.TPair(sp.TAddress, sp.TOption(sp.TNat)))).layout(("amounts", ("recipient", "tokens")))).layout((("accept_admin", ("run_lambda", "setSwapFeePercentage")), ("setYieldFeePercentage", ("transfer_admin", "withdrawCollectedFees"))))
+tprivates = { }
+tviews = { "getSwapFeePercentage": ((), sp.TNat), "getYieldFeePercentage": ((), sp.TNat), "get_admin": ((), sp.TAddress) }

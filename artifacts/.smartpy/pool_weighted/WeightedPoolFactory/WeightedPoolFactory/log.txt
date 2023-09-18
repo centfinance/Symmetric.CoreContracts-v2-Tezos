@@ -1,0 +1,12 @@
+Creating contract KT1TezoooozzSmartPyzzSTATiCzzzwwBFA1
+ -> (Pair (Pair (Pair "tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B" (Pair 400000000000000000 400000000000000000)) (Pair {} (Pair "KT1H2SaqZyCmmHxbsTfwx12YeUzugzj8eN2t" {Elt "" 0x68747470733a2f2f7261772e67697468756275736572636f6e74656e742e636f6d2f63656e7466696e616e63652f53796d6d65747269632e436f7265436f6e7472616374732d76322d54657a6f732f6d61696e2f6d657461646174612f746573746e65742f5765696768746564506f6f6c466163746f72792e6a736f6e}))) (Pair (Pair None "KT1AadsFF9ogbKySycWQm5i5avTAgcVwpY3e") (Pair "KT1L6L7n9cq7ExJFDD45PkpPACedufffKRbP" (Pair "KT19aJTzRK1SC131ZQa7Lr6kDfC4KPm9Kjry" "KT195jeqmRvGR25GTvoecXg25nCdCZubWT6N"))))
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/step_000_cont_0_storage.tz 1
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/step_000_cont_0_storage.json 50
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/step_000_cont_0_sizes.csv 2
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/step_000_cont_0_storage.py 1
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/step_000_cont_0_types.py 7
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/step_000_cont_0_contract.tz 6272
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/step_000_cont_0_contract.json 7617
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/step_000_cont_0_contract.py 130
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/step_000_cont_0_contract.py.html 2034
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/pool_weighted/WeightedPoolFactory/WeightedPoolFactory/log.html 2035

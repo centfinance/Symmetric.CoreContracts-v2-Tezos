@@ -1,0 +1,1 @@
+sp.record(fixedPoint = {20 : sp.build_lambda(lambda _x0: (sp.fst(_x0) * sp.snd(_x0)) // 1000000000000000000), 22 : lambda, 24 : lambda})

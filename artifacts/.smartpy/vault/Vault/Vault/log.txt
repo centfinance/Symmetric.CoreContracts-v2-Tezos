@@ -1,0 +1,12 @@
+Creating contract KT1TezoooozzSmartPyzzSTATiCzzzwwBFA1
+ -> (Pair (Pair (Pair "tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B" {}) (Pair {Elt "" 0x68747470733a2f2f7261772e67697468756275736572636f6e74656e742e636f6d2f63656e7466696e616e63652f53796d6d65747269632e436f7265436f6e7472616374732d76322d54657a6f732f6d61696e2f6d657461646174612f746573746e65742f5661756c742e6a736f6e} 1)) (Pair (Pair {} {}) (Pair None False)))
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/step_000_cont_0_storage.tz 1
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/step_000_cont_0_storage.json 29
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/step_000_cont_0_sizes.csv 2
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/step_000_cont_0_storage.py 1
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/step_000_cont_0_types.py 7
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/step_000_cont_0_contract.tz 4204
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/step_000_cont_0_contract.json 4440
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/step_000_cont_0_contract.py 218
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/step_000_cont_0_contract.py.html 2119
+ => /Users/stephen/Documents/GitHub/symmetric-tezos-contracts/artifacts/.smartpy/vault/vault/Vault/log.html 2120

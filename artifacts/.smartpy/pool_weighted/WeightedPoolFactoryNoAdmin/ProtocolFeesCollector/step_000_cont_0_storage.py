@@ -1,0 +1,1 @@
+sp.record(admin = sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'), proposed_admin = sp.none, swapFeePercentage = 0, vault = sp.address('KT1L6L7n9cq7ExJFDD45PkpPACedufffKRbP'), yieldFeePercentage = 0)

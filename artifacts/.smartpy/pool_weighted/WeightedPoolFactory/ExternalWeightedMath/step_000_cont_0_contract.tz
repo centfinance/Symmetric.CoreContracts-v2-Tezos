@@ -1,0 +1,1739 @@
+parameter unit;
+storage   (big_map nat (lambda (pair nat nat) nat));
+code
+  {
+    CDR;        # @storage
+    NIL operation; # list operation : @storage
+    PAIR;       # pair (list operation) @storage
+  };
+view
+  "calcInGivenOut" (pair (pair (nat %amountOut) (nat %balanceIn)) (pair (nat %balanceOut) (pair (nat %weightIn) (nat %weightOut)))) nat
+  {
+    UNPAIR;     # @parameter : @storage
+    # sp.verify(params.amountOut <= self.data.fixedPoint[20]((params.balanceOut, 300000000000000000)), 304) # @parameter : @storage
+    DUP 2;      # @storage : @parameter : @storage
+    PUSH nat 20; # nat : @storage : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 88; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @parameter : @storage
+    PUSH nat 300000000000000000; # nat : @some : @parameter : @storage
+    DUP 3;      # @parameter : nat : @some : @parameter : @storage
+    GET 3;      # nat : nat : @some : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @parameter : @storage
+    EXEC;       # nat : @parameter : @storage
+    DUP 2;      # @parameter : nat : @parameter : @storage
+    CAR;        # pair (nat %amountOut) (nat %balanceIn) : nat : @parameter : @storage
+    CAR;        # nat : nat : @parameter : @storage
+    COMPARE;    # int : @parameter : @storage
+    LE;         # bool : @parameter : @storage
+    IF
+      {}
+      {
+        PUSH int 304; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }; # @parameter : @storage
+    # sp.result(self.data.fixedPoint[21]((params.balanceIn, sp.as_nat(self.data.fixedPoint[25]((self.data.fixedPoint[23]((params.balanceOut, sp.as_nat(params.balanceOut - params.amountOut))), self.data.fixedPoint[23]((params.weightOut, params.weightIn)))) - 1000000000000000000)))) # @parameter : @storage
+    DUP 2;      # @storage : @parameter : @storage
+    PUSH nat 21; # nat : @storage : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 98; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : @some : @parameter : @storage
+    DUP 4;      # @storage : nat : @some : @parameter : @storage
+    PUSH nat 25; # nat : @storage : nat : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 94; # int : nat : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : @parameter : @storage
+    DUP 5;      # @storage : @some : nat : @some : @parameter : @storage
+    PUSH nat 23; # nat : @storage : @some : nat : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : nat : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 93; # int : @some : nat : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : @some : @parameter : @storage
+    DUP 5;      # @parameter : @some : @some : nat : @some : @parameter : @storage
+    GET 5;      # nat : @some : @some : nat : @some : @parameter : @storage
+    DUP 6;      # @parameter : nat : @some : @some : nat : @some : @parameter : @storage
+    GET 6;      # nat : nat : @some : @some : nat : @some : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : nat : @some : @parameter : @storage
+    EXEC;       # nat : @some : nat : @some : @parameter : @storage
+    DIG 5;      # @storage : nat : @some : nat : @some : @parameter
+    PUSH nat 23; # nat : @storage : nat : @some : nat : @some : @parameter
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : nat : @some : @parameter
+    IF_NONE
+      {
+        PUSH int 91; # int : nat : @some : nat : @some : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : nat : @some : @parameter
+    DUP 6;      # @parameter : @some : nat : @some : nat : @some : @parameter
+    CAR;        # pair (nat %amountOut) (nat %balanceIn) : @some : nat : @some : nat : @some : @parameter
+    CAR;        # nat : @some : nat : @some : nat : @some : @parameter
+    DUP 7;      # @parameter : nat : @some : nat : @some : nat : @some : @parameter
+    GET 3;      # nat : nat : @some : nat : @some : nat : @some : @parameter
+    SUB;        # int : @some : nat : @some : nat : @some : @parameter
+    ISNAT;      # option nat : @some : nat : @some : nat : @some : @parameter
+    IF_NONE
+      {
+        PUSH int 92; # int : @some : nat : @some : nat : @some : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : @some : nat : @some : @parameter
+    DUP 7;      # @parameter : @some : @some : nat : @some : nat : @some : @parameter
+    GET 3;      # nat : @some : @some : nat : @some : nat : @some : @parameter
+    PAIR;       # pair nat @some : @some : nat : @some : nat : @some : @parameter
+    EXEC;       # nat : nat : @some : nat : @some : @parameter
+    PAIR;       # pair nat nat : @some : nat : @some : @parameter
+    EXEC;       # nat : nat : @some : @parameter
+    SUB;        # int : @some : @parameter
+    ISNAT;      # option nat : @some : @parameter
+    IF_NONE
+      {
+        PUSH int 96; # int : @some : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @parameter
+    DIG 2;      # @parameter : @some : @some
+    CAR;        # pair (nat %amountOut) (nat %balanceIn) : @some : @some
+    CDR;        # nat : @some : @some
+    PAIR;       # pair nat @some : @some
+    EXEC;       # nat
+  };
+view
+  "calcOutGivenIn" (pair (pair (nat %amountIn) (nat %balanceIn)) (pair (nat %balanceOut) (pair (nat %weightIn) (nat %weightOut)))) nat
+  {
+    UNPAIR;     # @parameter : @storage
+    # sp.verify(params.amountIn <= self.data.fixedPoint[20]((params.balanceIn, 300000000000000000)), 304) # @parameter : @storage
+    DUP 2;      # @storage : @parameter : @storage
+    PUSH nat 20; # nat : @storage : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 71; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @parameter : @storage
+    PUSH nat 300000000000000000; # nat : @some : @parameter : @storage
+    DUP 3;      # @parameter : nat : @some : @parameter : @storage
+    CAR;        # pair (nat %amountIn) (nat %balanceIn) : nat : @some : @parameter : @storage
+    CDR;        # nat : nat : @some : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @parameter : @storage
+    EXEC;       # nat : @parameter : @storage
+    DUP 2;      # @parameter : nat : @parameter : @storage
+    CAR;        # pair (nat %amountIn) (nat %balanceIn) : nat : @parameter : @storage
+    CAR;        # nat : nat : @parameter : @storage
+    COMPARE;    # int : @parameter : @storage
+    LE;         # bool : @parameter : @storage
+    IF
+      {}
+      {
+        PUSH int 304; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }; # @parameter : @storage
+    # sp.result(self.data.fixedPoint[20]((params.balanceOut, sp.as_nat(1000000000000000000 - self.data.fixedPoint[25]((self.data.fixedPoint[23]((params.balanceIn, params.balanceIn + params.amountIn)), self.data.fixedPoint[22]((params.weightIn, params.weightOut)))))))) # @parameter : @storage
+    DUP 2;      # @storage : @parameter : @storage
+    PUSH nat 20; # nat : @storage : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 78; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @parameter : @storage
+    DUP 3;      # @storage : @some : @parameter : @storage
+    PUSH nat 25; # nat : @storage : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 76; # int : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @parameter : @storage
+    DUP 4;      # @storage : @some : @some : @parameter : @storage
+    PUSH nat 22; # nat : @storage : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 75; # int : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @parameter : @storage
+    DUP 4;      # @parameter : @some : @some : @some : @parameter : @storage
+    GET 6;      # nat : @some : @some : @some : @parameter : @storage
+    DUP 5;      # @parameter : nat : @some : @some : @some : @parameter : @storage
+    GET 5;      # nat : nat : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : @some : @some : @parameter : @storage
+    DIG 4;      # @storage : nat : @some : @some : @parameter
+    PUSH nat 23; # nat : @storage : nat : @some : @some : @parameter
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : @some : @parameter
+    IF_NONE
+      {
+        PUSH int 74; # int : nat : @some : @some : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : @some : @parameter
+    DUP 5;      # @parameter : @some : nat : @some : @some : @parameter
+    CAR;        # pair (nat %amountIn) (nat %balanceIn) : @some : nat : @some : @some : @parameter
+    CAR;        # nat : @some : nat : @some : @some : @parameter
+    DUP 6;      # @parameter : nat : @some : nat : @some : @some : @parameter
+    CAR;        # pair (nat %amountIn) (nat %balanceIn) : nat : @some : nat : @some : @some : @parameter
+    CDR;        # nat : nat : @some : nat : @some : @some : @parameter
+    ADD;        # nat : @some : nat : @some : @some : @parameter
+    DUP 6;      # @parameter : nat : @some : nat : @some : @some : @parameter
+    CAR;        # pair (nat %amountIn) (nat %balanceIn) : nat : @some : nat : @some : @some : @parameter
+    CDR;        # nat : nat : @some : nat : @some : @some : @parameter
+    PAIR;       # pair nat nat : @some : nat : @some : @some : @parameter
+    EXEC;       # nat : nat : @some : @some : @parameter
+    PAIR;       # pair nat nat : @some : @some : @parameter
+    EXEC;       # nat : @some : @parameter
+    PUSH nat 1000000000000000000; # nat : nat : @some : @parameter
+    SUB;        # int : @some : @parameter
+    ISNAT;      # option nat : @some : @parameter
+    IF_NONE
+      {
+        PUSH int 26; # int : @some : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @parameter
+    DIG 2;      # @parameter : @some : @some
+    GET 3;      # nat : @some : @some
+    PAIR;       # pair nat @some : @some
+    EXEC;       # nat
+  };
+view
+  "calcSptInGivenExactTokensOut" (pair (pair (map %amountsOut nat nat) (map %balances nat nat)) (pair (map %normalizedWeights nat nat) (pair (nat %swapFeePercentage) (nat %totalSupply)))) nat
+  {
+    UNPAIR;     # @parameter : @storage
+    # balanceRatiosWithoutFee = sp.local("balanceRatiosWithoutFee", {}, sp.TMap(sp.TNat, sp.TNat)) # @parameter : @storage
+    EMPTY_MAP nat nat; # map nat nat : @parameter : @storage
+    # invariantRatioWithoutFees = sp.local("invariantRatioWithoutFees", 0) # map nat nat : @parameter : @storage
+    PUSH nat 0; # nat : map nat nat : @parameter : @storage
+    # for i in sp.range(0, sp.len(params.balances)): ... (sp.TNat) # nat : map nat nat : @parameter : @storage
+    DUP 3;      # @parameter : nat : map nat nat : @parameter : @storage
+    CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : nat : map nat nat : @parameter : @storage
+    CDR;        # map nat nat : nat : map nat nat : @parameter : @storage
+    SIZE;       # nat : nat : map nat nat : @parameter : @storage
+    PUSH nat 0; # nat : nat : nat : map nat nat : @parameter : @storage
+    DUP;        # nat : nat : nat : nat : map nat nat : @parameter : @storage
+    DUP 3;      # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    COMPARE;    # int : nat : nat : nat : map nat nat : @parameter : @storage
+    GT;         # bool : nat : nat : nat : map nat nat : @parameter : @storage
+    LOOP
+      {
+        # balanceRatiosWithoutFee.value[i] = self.data.fixedPoint[23]((sp.as_nat(params.balances[i] - params.amountsOut[i]), params.balances[i])) # nat : nat : nat : map nat nat : @parameter : @storage
+        DIG 3;      # map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 6;      # @storage : map nat nat : nat : nat : nat : @parameter : @storage
+        PUSH nat 23; # nat : @storage : map nat nat : nat : nat : nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : map nat nat : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 242; # int : map nat nat : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 6;      # @parameter : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CDR;        # map nat nat : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 4;      # nat : map nat nat : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        GET;        # option nat : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 243; # int : @some : map nat nat : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 7;      # @parameter : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CAR;        # map nat nat : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 5;      # nat : map nat nat : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        GET;        # option nat : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 243; # int : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 8;      # @parameter : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CDR;        # map nat nat : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 6;      # nat : map nat nat : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        GET;        # option nat : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 243; # int : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        SUB;        # int : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        ISNAT;      # option nat : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 243; # int : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        PAIR;       # pair @some @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        EXEC;       # nat : map nat nat : nat : nat : nat : @parameter : @storage
+        SOME;       # option nat : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 3;      # nat : option nat : map nat nat : nat : nat : nat : @parameter : @storage
+        UPDATE;     # map nat nat : nat : nat : nat : @parameter : @storage
+        DUG 3;      # nat : nat : nat : map nat nat : @parameter : @storage
+        # invariantRatioWithoutFees.value += self.data.fixedPoint[21]((balanceRatiosWithoutFee.value[i], params.normalizedWeights[i])) # nat : nat : nat : map nat nat : @parameter : @storage
+        DIG 2;      # nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 6;      # @storage : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 21; # nat : @storage : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 245; # int : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 6;      # @parameter : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        GET 3;      # map nat nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 4;      # nat : map nat nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 246; # int : @some : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 6;      # map nat nat : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 5;      # nat : map nat nat : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 246; # int : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        PAIR;       # pair @some @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        EXEC;       # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        ADD;        # nat : nat : nat : map nat nat : @parameter : @storage
+        DUG 2;      # nat : nat : nat : map nat nat : @parameter : @storage
+        # loop step # nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 1; # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        ADD;        # nat : nat : nat : map nat nat : @parameter : @storage
+        DUP;        # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 3;      # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        COMPARE;    # int : nat : nat : nat : map nat nat : @parameter : @storage
+        GT;         # bool : nat : nat : nat : map nat nat : @parameter : @storage
+      }; # nat : nat : nat : map nat nat : @parameter : @storage
+    DROP 2;     # nat : map nat nat : @parameter : @storage
+    # ir = sp.local("ir", 1000000000000000000) # nat : map nat nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : map nat nat : @parameter : @storage
+    # for i in sp.range(0, sp.len(params.balances)): ... (sp.TNat) # nat : nat : map nat nat : @parameter : @storage
+    DUP 4;      # @parameter : nat : nat : map nat nat : @parameter : @storage
+    CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : nat : nat : map nat nat : @parameter : @storage
+    CDR;        # map nat nat : nat : nat : map nat nat : @parameter : @storage
+    SIZE;       # nat : nat : nat : map nat nat : @parameter : @storage
+    PUSH nat 0; # nat : nat : nat : nat : map nat nat : @parameter : @storage
+    DUP;        # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    DUP 3;      # nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    COMPARE;    # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    GT;         # bool : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    LOOP
+      {
+        # amountInWithoutFee = sp.local("amountInWithoutFee", 0)
+        # if invariantRatioWithoutFees.value > balanceRatiosWithoutFee.value[i]: # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 5;      # map nat nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 2;      # nat : map nat nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 325; # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 5;      # nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        COMPARE;    # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GT;         # bool : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF
+          {
+            # amountInWithoutFee.value = self.data.fixedPoint[20]((params.balances[i], sp.as_nat(1000000000000000000 - invariantRatioWithoutFees.value))) + self.data.fixedPoint[23]((sp.as_nat(params.amountsOut[i] - self.data.fixedPoint[20]((params.balances[i], sp.as_nat(1000000000000000000 - invariantRatioWithoutFees.value)))), sp.as_nat(1000000000000000000 - params.swapFeePercentage))) # nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 7;      # @storage : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PUSH nat 23; # nat : @storage : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option (lambda (pair nat nat) nat) : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 330; # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 7;      # @parameter : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET 5;      # nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PUSH nat 1000000000000000000; # nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            SUB;        # int : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            ISNAT;      # option nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 26; # int : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 9;      # @storage : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PUSH nat 20; # nat : @storage : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option (lambda (pair nat nat) nat) : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 327; # int : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 7;      # nat : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PUSH nat 1000000000000000000; # nat : nat : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            SUB;        # int : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            ISNAT;      # option nat : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 26; # int : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 10;     # @parameter : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CDR;        # map nat nat : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 6;      # nat : map nat nat : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option nat : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 328; # int : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PAIR;       # pair @some @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            EXEC;       # nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 9;      # @parameter : nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # map nat nat : nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 5;      # nat : map nat nat : nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option nat : nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 329; # int : nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            SUB;        # int : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            ISNAT;      # option nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 329; # int : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PAIR;       # pair @some @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            EXEC;       # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 8;      # @storage : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PUSH nat 20; # nat : @storage : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option (lambda (pair nat nat) nat) : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 327; # int : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 6;      # nat : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PUSH nat 1000000000000000000; # nat : nat : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            SUB;        # int : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            ISNAT;      # option nat : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 26; # int : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 9;      # @parameter : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CDR;        # map nat nat : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 5;      # nat : map nat nat : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option nat : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 328; # int : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PAIR;       # pair @some @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            EXEC;       # nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            ADD;        # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+          }
+          {
+            # amountInWithoutFee.value = params.amountsOut[i] # nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 6;      # @parameter : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # map nat nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 2;      # nat : map nat nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 335; # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+          }; # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        # ir.value = self.data.fixedPoint[20]((ir.value, self.data.fixedPoint[24]((self.data.fixedPoint[22]((sp.as_nat(params.balances[i] - amountInWithoutFee.value), params.balances[i])), params.normalizedWeights[i])))) # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 8;      # @storage : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 20; # nat : @storage : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 340; # int : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 9;      # @storage : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 24; # nat : @storage : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 340; # int : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 9;      # @parameter : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET 3;      # map nat nat : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 5;      # nat : map nat nat : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 341; # int : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 11;     # @storage : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 22; # nat : @storage : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 337; # int : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 11;     # @parameter : @some : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : @some : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        CDR;        # map nat nat : @some : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 7;      # nat : map nat nat : @some : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : @some : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 338; # int : @some : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DIG 5;      # nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 12;     # @parameter : nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        CAR;        # pair (map %amountsOut nat nat) (map %balances nat nat) : nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        CDR;        # map nat nat : nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 8;      # nat : map nat nat : nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 338; # int : nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        SUB;        # int : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        ISNAT;      # option nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 338; # int : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PAIR;       # pair @some @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        EXEC;       # nat : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PAIR;       # pair nat @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        EXEC;       # nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DIG 4;      # nat : nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        PAIR;       # pair nat nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        EXEC;       # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUG 2;      # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        # loop step # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 1; # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        ADD;        # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP;        # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 3;      # nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        COMPARE;    # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GT;         # bool : nat : nat : nat : nat : map nat nat : @parameter : @storage
+      }; # nat : nat : nat : nat : map nat nat : @parameter : @storage
+    DROP 2;     # nat : nat : map nat nat : @parameter : @storage
+    SWAP;       # nat : nat : map nat nat : @parameter : @storage
+    DROP;       # nat : map nat nat : @parameter : @storage
+    SWAP;       # map nat nat : nat : @parameter : @storage
+    DROP;       # nat : @parameter : @storage
+    # sp.result(self.data.fixedPoint[21]((params.totalSupply, sp.as_nat(1000000000000000000 - ir.value)))) # nat : @parameter : @storage
+    DIG 2;      # @storage : nat : @parameter
+    PUSH nat 21; # nat : @storage : nat : @parameter
+    GET;        # option (lambda (pair nat nat) nat) : nat : @parameter
+    IF_NONE
+      {
+        PUSH int 258; # int : nat : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @parameter
+    SWAP;       # nat : @some : @parameter
+    PUSH nat 1000000000000000000; # nat : nat : @some : @parameter
+    SUB;        # int : @some : @parameter
+    ISNAT;      # option nat : @some : @parameter
+    IF_NONE
+      {
+        PUSH int 234; # int : @some : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @parameter
+    DIG 2;      # @parameter : @some : @some
+    GET 6;      # nat : @some : @some
+    PAIR;       # pair nat @some : @some
+    EXEC;       # nat
+  };
+view
+  "calcSptOutGivenExactTokensIn" (pair (pair (map %amountsIn nat nat) (map %balances nat nat)) (pair (map %normalizedWeights nat nat) (pair (nat %swapFeePercentage) (nat %totalSupply)))) nat
+  {
+    UNPAIR;     # @parameter : @storage
+    # balanceRatiosWithFee = sp.local("balanceRatiosWithFee", {}, sp.TMap(sp.TNat, sp.TNat)) # @parameter : @storage
+    EMPTY_MAP nat nat; # map nat nat : @parameter : @storage
+    # invariantRatioWithFees = sp.local("invariantRatioWithFees", 0) # map nat nat : @parameter : @storage
+    PUSH nat 0; # nat : map nat nat : @parameter : @storage
+    # for i in sp.range(0, sp.len(params.balances)): ... (sp.TNat) # nat : map nat nat : @parameter : @storage
+    DUP 3;      # @parameter : nat : map nat nat : @parameter : @storage
+    CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : nat : map nat nat : @parameter : @storage
+    CDR;        # map nat nat : nat : map nat nat : @parameter : @storage
+    SIZE;       # nat : nat : map nat nat : @parameter : @storage
+    PUSH nat 0; # nat : nat : nat : map nat nat : @parameter : @storage
+    DUP;        # nat : nat : nat : nat : map nat nat : @parameter : @storage
+    DUP 3;      # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    COMPARE;    # int : nat : nat : nat : map nat nat : @parameter : @storage
+    GT;         # bool : nat : nat : nat : map nat nat : @parameter : @storage
+    LOOP
+      {
+        # balanceRatiosWithFee.value[i] = self.data.fixedPoint[22]((params.balances[i] + params.amountsIn[i], params.balances[i])) # nat : nat : nat : map nat nat : @parameter : @storage
+        DIG 3;      # map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 6;      # @storage : map nat nat : nat : nat : nat : @parameter : @storage
+        PUSH nat 22; # nat : @storage : map nat nat : nat : nat : nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : map nat nat : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 116; # int : map nat nat : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 6;      # @parameter : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CDR;        # map nat nat : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 4;      # nat : map nat nat : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        GET;        # option nat : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 117; # int : @some : map nat nat : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 7;      # @parameter : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CAR;        # map nat nat : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 5;      # nat : map nat nat : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        GET;        # option nat : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 117; # int : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 8;      # @parameter : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        CDR;        # map nat nat : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 6;      # nat : map nat nat : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        GET;        # option nat : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 117; # int : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        ADD;        # nat : @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        PAIR;       # pair nat @some : @some : map nat nat : nat : nat : nat : @parameter : @storage
+        EXEC;       # nat : map nat nat : nat : nat : nat : @parameter : @storage
+        SOME;       # option nat : map nat nat : nat : nat : nat : @parameter : @storage
+        DUP 3;      # nat : option nat : map nat nat : nat : nat : nat : @parameter : @storage
+        UPDATE;     # map nat nat : nat : nat : nat : @parameter : @storage
+        DUG 3;      # nat : nat : nat : map nat nat : @parameter : @storage
+        # invariantRatioWithFees.value += self.data.fixedPoint[20]((balanceRatiosWithFee.value[i], params.normalizedWeights[i])) # nat : nat : nat : map nat nat : @parameter : @storage
+        DIG 2;      # nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 6;      # @storage : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 20; # nat : @storage : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 119; # int : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 6;      # @parameter : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        GET 3;      # map nat nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 4;      # nat : map nat nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 120; # int : @some : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 6;      # map nat nat : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 5;      # nat : map nat nat : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 120; # int : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        PAIR;       # pair @some @some : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        EXEC;       # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        ADD;        # nat : nat : nat : map nat nat : @parameter : @storage
+        DUG 2;      # nat : nat : nat : map nat nat : @parameter : @storage
+        # loop step # nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 1; # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        ADD;        # nat : nat : nat : map nat nat : @parameter : @storage
+        DUP;        # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 3;      # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        COMPARE;    # int : nat : nat : nat : map nat nat : @parameter : @storage
+        GT;         # bool : nat : nat : nat : map nat nat : @parameter : @storage
+      }; # nat : nat : nat : map nat nat : @parameter : @storage
+    DROP 2;     # nat : map nat nat : @parameter : @storage
+    # ir = sp.local("ir", 1000000000000000000) # nat : map nat nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : map nat nat : @parameter : @storage
+    # for i in sp.range(0, sp.len(params.balances)): ... (sp.TNat) # nat : nat : map nat nat : @parameter : @storage
+    DUP 4;      # @parameter : nat : nat : map nat nat : @parameter : @storage
+    CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : nat : nat : map nat nat : @parameter : @storage
+    CDR;        # map nat nat : nat : nat : map nat nat : @parameter : @storage
+    SIZE;       # nat : nat : nat : map nat nat : @parameter : @storage
+    PUSH nat 0; # nat : nat : nat : nat : map nat nat : @parameter : @storage
+    DUP;        # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    DUP 3;      # nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    COMPARE;    # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    GT;         # bool : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    LOOP
+      {
+        # amountInWithoutFee = sp.local("amountInWithoutFee", 0) # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 0; # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        # if balanceRatiosWithFee.value[i] > invariantRatioWithFees.value: # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 5;      # nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 7;      # map nat nat : nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 4;      # nat : map nat nat : nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 202; # int : nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        COMPARE;    # int : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GT;         # bool : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF
+          {
+            # nta = sp.local("nta", 0) # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PUSH nat 0; # nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            # if invariantRatioWithFees.value > 1000000000000000000: # nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PUSH nat 1000000000000000000; # nat : nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 7;      # nat : nat : nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            COMPARE;    # int : nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GT;         # bool : nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF
+              {
+                DROP 2;     # nat : nat : nat : nat : map nat nat : @parameter : @storage
+                # nta.value = self.data.fixedPoint[20]((params.balances[i], sp.as_nat(invariantRatioWithFees.value - 1000000000000000000))) # nat : nat : nat : nat : map nat nat : @parameter : @storage
+                DUP 7;      # @storage : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                PUSH nat 20; # nat : @storage : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                GET;        # option (lambda (pair nat nat) nat) : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                IF_NONE
+                  {
+                    PUSH int 206; # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                    FAILWITH;   # FAILED
+                  }
+                  {}; # @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                PUSH nat 1000000000000000000; # nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                DUP 6;      # nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                SUB;        # int : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                ISNAT;      # option nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                IF_NONE
+                  {
+                    PUSH int 207; # int : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                    FAILWITH;   # FAILED
+                  }
+                  {}; # @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                DUP 8;      # @parameter : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                CDR;        # map nat nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                DUP 4;      # nat : map nat nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                GET;        # option nat : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                IF_NONE
+                  {
+                    PUSH int 207; # int : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                    FAILWITH;   # FAILED
+                  }
+                  {}; # @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                PAIR;       # pair @some @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                EXEC;       # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+              }
+              {
+                SWAP;       # nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                DROP;       # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+              }; # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            # amountInWithoutFee.value = sp.as_nat(params.amountsIn[i] - self.data.fixedPoint[21]((sp.as_nat(params.amountsIn[i] - nta.value), params.swapFeePercentage))) # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 8;      # @storage : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PUSH nat 21; # nat : @storage : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option (lambda (pair nat nat) nat) : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 208; # int : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 8;      # @parameter : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET 5;      # nat : @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DIG 2;      # nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 9;      # @parameter : nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # map nat nat : nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 5;      # nat : map nat nat : nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option nat : nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 209; # int : nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            SUB;        # int : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            ISNAT;      # option nat : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 209; # int : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            PAIR;       # pair @some nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            EXEC;       # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 7;      # @parameter : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # map nat nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 3;      # nat : map nat nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 211; # int : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            SUB;        # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            ISNAT;      # option nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 210; # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+          }
+          {
+            DROP;       # nat : nat : nat : nat : map nat nat : @parameter : @storage
+            # amountInWithoutFee.value = params.amountsIn[i] # nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 6;      # @parameter : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            CAR;        # map nat nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            DUP 2;      # nat : map nat nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            GET;        # option nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            IF_NONE
+              {
+                PUSH int 213; # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+                FAILWITH;   # FAILED
+              }
+              {}; # @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+          }; # @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        # ir.value = self.data.fixedPoint[20]((ir.value, self.data.fixedPoint[24]((self.data.fixedPoint[22]((params.balances[i] + amountInWithoutFee.value, params.balances[i])), params.normalizedWeights[i])))) # @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 8;      # @storage : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 20; # nat : @storage : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 218; # int : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 9;      # @storage : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 24; # nat : @storage : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 218; # int : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 9;      # @parameter : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET 3;      # map nat nat : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 5;      # nat : map nat nat : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 219; # int : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 11;     # @storage : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 22; # nat : @storage : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 215; # int : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 11;     # @parameter : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        CDR;        # map nat nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 7;      # nat : map nat nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 216; # int : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DIG 5;      # @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 12;     # @parameter : @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        CAR;        # pair (map %amountsIn nat nat) (map %balances nat nat) : @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        CDR;        # map nat nat : @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 8;      # nat : map nat nat : @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GET;        # option nat : @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 216; # int : @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        ADD;        # nat : @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PAIR;       # pair nat @some : @some : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        EXEC;       # nat : @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PAIR;       # pair nat @some : @some : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        EXEC;       # nat : @some : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DIG 4;      # nat : nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        PAIR;       # pair nat nat : @some : nat : nat : nat : map nat nat : @parameter : @storage
+        EXEC;       # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUG 2;      # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        # loop step # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        PUSH nat 1; # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        ADD;        # nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP;        # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        DUP 3;      # nat : nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        COMPARE;    # int : nat : nat : nat : nat : map nat nat : @parameter : @storage
+        GT;         # bool : nat : nat : nat : nat : map nat nat : @parameter : @storage
+      }; # nat : nat : nat : nat : map nat nat : @parameter : @storage
+    DROP 2;     # nat : nat : map nat nat : @parameter : @storage
+    # sptOut = sp.local("sptOut", 0) # nat : nat : map nat nat : @parameter : @storage
+    PUSH nat 0; # nat : nat : nat : map nat nat : @parameter : @storage
+    # if ir.value > 1000000000000000000: # nat : nat : nat : map nat nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : nat : nat : map nat nat : @parameter : @storage
+    DUP 3;      # nat : nat : nat : nat : nat : map nat nat : @parameter : @storage
+    COMPARE;    # int : nat : nat : nat : map nat nat : @parameter : @storage
+    GT;         # bool : nat : nat : nat : map nat nat : @parameter : @storage
+    IF
+      {
+        DROP;       # nat : nat : map nat nat : @parameter : @storage
+        SWAP;       # nat : nat : map nat nat : @parameter : @storage
+        DROP;       # nat : map nat nat : @parameter : @storage
+        SWAP;       # map nat nat : nat : @parameter : @storage
+        DROP;       # nat : @parameter : @storage
+        # sptOut.value = self.data.fixedPoint[20]((params.totalSupply, sp.as_nat(ir.value - 1000000000000000000))) # nat : @parameter : @storage
+        DIG 2;      # @storage : nat : @parameter
+        PUSH nat 20; # nat : @storage : nat : @parameter
+        GET;        # option (lambda (pair nat nat) nat) : nat : @parameter
+        IF_NONE
+          {
+            PUSH int 134; # int : nat : @parameter
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : nat : @parameter
+        PUSH nat 1000000000000000000; # nat : @some : nat : @parameter
+        DIG 2;      # nat : nat : @some : @parameter
+        SUB;        # int : @some : @parameter
+        ISNAT;      # option nat : @some : @parameter
+        IF_NONE
+          {
+            PUSH int 135; # int : @some : @parameter
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @parameter
+        DIG 2;      # @parameter : @some : @some
+        GET 6;      # nat : @some : @some
+        PAIR;       # pair nat @some : @some
+        EXEC;       # nat
+      }
+      {
+        SWAP;       # nat : nat : nat : map nat nat : @parameter : @storage
+        DROP;       # nat : nat : map nat nat : @parameter : @storage
+        SWAP;       # nat : nat : map nat nat : @parameter : @storage
+        DROP;       # nat : map nat nat : @parameter : @storage
+        SWAP;       # map nat nat : nat : @parameter : @storage
+        DROP;       # nat : @parameter : @storage
+        SWAP;       # @parameter : nat : @storage
+        DROP;       # nat : @storage
+        SWAP;       # @storage : nat
+        DROP;       # nat
+      }; # nat
+    # sp.result(sptOut.value) # nat
+  };
+view
+  "calcTokenInGivenExactSptOut" (pair (pair (nat %balance) (nat %normalizedWeight)) (pair (nat %sptAmountOut) (pair (nat %sptTotalSupply) (nat %swapFeePercentage)))) nat
+  {
+    UNPAIR;     # @parameter : @storage
+    # sp.verify(self.data.fixedPoint[23]((params.sptTotalSupply + params.sptAmountOut, params.sptTotalSupply)) <= 3000000000000000000, 307) # @parameter : @storage
+    PUSH nat 3000000000000000000; # nat : @parameter : @storage
+    DUP 3;      # @storage : nat : @parameter : @storage
+    PUSH nat 23; # nat : @storage : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 162; # int : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @parameter : @storage
+    DUP 3;      # @parameter : @some : nat : @parameter : @storage
+    GET 5;      # nat : @some : nat : @parameter : @storage
+    DUP 4;      # @parameter : nat : @some : nat : @parameter : @storage
+    GET 3;      # nat : nat : @some : nat : @parameter : @storage
+    DUP 5;      # @parameter : nat : nat : @some : nat : @parameter : @storage
+    GET 5;      # nat : nat : nat : @some : nat : @parameter : @storage
+    ADD;        # nat : nat : @some : nat : @parameter : @storage
+    PAIR;       # pair nat nat : @some : nat : @parameter : @storage
+    EXEC;       # nat : nat : @parameter : @storage
+    COMPARE;    # int : @parameter : @storage
+    LE;         # bool : @parameter : @storage
+    IF
+      {}
+      {
+        PUSH int 307; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }; # @parameter : @storage
+    # sp.result(sp.as_nat(self.data.fixedPoint[21]((params.balance, sp.as_nat(self.data.fixedPoint[25]((self.data.fixedPoint[23]((params.sptTotalSupply + params.sptAmountOut, params.sptTotalSupply)), self.data.fixedPoint[23]((1000000000000000000, params.normalizedWeight)))) - 1000000000000000000))) - self.data.fixedPoint[21]((self.data.fixedPoint[21]((params.balance, sp.as_nat(self.data.fixedPoint[25]((self.data.fixedPoint[23]((params.sptTotalSupply + params.sptAmountOut, params.sptTotalSupply)), self.data.fixedPoint[23]((1000000000000000000, params.normalizedWeight)))) - 1000000000000000000))), sp.as_nat(1000000000000000000 - params.normalizedWeight)))) + self.data.fixedPoint[23]((self.data.fixedPoint[21]((self.data.fixedPoint[21]((params.balance, sp.as_nat(self.data.fixedPoint[25]((self.data.fixedPoint[23]((params.sptTotalSupply + params.sptAmountOut, params.sptTotalSupply)), self.data.fixedPoint[23]((1000000000000000000, params.normalizedWeight)))) - 1000000000000000000))), sp.as_nat(1000000000000000000 - params.normalizedWeight))), sp.as_nat(1000000000000000000 - params.swapFeePercentage)))) # @parameter : @storage
+    DUP 2;      # @storage : @parameter : @storage
+    PUSH nat 23; # nat : @storage : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 182; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @parameter : @storage
+    DUP 2;      # @parameter : @some : @parameter : @storage
+    GET 6;      # nat : @some : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @parameter : @storage
+    SUB;        # int : @some : @parameter : @storage
+    ISNAT;      # option nat : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 156; # int : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @parameter : @storage
+    DUP 4;      # @storage : @some : @some : @parameter : @storage
+    PUSH nat 21; # nat : @storage : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 177; # int : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @parameter : @storage
+    DUP 4;      # @parameter : @some : @some : @some : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : @some : @parameter : @storage
+    CDR;        # nat : @some : @some : @some : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : @some : @parameter : @storage
+    SUB;        # int : @some : @some : @some : @parameter : @storage
+    ISNAT;      # option nat : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 156; # int : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : @parameter : @storage
+    DUP 6;      # @storage : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 21; # nat : @storage : @some : @some : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 172; # int : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 8;      # @storage : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 25; # nat : @storage : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 169; # int : nat : @some : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 9;      # @storage : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 23; # nat : @storage : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 170; # int : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 9;      # @parameter : @some : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    CDR;        # nat : @some : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 10;     # @storage : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 23; # nat : @storage : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 162; # int : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 10;     # @parameter : @some : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    GET 5;      # nat : @some : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 11;     # @parameter : nat : @some : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    GET 3;      # nat : nat : @some : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 12;     # @parameter : nat : nat : @some : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    GET 5;      # nat : nat : nat : @some : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    ADD;        # nat : nat : @some : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat nat : @some : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat nat : @some : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    SUB;        # int : @some : @some : @some : @some : @some : @parameter : @storage
+    ISNAT;      # option nat : @some : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 173; # int : @some : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 7;      # @parameter : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    CAR;        # nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat @some : @some : @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : @some : @some : @parameter : @storage
+    PAIR;       # pair nat @some : @some : @parameter : @storage
+    EXEC;       # nat : @parameter : @storage
+    DUP 3;      # @storage : nat : @parameter : @storage
+    PUSH nat 21; # nat : @storage : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 177; # int : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @parameter : @storage
+    DUP 3;      # @parameter : @some : nat : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : nat : @parameter : @storage
+    CDR;        # nat : @some : nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : nat : @parameter : @storage
+    SUB;        # int : @some : nat : @parameter : @storage
+    ISNAT;      # option nat : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 156; # int : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : @parameter : @storage
+    DUP 5;      # @storage : @some : @some : nat : @parameter : @storage
+    PUSH nat 21; # nat : @storage : @some : @some : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 172; # int : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : @some : @some : @some : nat : @parameter : @storage
+    DUP 7;      # @storage : nat : @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 25; # nat : @storage : nat : @some : @some : @some : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 169; # int : nat : @some : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : @some : @some : nat : @parameter : @storage
+    DUP 8;      # @storage : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 23; # nat : @storage : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 170; # int : @some : nat : @some : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    DUP 8;      # @parameter : @some : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    CDR;        # nat : @some : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    DUP 9;      # @storage : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 23; # nat : @storage : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 162; # int : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    DUP 9;      # @parameter : @some : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    GET 5;      # nat : @some : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    DUP 10;     # @parameter : nat : @some : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    GET 3;      # nat : nat : @some : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    DUP 11;     # @parameter : nat : nat : @some : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    GET 5;      # nat : nat : nat : @some : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    ADD;        # nat : nat : @some : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair nat nat : @some : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair nat nat : @some : nat : @some : @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : nat : @some : @some : @some : nat : @parameter : @storage
+    SUB;        # int : @some : @some : @some : nat : @parameter : @storage
+    ISNAT;      # option nat : @some : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 173; # int : @some : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : nat : @parameter : @storage
+    DUP 6;      # @parameter : @some : @some : @some : @some : nat : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : @some : @some : nat : @parameter : @storage
+    CAR;        # nat : @some : @some : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair nat @some : @some : @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair nat @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : nat : @parameter : @storage
+    DUP 4;      # @storage : nat : nat : @parameter : @storage
+    PUSH nat 21; # nat : @storage : nat : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 172; # int : nat : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : @some : nat : nat : @parameter : @storage
+    DUP 6;      # @storage : nat : @some : nat : nat : @parameter : @storage
+    PUSH nat 25; # nat : @storage : nat : @some : nat : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : nat : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 169; # int : nat : @some : nat : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : nat : nat : @parameter : @storage
+    DUP 7;      # @storage : @some : nat : @some : nat : nat : @parameter : @storage
+    PUSH nat 23; # nat : @storage : @some : nat : @some : nat : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : nat : @some : nat : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 170; # int : @some : nat : @some : nat : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : @some : nat : nat : @parameter : @storage
+    DUP 7;      # @parameter : @some : @some : nat : @some : nat : nat : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : nat : @some : nat : nat : @parameter : @storage
+    CDR;        # nat : @some : @some : nat : @some : nat : nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : nat : @some : nat : nat : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : nat : @some : nat : nat : @parameter : @storage
+    EXEC;       # nat : @some : nat : @some : nat : nat : @parameter : @storage
+    DIG 7;      # @storage : nat : @some : nat : @some : nat : nat : @parameter
+    PUSH nat 23; # nat : @storage : nat : @some : nat : @some : nat : nat : @parameter
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : nat : @some : nat : nat : @parameter
+    IF_NONE
+      {
+        PUSH int 162; # int : nat : @some : nat : @some : nat : nat : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : nat : @some : nat : nat : @parameter
+    DUP 8;      # @parameter : @some : nat : @some : nat : @some : nat : nat : @parameter
+    GET 5;      # nat : @some : nat : @some : nat : @some : nat : nat : @parameter
+    DUP 9;      # @parameter : nat : @some : nat : @some : nat : @some : nat : nat : @parameter
+    GET 3;      # nat : nat : @some : nat : @some : nat : @some : nat : nat : @parameter
+    DUP 10;     # @parameter : nat : nat : @some : nat : @some : nat : @some : nat : nat : @parameter
+    GET 5;      # nat : nat : nat : @some : nat : @some : nat : @some : nat : nat : @parameter
+    ADD;        # nat : nat : @some : nat : @some : nat : @some : nat : nat : @parameter
+    PAIR;       # pair nat nat : @some : nat : @some : nat : @some : nat : nat : @parameter
+    EXEC;       # nat : nat : @some : nat : @some : nat : nat : @parameter
+    PAIR;       # pair nat nat : @some : nat : @some : nat : nat : @parameter
+    EXEC;       # nat : nat : @some : nat : nat : @parameter
+    SUB;        # int : @some : nat : nat : @parameter
+    ISNAT;      # option nat : @some : nat : nat : @parameter
+    IF_NONE
+      {
+        PUSH int 173; # int : @some : nat : nat : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : nat : @parameter
+    DIG 4;      # @parameter : @some : @some : nat : nat
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : nat : nat
+    CAR;        # nat : @some : @some : nat : nat
+    PAIR;       # pair nat @some : @some : nat : nat
+    EXEC;       # nat : nat : nat
+    SUB;        # int : nat
+    ISNAT;      # option nat : nat
+    IF_NONE
+      {
+        PUSH int 180; # int : nat
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat
+    ADD;        # nat
+  };
+view
+  "calcTokenOutGivenExactSptIn" (pair (pair (nat %balance) (nat %normalizedWeight)) (pair (nat %sptAmountIn) (pair (nat %sptTotalSupply) (nat %swapFeePercentage)))) nat
+  {
+    UNPAIR;     # @parameter : @storage
+    # sp.verify(self.data.fixedPoint[23]((sp.as_nat(params.sptTotalSupply - params.sptAmountIn), params.sptTotalSupply)) >= 700000000000000000, 306) # @parameter : @storage
+    PUSH nat 700000000000000000; # nat : @parameter : @storage
+    DUP 3;      # @storage : nat : @parameter : @storage
+    PUSH nat 23; # nat : @storage : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 284; # int : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @parameter : @storage
+    DUP 3;      # @parameter : @some : nat : @parameter : @storage
+    GET 5;      # nat : @some : nat : @parameter : @storage
+    DUP 4;      # @parameter : nat : @some : nat : @parameter : @storage
+    GET 3;      # nat : nat : @some : nat : @parameter : @storage
+    DUP 5;      # @parameter : nat : nat : @some : nat : @parameter : @storage
+    GET 5;      # nat : nat : nat : @some : nat : @parameter : @storage
+    SUB;        # int : nat : @some : nat : @parameter : @storage
+    ISNAT;      # option nat : nat : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 285; # int : nat : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : nat : @parameter : @storage
+    PAIR;       # pair @some nat : @some : nat : @parameter : @storage
+    EXEC;       # nat : nat : @parameter : @storage
+    COMPARE;    # int : @parameter : @storage
+    GE;         # bool : @parameter : @storage
+    IF
+      {}
+      {
+        PUSH int 306; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }; # @parameter : @storage
+    # sp.result(sp.as_nat(self.data.fixedPoint[20]((params.balance, sp.as_nat(1000000000000000000 - self.data.fixedPoint[25]((self.data.fixedPoint[23]((sp.as_nat(params.sptTotalSupply - params.sptAmountIn), params.sptTotalSupply)), self.data.fixedPoint[22]((1000000000000000000, params.normalizedWeight))))))) - self.data.fixedPoint[21]((self.data.fixedPoint[20]((params.balance, sp.as_nat(1000000000000000000 - self.data.fixedPoint[25]((self.data.fixedPoint[23]((sp.as_nat(params.sptTotalSupply - params.sptAmountIn), params.sptTotalSupply)), self.data.fixedPoint[22]((1000000000000000000, params.normalizedWeight))))))), sp.as_nat(1000000000000000000 - params.normalizedWeight)))) + self.data.fixedPoint[21]((self.data.fixedPoint[21]((self.data.fixedPoint[20]((params.balance, sp.as_nat(1000000000000000000 - self.data.fixedPoint[25]((self.data.fixedPoint[23]((sp.as_nat(params.sptTotalSupply - params.sptAmountIn), params.sptTotalSupply)), self.data.fixedPoint[22]((1000000000000000000, params.normalizedWeight))))))), sp.as_nat(1000000000000000000 - params.normalizedWeight))), sp.as_nat(1000000000000000000 - params.swapFeePercentage)))) # @parameter : @storage
+    DUP 2;      # @storage : @parameter : @storage
+    PUSH nat 21; # nat : @storage : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 304; # int : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @parameter : @storage
+    DUP 2;      # @parameter : @some : @parameter : @storage
+    GET 6;      # nat : @some : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @parameter : @storage
+    SUB;        # int : @some : @parameter : @storage
+    ISNAT;      # option nat : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 278; # int : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @parameter : @storage
+    DUP 4;      # @storage : @some : @some : @parameter : @storage
+    PUSH nat 21; # nat : @storage : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 299; # int : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @parameter : @storage
+    DUP 4;      # @parameter : @some : @some : @some : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : @some : @parameter : @storage
+    CDR;        # nat : @some : @some : @some : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : @some : @parameter : @storage
+    SUB;        # int : @some : @some : @some : @parameter : @storage
+    ISNAT;      # option nat : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 278; # int : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : @parameter : @storage
+    DUP 6;      # @storage : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 20; # nat : @storage : @some : @some : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 294; # int : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 7;      # @storage : @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 25; # nat : @storage : @some : @some : @some : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 291; # int : @some : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 8;      # @storage : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 22; # nat : @storage : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 292; # int : @some : @some : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 8;      # @parameter : @some : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    CDR;        # nat : @some : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 9;      # @storage : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 23; # nat : @storage : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 284; # int : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 9;      # @parameter : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    GET 5;      # nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 10;     # @parameter : nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    GET 3;      # nat : nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 11;     # @parameter : nat : nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    GET 5;      # nat : nat : nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    SUB;        # int : nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    ISNAT;      # option nat : nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 285; # int : nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair @some nat : @some : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : @some : @some : @some : @some : @some : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : @some : @some : @some : @parameter : @storage
+    SUB;        # int : @some : @some : @some : @some : @some : @parameter : @storage
+    ISNAT;      # option nat : @some : @some : @some : @some : @some : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 278; # int : @some : @some : @some : @some : @some : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : @some : @some : @parameter : @storage
+    DUP 7;      # @parameter : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    CAR;        # nat : @some : @some : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat @some : @some : @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : @some : @some : @some : @some : @parameter : @storage
+    PAIR;       # pair nat @some : @some : @some : @some : @parameter : @storage
+    EXEC;       # nat : @some : @some : @parameter : @storage
+    PAIR;       # pair nat @some : @some : @parameter : @storage
+    EXEC;       # nat : @parameter : @storage
+    DUP 3;      # @storage : nat : @parameter : @storage
+    PUSH nat 21; # nat : @storage : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 299; # int : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @parameter : @storage
+    DUP 3;      # @parameter : @some : nat : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : nat : @parameter : @storage
+    CDR;        # nat : @some : nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : nat : @parameter : @storage
+    SUB;        # int : @some : nat : @parameter : @storage
+    ISNAT;      # option nat : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 278; # int : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : @parameter : @storage
+    DUP 5;      # @storage : @some : @some : nat : @parameter : @storage
+    PUSH nat 20; # nat : @storage : @some : @some : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 294; # int : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : nat : @parameter : @storage
+    DUP 6;      # @storage : @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 25; # nat : @storage : @some : @some : @some : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 291; # int : @some : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : nat : @parameter : @storage
+    DUP 7;      # @storage : @some : @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 22; # nat : @storage : @some : @some : @some : @some : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 292; # int : @some : @some : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : @some : nat : @parameter : @storage
+    DUP 7;      # @parameter : @some : @some : @some : @some : @some : nat : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : @some : @some : @some : nat : @parameter : @storage
+    CDR;        # nat : @some : @some : @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : @some : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : @some : @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : @some : @some : @some : @some : nat : @parameter : @storage
+    DUP 8;      # @storage : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 23; # nat : @storage : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 284; # int : nat : @some : @some : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    DUP 8;      # @parameter : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    GET 5;      # nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    DUP 9;      # @parameter : nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    GET 3;      # nat : nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    DUP 10;     # @parameter : nat : nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    GET 5;      # nat : nat : nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    SUB;        # int : nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    ISNAT;      # option nat : nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 285; # int : nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair @some nat : @some : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : nat : @some : @some : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : @some : @some : @some : nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : @some : nat : @parameter : @storage
+    SUB;        # int : @some : @some : @some : nat : @parameter : @storage
+    ISNAT;      # option nat : @some : @some : @some : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 278; # int : @some : @some : @some : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : @some : nat : @parameter : @storage
+    DUP 6;      # @parameter : @some : @some : @some : @some : nat : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : @some : @some : nat : @parameter : @storage
+    CAR;        # nat : @some : @some : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair nat @some : @some : @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : @some : @some : nat : @parameter : @storage
+    PAIR;       # pair nat @some : @some : nat : @parameter : @storage
+    EXEC;       # nat : nat : @parameter : @storage
+    DUP 4;      # @storage : nat : nat : @parameter : @storage
+    PUSH nat 20; # nat : @storage : nat : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : nat : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 294; # int : nat : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : nat : @parameter : @storage
+    DUP 5;      # @storage : @some : nat : nat : @parameter : @storage
+    PUSH nat 25; # nat : @storage : @some : nat : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : nat : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 291; # int : @some : nat : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : nat : @parameter : @storage
+    DUP 6;      # @storage : @some : @some : nat : nat : @parameter : @storage
+    PUSH nat 22; # nat : @storage : @some : @some : nat : nat : @parameter : @storage
+    GET;        # option (lambda (pair nat nat) nat) : @some : @some : nat : nat : @parameter : @storage
+    IF_NONE
+      {
+        PUSH int 292; # int : @some : @some : nat : nat : @parameter : @storage
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : @some : nat : nat : @parameter : @storage
+    DUP 6;      # @parameter : @some : @some : @some : nat : nat : @parameter : @storage
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : @some : nat : nat : @parameter : @storage
+    CDR;        # nat : @some : @some : @some : nat : nat : @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : nat : @some : @some : @some : nat : nat : @parameter : @storage
+    PAIR;       # pair nat nat : @some : @some : @some : nat : nat : @parameter : @storage
+    EXEC;       # nat : @some : @some : nat : nat : @parameter : @storage
+    DIG 6;      # @storage : nat : @some : @some : nat : nat : @parameter
+    PUSH nat 23; # nat : @storage : nat : @some : @some : nat : nat : @parameter
+    GET;        # option (lambda (pair nat nat) nat) : nat : @some : @some : nat : nat : @parameter
+    IF_NONE
+      {
+        PUSH int 284; # int : nat : @some : @some : nat : nat : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : @some : nat : nat : @parameter
+    DUP 7;      # @parameter : @some : nat : @some : @some : nat : nat : @parameter
+    GET 5;      # nat : @some : nat : @some : @some : nat : nat : @parameter
+    DUP 8;      # @parameter : nat : @some : nat : @some : @some : nat : nat : @parameter
+    GET 3;      # nat : nat : @some : nat : @some : @some : nat : nat : @parameter
+    DUP 9;      # @parameter : nat : nat : @some : nat : @some : @some : nat : nat : @parameter
+    GET 5;      # nat : nat : nat : @some : nat : @some : @some : nat : nat : @parameter
+    SUB;        # int : nat : @some : nat : @some : @some : nat : nat : @parameter
+    ISNAT;      # option nat : nat : @some : nat : @some : @some : nat : nat : @parameter
+    IF_NONE
+      {
+        PUSH int 285; # int : nat : @some : nat : @some : @some : nat : nat : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat : @some : nat : @some : @some : nat : nat : @parameter
+    PAIR;       # pair @some nat : @some : nat : @some : @some : nat : nat : @parameter
+    EXEC;       # nat : nat : @some : @some : nat : nat : @parameter
+    PAIR;       # pair nat nat : @some : @some : nat : nat : @parameter
+    EXEC;       # nat : @some : nat : nat : @parameter
+    PUSH nat 1000000000000000000; # nat : nat : @some : nat : nat : @parameter
+    SUB;        # int : @some : nat : nat : @parameter
+    ISNAT;      # option nat : @some : nat : nat : @parameter
+    IF_NONE
+      {
+        PUSH int 278; # int : @some : nat : nat : @parameter
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : @some : nat : nat : @parameter
+    DIG 4;      # @parameter : @some : @some : nat : nat
+    CAR;        # pair (nat %balance) (nat %normalizedWeight) : @some : @some : nat : nat
+    CAR;        # nat : @some : @some : nat : nat
+    PAIR;       # pair nat @some : @some : nat : nat
+    EXEC;       # nat : nat : nat
+    SUB;        # int : nat
+    ISNAT;      # option nat : nat
+    IF_NONE
+      {
+        PUSH int 302; # int : nat
+        FAILWITH;   # FAILED
+      }
+      {}; # @some : nat
+    ADD;        # nat
+  };
+view
+  "calculateInvariant" (pair (map %balances nat nat) (map %normalizedWeights nat nat)) nat
+  {
+    UNPAIR;     # @parameter : @storage
+    # invariant = sp.local("invariant", 1000000000000000000) # @parameter : @storage
+    PUSH nat 1000000000000000000; # nat : @parameter : @storage
+    # for i in sp.range(0, sp.len(params.normalizedWeights)): ... (sp.TNat) # nat : @parameter : @storage
+    DUP 2;      # @parameter : nat : @parameter : @storage
+    CDR;        # map nat nat : nat : @parameter : @storage
+    SIZE;       # nat : nat : @parameter : @storage
+    PUSH nat 0; # nat : nat : nat : @parameter : @storage
+    DUP;        # nat : nat : nat : nat : @parameter : @storage
+    DUP 3;      # nat : nat : nat : nat : nat : @parameter : @storage
+    COMPARE;    # int : nat : nat : nat : @parameter : @storage
+    GT;         # bool : nat : nat : nat : @parameter : @storage
+    LOOP
+      {
+        # invariant.value = self.data.fixedPoint[20]((invariant.value, self.data.fixedPoint[24]((params.balances[i], params.normalizedWeights[i])))) # nat : nat : nat : @parameter : @storage
+        DUP 5;      # @storage : nat : nat : nat : @parameter : @storage
+        PUSH nat 20; # nat : @storage : nat : nat : nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 53; # int : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : nat : nat : nat : @parameter : @storage
+        DUP 6;      # @storage : @some : nat : nat : nat : @parameter : @storage
+        PUSH nat 24; # nat : @storage : @some : nat : nat : nat : @parameter : @storage
+        GET;        # option (lambda (pair nat nat) nat) : @some : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 51; # int : @some : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : nat : nat : nat : @parameter : @storage
+        DUP 6;      # @parameter : @some : @some : nat : nat : nat : @parameter : @storage
+        CDR;        # map nat nat : @some : @some : nat : nat : nat : @parameter : @storage
+        DUP 4;      # nat : map nat nat : @some : @some : nat : nat : nat : @parameter : @storage
+        GET;        # option nat : @some : @some : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 51; # int : @some : @some : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : nat : nat : nat : @parameter : @storage
+        DUP 7;      # @parameter : @some : @some : @some : nat : nat : nat : @parameter : @storage
+        CAR;        # map nat nat : @some : @some : @some : nat : nat : nat : @parameter : @storage
+        DUP 5;      # nat : map nat nat : @some : @some : @some : nat : nat : nat : @parameter : @storage
+        GET;        # option nat : @some : @some : @some : nat : nat : nat : @parameter : @storage
+        IF_NONE
+          {
+            PUSH int 51; # int : @some : @some : @some : nat : nat : nat : @parameter : @storage
+            FAILWITH;   # FAILED
+          }
+          {}; # @some : @some : @some : @some : nat : nat : nat : @parameter : @storage
+        PAIR;       # pair @some @some : @some : @some : nat : nat : nat : @parameter : @storage
+        EXEC;       # nat : @some : nat : nat : nat : @parameter : @storage
+        DIG 4;      # nat : nat : @some : nat : nat : @parameter : @storage
+        PAIR;       # pair nat nat : @some : nat : nat : @parameter : @storage
+        EXEC;       # nat : nat : nat : @parameter : @storage
+        DUG 2;      # nat : nat : nat : @parameter : @storage
+        # loop step # nat : nat : nat : @parameter : @storage
+        PUSH nat 1; # nat : nat : nat : nat : @parameter : @storage
+        ADD;        # nat : nat : nat : @parameter : @storage
+        DUP;        # nat : nat : nat : nat : @parameter : @storage
+        DUP 3;      # nat : nat : nat : nat : nat : @parameter : @storage
+        COMPARE;    # int : nat : nat : nat : @parameter : @storage
+        GT;         # bool : nat : nat : nat : @parameter : @storage
+      }; # nat : nat : nat : @parameter : @storage
+    DROP 2;     # nat : @parameter : @storage
+    SWAP;       # @parameter : nat : @storage
+    DROP;       # nat : @storage
+    SWAP;       # @storage : nat
+    DROP;       # nat
+    # sp.verify(invariant.value > 0) # nat
+    PUSH nat 0; # nat : nat
+    DUP 2;      # nat : nat : nat
+    COMPARE;    # int : nat
+    GT;         # bool : nat
+    IF
+      {}
+      {
+        PUSH string "WrongCondition: invariant.value > 0"; # string : nat
+        FAILWITH;   # FAILED
+      }; # nat
+    # sp.result(invariant.value) # nat
+  };

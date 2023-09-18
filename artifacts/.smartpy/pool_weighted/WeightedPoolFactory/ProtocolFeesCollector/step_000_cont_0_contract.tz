@@ -1,0 +1,396 @@
+parameter (or (or (unit %accept_admin) (or (lambda %run_lambda (pair unit (pair (list operation) (pair (pair (address %admin) (option %proposed_admin address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))))) (pair (list operation) (pair (list operation) (pair (pair (address %admin) (option %proposed_admin address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))))))) (nat %setSwapFeePercentage))) (or (nat %setYieldFeePercentage) (or (address %transfer_admin) (pair %withdrawCollectedFees (map %amounts nat nat) (pair (address %recipient) (map %tokens nat (pair address (option nat))))))));
+storage   (pair (pair (address %admin) (option %proposed_admin address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))));
+code
+  {
+    UNPAIR;     # @parameter : @storage
+    IF_LEFT
+      {
+        IF_LEFT
+          {
+            DROP;       # @storage
+            # == accept_admin ==
+            # sp.verify(sp.some(sp.sender) == self.data.proposed_admin, 'NOT_PROPOSED_ADMIN') # @storage
+            DUP;        # @storage : @storage
+            CAR;        # pair (address %admin) (option %proposed_admin address) : @storage
+            CDR;        # option address : @storage
+            SENDER;     # @sender : option address : @storage
+            SOME;       # option address : option address : @storage
+            COMPARE;    # int : @storage
+            EQ;         # bool : @storage
+            IF
+              {}
+              {
+                PUSH string "NOT_PROPOSED_ADMIN"; # string : @storage
+                FAILWITH;   # FAILED
+              }; # @storage
+            # self.data.admin = sp.sender # @storage
+            CDR;        # pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+            SENDER;     # @sender : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+            # self.data.proposed_admin = sp.none # @sender : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+            NONE address; # option address : @sender : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+            SWAP;       # @sender : option address : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+            PAIR;       # pair @sender (option address) : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+            PAIR;       # pair (pair @sender (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+            NIL operation; # list operation : pair (pair @sender (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+          }
+          {
+            IF_LEFT
+              {
+                # == run_lambda ==
+                # sp.verify(self.data.admin == sp.set_type_expr(sp.sender, sp.TAddress), 'ONLY_ADMIN') # @parameter%run_lambda : @storage
+                SENDER;     # @sender : @parameter%run_lambda : @storage
+                DUP 3;      # @storage : @sender : @parameter%run_lambda : @storage
+                CAR;        # pair (address %admin) (option %proposed_admin address) : @sender : @parameter%run_lambda : @storage
+                CAR;        # address : @sender : @parameter%run_lambda : @storage
+                COMPARE;    # int : @parameter%run_lambda : @storage
+                EQ;         # bool : @parameter%run_lambda : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "ONLY_ADMIN"; # string : @parameter%run_lambda : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%run_lambda : @storage
+                # for op in params(sp.unit): ... # @parameter%run_lambda : @storage
+                NIL operation; # list operation : @parameter%run_lambda : @storage
+                UNIT;       # unit : list operation : @parameter%run_lambda : @storage
+                DIG 2;      # @parameter%run_lambda : unit : list operation : @storage
+                DUG 3;      # unit : list operation : @storage : @parameter%run_lambda
+                PAIR 3;     # pair unit (pair (list operation) @storage) : @parameter%run_lambda
+                EXEC;       # pair (list operation) (pair (list operation) (pair (pair (address %admin) (option %proposed_admin address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))))
+                UNPAIR 3;   # list operation : list operation : pair (pair (address %admin) (option %proposed_admin address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+                ITER
+                  {
+                    # sp.operations().push(op) # operation : list operation : pair (pair (address %admin) (option %proposed_admin address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+                    CONS;       # list operation : pair (pair (address %admin) (option %proposed_admin address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+                  }; # list operation : pair (pair (address %admin) (option %proposed_admin address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+              }
+              {
+                # == setSwapFeePercentage ==
+                # sp.verify(self.data.admin == sp.set_type_expr(sp.sender, sp.TAddress), 'ONLY_ADMIN') # @parameter%setSwapFeePercentage : @storage
+                SENDER;     # @sender : @parameter%setSwapFeePercentage : @storage
+                DUP 3;      # @storage : @sender : @parameter%setSwapFeePercentage : @storage
+                CAR;        # pair (address %admin) (option %proposed_admin address) : @sender : @parameter%setSwapFeePercentage : @storage
+                CAR;        # address : @sender : @parameter%setSwapFeePercentage : @storage
+                COMPARE;    # int : @parameter%setSwapFeePercentage : @storage
+                EQ;         # bool : @parameter%setSwapFeePercentage : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "ONLY_ADMIN"; # string : @parameter%setSwapFeePercentage : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%setSwapFeePercentage : @storage
+                # sp.verify(params <= 500000000000000000, 600) # @parameter%setSwapFeePercentage : @storage
+                PUSH nat 500000000000000000; # nat : @parameter%setSwapFeePercentage : @storage
+                DUP 2;      # @parameter%setSwapFeePercentage : nat : @parameter%setSwapFeePercentage : @storage
+                COMPARE;    # int : @parameter%setSwapFeePercentage : @storage
+                LE;         # bool : @parameter%setSwapFeePercentage : @storage
+                IF
+                  {}
+                  {
+                    PUSH int 600; # int : @parameter%setSwapFeePercentage : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%setSwapFeePercentage : @storage
+                SWAP;       # @storage : @parameter%setSwapFeePercentage
+                # self.data.swapFeePercentage = params # @storage : @parameter%setSwapFeePercentage
+                DUP 2;      # @parameter%setSwapFeePercentage : @storage : @parameter%setSwapFeePercentage
+                UPDATE 3;   # @storage : @parameter%setSwapFeePercentage
+                SWAP;       # @parameter%setSwapFeePercentage : @storage
+                # sp.emit(params, tag = "SwapFeePercentageChanged") # @parameter%setSwapFeePercentage : @storage
+                EMIT %SwapFeePercentageChanged nat; # operation : @storage
+                NIL operation; # list operation : operation : @storage
+                SWAP;       # operation : list operation : @storage
+                CONS;       # list operation : @storage
+              }; # list operation : pair (pair (address %admin) (option %proposed_admin address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+          }; # list operation : pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+      }
+      {
+        IF_LEFT
+          {
+            # == setYieldFeePercentage ==
+            # sp.verify(self.data.admin == sp.set_type_expr(sp.sender, sp.TAddress), 'ONLY_ADMIN') # @parameter%setYieldFeePercentage : @storage
+            SENDER;     # @sender : @parameter%setYieldFeePercentage : @storage
+            DUP 3;      # @storage : @sender : @parameter%setYieldFeePercentage : @storage
+            CAR;        # pair (address %admin) (option %proposed_admin address) : @sender : @parameter%setYieldFeePercentage : @storage
+            CAR;        # address : @sender : @parameter%setYieldFeePercentage : @storage
+            COMPARE;    # int : @parameter%setYieldFeePercentage : @storage
+            EQ;         # bool : @parameter%setYieldFeePercentage : @storage
+            IF
+              {}
+              {
+                PUSH string "ONLY_ADMIN"; # string : @parameter%setYieldFeePercentage : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%setYieldFeePercentage : @storage
+            # sp.verify(params <= 500000000000000000, 600) # @parameter%setYieldFeePercentage : @storage
+            PUSH nat 500000000000000000; # nat : @parameter%setYieldFeePercentage : @storage
+            DUP 2;      # @parameter%setYieldFeePercentage : nat : @parameter%setYieldFeePercentage : @storage
+            COMPARE;    # int : @parameter%setYieldFeePercentage : @storage
+            LE;         # bool : @parameter%setYieldFeePercentage : @storage
+            IF
+              {}
+              {
+                PUSH int 600; # int : @parameter%setYieldFeePercentage : @storage
+                FAILWITH;   # FAILED
+              }; # @parameter%setYieldFeePercentage : @storage
+            SWAP;       # @storage : @parameter%setYieldFeePercentage
+            # self.data.yieldFeePercentage = params # @storage : @parameter%setYieldFeePercentage
+            DUP 2;      # @parameter%setYieldFeePercentage : @storage : @parameter%setYieldFeePercentage
+            UPDATE 6;   # @storage : @parameter%setYieldFeePercentage
+            SWAP;       # @parameter%setYieldFeePercentage : @storage
+            # sp.emit(params, tag = "YieldFeePercentageChanged") # @parameter%setYieldFeePercentage : @storage
+            EMIT %YieldFeePercentageChanged nat; # operation : @storage
+            NIL operation; # list operation : operation : @storage
+            SWAP;       # operation : list operation : @storage
+            CONS;       # list operation : @storage
+          }
+          {
+            IF_LEFT
+              {
+                # == transfer_admin ==
+                # sp.verify(self.data.admin == sp.set_type_expr(sp.sender, sp.TAddress), 'ONLY_ADMIN') # @parameter%transfer_admin : @storage
+                SENDER;     # @sender : @parameter%transfer_admin : @storage
+                DUP 3;      # @storage : @sender : @parameter%transfer_admin : @storage
+                CAR;        # pair (address %admin) (option %proposed_admin address) : @sender : @parameter%transfer_admin : @storage
+                CAR;        # address : @sender : @parameter%transfer_admin : @storage
+                COMPARE;    # int : @parameter%transfer_admin : @storage
+                EQ;         # bool : @parameter%transfer_admin : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "ONLY_ADMIN"; # string : @parameter%transfer_admin : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%transfer_admin : @storage
+                SWAP;       # @storage : @parameter%transfer_admin
+                # self.data.proposed_admin = sp.some(params) # @storage : @parameter%transfer_admin
+                UNPAIR;     # pair (address %admin) (option %proposed_admin address) : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)) : @parameter%transfer_admin
+                CAR;        # address : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)) : @parameter%transfer_admin
+                DIG 2;      # @parameter%transfer_admin : address : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+                SOME;       # option address : address : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+                SWAP;       # address : option address : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+                PAIR;       # pair address (option address) : pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))
+                PAIR;       # pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+                NIL operation; # list operation : pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+              }
+              {
+                # == withdrawCollectedFees ==
+                # sp.verify(self.data.admin == sp.set_type_expr(sp.sender, sp.TAddress), 'ONLY_ADMIN') # @parameter%withdrawCollectedFees : @storage
+                SENDER;     # @sender : @parameter%withdrawCollectedFees : @storage
+                DUP 3;      # @storage : @sender : @parameter%withdrawCollectedFees : @storage
+                CAR;        # pair (address %admin) (option %proposed_admin address) : @sender : @parameter%withdrawCollectedFees : @storage
+                CAR;        # address : @sender : @parameter%withdrawCollectedFees : @storage
+                COMPARE;    # int : @parameter%withdrawCollectedFees : @storage
+                EQ;         # bool : @parameter%withdrawCollectedFees : @storage
+                IF
+                  {}
+                  {
+                    PUSH string "ONLY_ADMIN"; # string : @parameter%withdrawCollectedFees : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%withdrawCollectedFees : @storage
+                # sp.verify(sp.len(params.tokens) == sp.len(params.amounts), 103) # @parameter%withdrawCollectedFees : @storage
+                DUP;        # @parameter%withdrawCollectedFees : @parameter%withdrawCollectedFees : @storage
+                CAR;        # map nat nat : @parameter%withdrawCollectedFees : @storage
+                SIZE;       # nat : @parameter%withdrawCollectedFees : @storage
+                DUP 2;      # @parameter%withdrawCollectedFees : nat : @parameter%withdrawCollectedFees : @storage
+                GET 4;      # map nat (pair address (option nat)) : nat : @parameter%withdrawCollectedFees : @storage
+                SIZE;       # nat : nat : @parameter%withdrawCollectedFees : @storage
+                COMPARE;    # int : @parameter%withdrawCollectedFees : @storage
+                EQ;         # bool : @parameter%withdrawCollectedFees : @storage
+                IF
+                  {}
+                  {
+                    PUSH int 103; # int : @parameter%withdrawCollectedFees : @storage
+                    FAILWITH;   # FAILED
+                  }; # @parameter%withdrawCollectedFees : @storage
+                # for i in sp.range(0, sp.len(params.tokens)): ... (sp.TNat) # @parameter%withdrawCollectedFees : @storage
+                NIL operation; # list operation : @parameter%withdrawCollectedFees : @storage
+                DUP 2;      # @parameter%withdrawCollectedFees : list operation : @parameter%withdrawCollectedFees : @storage
+                GET 4;      # map nat (pair address (option nat)) : list operation : @parameter%withdrawCollectedFees : @storage
+                SIZE;       # nat : list operation : @parameter%withdrawCollectedFees : @storage
+                PUSH nat 0; # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                DUP;        # nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                DUP 3;      # nat : nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                COMPARE;    # int : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                GT;         # bool : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                LOOP
+                  {
+                    # sp.verify(params.amounts[i] > 0, 'Zero_Transfer') # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    PUSH nat 0; # nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    DUP 5;      # @parameter%withdrawCollectedFees : nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    CAR;        # map nat nat : nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    DUP 3;      # nat : map nat nat : nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    GET;        # option nat : nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    IF_NONE
+                      {
+                        PUSH int 83; # int : nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                        FAILWITH;   # FAILED
+                      }
+                      {}; # @some : nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    COMPARE;    # int : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    GT;         # bool : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    IF
+                      {}
+                      {
+                        PUSH string "Zero_Transfer"; # string : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                        FAILWITH;   # FAILED
+                      }; # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    # if sp.snd(params.tokens[i]) != sp.none: # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    NONE nat;   # option nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    DUP 5;      # @parameter%withdrawCollectedFees : option nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    GET 4;      # map nat (pair address (option nat)) : option nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    DUP 3;      # nat : map nat (pair address (option nat)) : option nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    GET;        # option (pair address (option nat)) : option nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    IF_NONE
+                      {
+                        PUSH int 82; # int : option nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                        FAILWITH;   # FAILED
+                      }
+                      {}; # @some : option nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    CDR;        # option nat : option nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    COMPARE;    # int : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    NEQ;        # bool : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    IF
+                      {
+                        # sp.transfer(sp.list([sp.record(from_ = sp.self_address, txs = sp.list([sp.record(amount = params.amounts[i], to_ = params.recipient, token_id = sp.snd(params.tokens[i]).open_some())]))]), sp.tez(0), sp.contract(sp.TList(sp.TRecord(from_ = sp.TAddress, txs = sp.TList(sp.TRecord(amount = sp.TNat, to_ = sp.TAddress, token_id = sp.TNat).layout(("to_", ("token_id", "amount"))))).layout(("from_", "txs"))), sp.fst(params.tokens[i]), entrypoint='transfer').open_some()) # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                        DIG 2;      # list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 4;      # @parameter%withdrawCollectedFees : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET 4;      # map nat (pair address (option nat)) : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 3;      # nat : map nat (pair address (option nat)) : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET;        # option (pair address (option nat)) : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        IF_NONE
+                          {
+                            PUSH int 82; # int : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                            FAILWITH;   # FAILED
+                          }
+                          {}; # @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CAR;        # address : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CONTRACT %transfer (list (pair (address %from_) (list %txs (pair (address %to_) (pair (nat %token_id) (nat %amount)))))); # option (contract (list (pair (address %from_) (list %txs (pair (address %to_) (pair (nat %token_id) (nat %amount))))))) : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        IF_NONE
+                          {
+                            PUSH int 36; # int : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                            FAILWITH;   # FAILED
+                          }
+                          {}; # @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        PUSH mutez 0; # mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        NIL (pair address (list (pair address (pair nat nat)))); # list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        NIL (pair address (pair nat nat)); # list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 8;      # @parameter%withdrawCollectedFees : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CAR;        # map nat nat : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 7;      # nat : map nat nat : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET;        # option nat : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        IF_NONE
+                          {
+                            PUSH int 83; # int : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                            FAILWITH;   # FAILED
+                          }
+                          {}; # @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 9;      # @parameter%withdrawCollectedFees : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET 4;      # map nat (pair address (option nat)) : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 8;      # nat : map nat (pair address (option nat)) : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET;        # option (pair address (option nat)) : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        IF_NONE
+                          {
+                            PUSH int 82; # int : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                            FAILWITH;   # FAILED
+                          }
+                          {}; # @some : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CDR;        # option nat : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        IF_NONE
+                          {
+                            PUSH int 82; # int : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                            FAILWITH;   # FAILED
+                          }
+                          {}; # @some : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 10;     # @parameter%withdrawCollectedFees : @some : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET 3;      # address : @some : @some : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        PAIR 3;     # pair address (pair @some @some) : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CONS;       # list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        SELF_ADDRESS; # @self : list (pair address (pair nat nat)) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        PAIR;       # pair @self (list (pair address (pair nat nat))) : list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CONS;       # list (pair address (list (pair address (pair nat nat)))) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        TRANSFER_TOKENS; # operation : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CONS;       # list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUG 2;      # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                      }
+                      {
+                        # sp.transfer(sp.record(from_ = sp.self_address, to_ = params.recipient, value = params.amounts[i]), sp.tez(0), sp.contract(sp.TRecord(from_ = sp.TAddress, to_ = sp.TAddress, value = sp.TNat).layout(("from_ as from", ("to_ as to", "value"))), sp.fst(params.tokens[i]), entrypoint='transfer').open_some()) # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                        DIG 2;      # list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 4;      # @parameter%withdrawCollectedFees : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET 4;      # map nat (pair address (option nat)) : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 3;      # nat : map nat (pair address (option nat)) : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET;        # option (pair address (option nat)) : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        IF_NONE
+                          {
+                            PUSH int 82; # int : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                            FAILWITH;   # FAILED
+                          }
+                          {}; # @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CAR;        # address : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CONTRACT %transfer (pair (address %from) (pair (address %to) (nat %value))); # option (contract (pair (address %from) (pair (address %to) (nat %value)))) : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        IF_NONE
+                          {
+                            PUSH int 61; # int : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                            FAILWITH;   # FAILED
+                          }
+                          {}; # @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        PUSH mutez 0; # mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 6;      # @parameter%withdrawCollectedFees : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CAR;        # map nat nat : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 5;      # nat : map nat nat : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET;        # option nat : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        IF_NONE
+                          {
+                            PUSH int 83; # int : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                            FAILWITH;   # FAILED
+                          }
+                          {}; # @some : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUP 7;      # @parameter%withdrawCollectedFees : @some : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        GET 3;      # address : @some : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        SELF_ADDRESS; # @self : address : @some : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        PAIR 3;     # pair @self (pair address @some) : mutez : @some : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        TRANSFER_TOKENS; # operation : list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        CONS;       # list operation : nat : nat : @parameter%withdrawCollectedFees : @storage
+                        DUG 2;      # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                      }; # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    # loop step # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    PUSH nat 1; # nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    ADD;        # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    DUP;        # nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    DUP 3;      # nat : nat : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    COMPARE;    # int : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                    GT;         # bool : nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                  }; # nat : nat : list operation : @parameter%withdrawCollectedFees : @storage
+                DROP 2;     # list operation : @parameter%withdrawCollectedFees : @storage
+                SWAP;       # @parameter%withdrawCollectedFees : list operation : @storage
+                DROP;       # list operation : @storage
+              }; # list operation : pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+          }; # list operation : pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+      }; # list operation : pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+    NIL operation; # list operation : list operation : pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+    SWAP;       # list operation : list operation : pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+    ITER
+      {
+        CONS;       # list operation : pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+      }; # list operation : pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage)))
+    PAIR;       # pair (list operation) (pair (pair address (option address)) (pair (nat %swapFeePercentage) (pair (address %vault) (nat %yieldFeePercentage))))
+  };
+view
+  "getSwapFeePercentage" unit nat
+  {
+    CDR;        # @storage
+    # sp.result(self.data.swapFeePercentage) # @storage
+    GET 3;      # nat
+  };
+view
+  "getYieldFeePercentage" unit nat
+  {
+    CDR;        # @storage
+    # sp.result(self.data.yieldFeePercentage) # @storage
+    GET 6;      # nat
+  };
+view
+  "get_admin" unit address
+  {
+    CDR;        # @storage
+    # sp.result(self.data.admin) # @storage
+    CAR;        # pair (address %admin) (option %proposed_admin address)
+    CAR;        # address
+  };

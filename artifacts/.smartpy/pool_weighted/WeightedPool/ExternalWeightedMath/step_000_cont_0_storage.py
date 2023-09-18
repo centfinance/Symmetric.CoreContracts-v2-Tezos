@@ -1,0 +1,1 @@
+sp.record(fixedPoint = {20 : sp.build_lambda(lambda _x0: (sp.fst(_x0) * sp.snd(_x0)) // 1000000000000000000), 21 : sp.build_lambda(lambda _x2: sp.as_nat(sp.fst(sp.ediv((sp.fst(_x2) * sp.snd(_x2)) - 1, 1000000000000000000).open_some()) + 1)), 22 : lambda, 23 : lambda, 24 : lambda, 25 : lambda})

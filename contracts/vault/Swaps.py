@@ -4,8 +4,6 @@ import contracts.interfaces.SymmetricErrors as Errors
 
 import contracts.interfaces.SymmetricEnums as Enums
 
-import contracts.vault.balances.BalanceAllocation as BalanceAllocation
-
 from contracts.vault.PoolBalances import PoolBalances
 
 from contracts.vault.AssetTransfersHandler import AssetTransfersHandler

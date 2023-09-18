@@ -1,0 +1,2119 @@
+<html><head><style>/* Copyright 2022-2023 Morum LLC, 2019-2022 Smart Chain Arena LLC */
+
+:root {
+  --primary: #006dcc;
+  --primary-text-color: #212529;
+
+  --background-color: #fafafa;
+  --link-color: #01608c;
+  --button-hover-color: #e8e8e8;
+  --menu-bg-color: #f1f1f1;
+  --border-color: #d3d3d3;
+
+  --output-bgok: #f1f1fa;
+  --output-bgko: #faf1f1;
+
+  --danger-color: #dc3545;
+  --dataColumn-color: #290075;
+  --simulationBuilder-bg-color: #fffdeb;
+  --tabcontentshow-bg-color: #ccffcc;
+
+  --key-address-color: #006600;
+  --timestamp-color: #6600aa;
+  --code-type-color: #331188;
+  --code-variable-color: #aa0000;
+  --code-store-color: #0000aa;
+  --code-constant-color: #000088;
+  --code-cons-color: #0000aa;
+  --code-comment-color: #006600;
+
+  --button-bg-color: #006dcc;
+  --button-font-color: #fff;
+
+  /* Wallet colors */
+  --applied-op-color: #e8ffc2;
+  --failed-op-color: #ffcfbf;
+}
+
+button.editor-menu-btn:not([disabled]):hover {
+  color: var(--primary-text-color);
+  background-color: var(--background-color);
+}
+
+button.editor-menu-btn:disabled,
+button.editor-menu-btn:disabled:hover {
+  opacity: 0.5;
+  cursor: default;
+  background-color: initial;
+  text-decoration: none;
+}
+
+#outputPanel.empty-output {
+  background: rgba(255, 255, 255, 0.9) url(../smartPY.only.transp.png)
+    center/40% no-repeat;
+  background-blend-mode: color;
+}
+
+#logo-image {
+  background: url(../smartPY_horizon.transp.png) left/75% no-repeat;
+}
+
+#editor-link {
+  background-image: url(../svgs/terminal.svg);
+}
+
+#wallet-link {
+  background-image: url(../svgs/wallet-dark.svg);
+}
+
+#faucet-link {
+  background-image: url(../svgs/faucet.svg);
+}
+
+#explorer-link {
+  background-image: url(../svgs/search.svg);
+}
+
+#node_explorer-link {
+  background-image: url(../svgs/search.svg);
+}
+
+#michelson-link {
+  background-image: url(../svgs/stream.svg);
+}
+
+#help-link {
+  background-image: url(../svgs/question.svg);
+}
+
+#origination-link {
+  background-image: url(../svgs/stream.svg);
+}
+
+#ledger-img {
+  background-image: url(../svgs/ledger-dark.svg);
+  background-repeat: no-repeat;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #006dcc;
+    --primary-text-color: #fafafa;
+
+    --background-color: #212529;
+    --link-color: #66aacc;
+    --button-hover-color: slategray;
+    --menu-bg-color: #05385c;
+    --border-color: #d3d3d3;
+
+    --output-bgok: #05364a;
+    --output-bgko: #4a3605;
+
+    --danger-color: #dc3545;
+    --dataColumn-color: blanchedalmond;
+    --simulationBuilder-bg-color: #444488;
+    --tabcontentshow-bg-color: darkgreen;
+
+    --key-address-color: chocolate;
+    --timestamp-color: aqua;
+    --code-type-color: magenta;
+    --code-variable-color: khaki;
+    --code-store-color: greenyellow;
+    --code-constant-color: red;
+    --code-cons-color: hotpink;
+    --code-comment-color: chocolate;
+
+    --button-bg-color: #fff;
+    --button-font-color: #000;
+  }
+
+  button.editor-menu-btn:not([disabled]):hover {
+    color: var(--background-color);
+    background-color: #e8e8e8;
+  }
+
+  .right-submenu button,
+  .pretty-submenu button {
+    background-color: var(--primary-text-color);
+  }
+
+  #outputPanel.empty-output {
+    background: rgba(30, 30, 30, 0.8) url(../logo-transp.png)
+      center/40% no-repeat;
+    background-blend-mode: color;
+  }
+
+  #logo-image {
+    background: url(../dm-logo.png) left/75% no-repeat;
+  }
+
+  .modal-content {
+    background-color: var(--menu-bg-color);
+  }
+
+  /** Dark mode header icons*/
+  #editor-link {
+    background-image: url(../svgs/dm-terminal.svg);
+  }
+
+  #wallet-link {
+    background-image: url(../svgs/wallet-dark.svg);
+  }
+
+  #faucet-link {
+    background-image: url(../svgs/dm-faucet.svg);
+  }
+
+  #explorer-link {
+    background-image: url(../svgs/dm-search.svg);
+  }
+
+  #node_explorer-link {
+    background-image: url(../svgs/dm-search.svg);
+  }
+
+  #michelson-link {
+    background-image: url(../svgs/dm-stream.svg);
+  }
+
+  #help-link {
+    background-image: url(../svgs/dm-question.svg);
+  }
+
+  #origination-link {
+    background-image: url(../svgs/dm-stream.svg);
+  }
+}
+
+body,
+html {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  color: var(--primary-text-color);
+}
+
+body {
+  background-color: var(--background-color);
+}
+
+main {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 20px 1fr;
+  grid-template-rows: max-content max-content minmax(1px, 1fr);
+  grid-template-areas:
+    'menu menu menu'
+    'submenu submenu submenu'
+    'editorDiv centerCol outputPanel';
+}
+
+button {
+  border-radius: 3px;
+  background-color: inherit;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(216, 216, 216) rgb(209, 209, 209)
+    rgb(186, 186, 186);
+  color: inherit;
+}
+
+button[onclick]:hover,
+button[data-toggle]:hover {
+  cursor: pointer;
+  background-color: var(--button-hover-color);
+}
+
+button.text-button {
+  border: none;
+  background-color: inherit;
+  color: var(--link-color);
+  text-align: left;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+button.text-button:hover {
+  text-decoration: underline;
+  box-shadow: none;
+  font-weight: bold;
+}
+
+button.text-button:active,
+button.text-button:focus {
+  outline: none;
+  font-weight: bold;
+}
+
+/** Main Nav **/
+header {
+  position: fixed;
+  width: 100%;
+  background-color: var(--background-color);
+  top: 0;
+  z-index: 99999999999;
+}
+
+header .navbar-toggler {
+  background-color: #fafafa; /** Note: same color in both light and dark mode */
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--menu-bg-color);
+}
+
+.logo {
+  margin: 0.6em;
+}
+
+.logo img,
+.logo div {
+  height: 42px;
+}
+
+.logo a:hover {
+  background-color: inherit !important;
+}
+
+.logo p {
+  margin: -10px 0 0 40px;
+  font-variant: small-caps;
+  font-family: Verdana, sans-serif;
+}
+
+#mainNav .container {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 0;
+}
+
+#mainNav .row {
+  margin: 0 0 3px 0;
+}
+
+.nav-icon {
+  height: 14px !important;
+}
+
+.nav-item {
+  margin: 0 2px;
+}
+
+.nav-link {
+  padding: 0.25rem 1rem;
+}
+
+.nav-link {
+  color: inherit !important;
+  opacity: 0.5;
+}
+
+.active {
+  border-bottom: 2px solid var(--primary-text-color);
+  opacity: 1;
+}
+
+.nav-link > div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.nav-link span {
+  padding-right: 0.33rem;
+}
+
+.nav-icon {
+  height: 14px;
+  width: 14px;
+  display: inline-flex;
+  background-position: bottom;
+  background-repeat: no-repeat;
+  background-size: 14px;
+}
+
+/** End Main nav **/
+
+/** Editor menus **/
+
+.editor-nav {
+  padding: 3px;
+}
+
+.editor-nav .dropdown {
+  margin: 0 2px;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  background-color: var(--primary);
+}
+
+.dropdown-menu li {
+  margin-bottom: 0;
+}
+
+button.editor-menu-btn {
+  border: none;
+  min-width: 4.1rem;
+  color: inherit;
+}
+
+button.editor-menu-btn:hover {
+  text-decoration: underline;
+}
+
+.submenu {
+  grid-area: submenu;
+  border: 1px solid var(--border-color);
+  background-color: var(--menu-bg-color);
+  padding: 2px 3px 3px 3px;
+  margin: 0px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.editor-nav > button {
+  margin: 0px 2px;
+}
+
+.with-key-commands {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.spacer {
+  width: 8rem;
+}
+
+.right-submenu button,
+.pretty-submenu button {
+  margin: 0px 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.right-submenu,
+.pretty-submenu {
+  display: inline-flex;
+  margin: 0 3px;
+}
+
+.right-submenu {
+  padding-left: 0rem;
+}
+
+.pretty-submenu button span {
+  margin-left: 0.25rem;
+}
+
+#dynamicButtons > button {
+  padding-bottom: 4px;
+}
+/** End Editor Menu **/
+
+/** Editor layout **/
+main,
+#help,
+#explorer,
+#node_explorer,
+#faucet,
+#origination,
+#faq,
+#wallet {
+  padding-top: 76px;
+}
+
+main.layout-side-by-side {
+  grid-template-columns: 1fr 20px 1fr;
+}
+
+main.layout-output-only {
+  grid-template-columns: 0 0 1fr;
+}
+
+main.layout-editor-only {
+  grid-template-columns: 1fr 0 0;
+}
+
+main.layout-stacked {
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+}
+
+main.layout-side-by-side #outputPanel,
+main.layout-output-only #outputPanel {
+  display: block;
+}
+
+main.layout-editor-only #outputPanel {
+  display: none;
+}
+
+main.layout-stacked #outputPanel,
+main.layout-stacked #editorDiv {
+  height: 50%;
+  display: block;
+}
+
+/** End Editor layout **/
+
+#editorDiv {
+  grid-area: editorDiv;
+  display: inline-block;
+}
+
+#centerCol {
+  grid-area: centerCol;
+  display: inline-block;
+  background-color: var(--menu-bg-color);
+  margin: 5px;
+  padding: 0;
+}
+
+#outputPanel {
+  grid-area: outputPanel;
+  overflow: scroll;
+  margin: 0px;
+  padding: 5px;
+  background-size: 40%;
+  background-blend-mode: color;
+}
+
+#outputPanel.empty-output span {
+  opacity: 0.5;
+}
+
+.operation {
+  padding: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+#outputPanel .contract {
+  padding: 0.5rem;
+}
+
+#outputPanel .execMessage {
+  padding: 0.5rem;
+}
+
+#outputPanel .contract,
+#outputPanel .execMessage {
+  overflow-x: auto;
+}
+
+.menu {
+  grid-area: menu;
+  overflow: hidden;
+  border: none;
+  background-color: var(--menu-bg-color);
+  padding: 10px 10px;
+  margin: 0px;
+}
+
+.menu a {
+  padding: 1px 10px;
+}
+
+#help,
+#explorer,
+#node_explorer,
+#faucet,
+#origination,
+#faq,
+#wallet {
+  margin: 1rem 2rem;
+}
+
+/** Overwrite bootstrap modal lg max width **/
+.modal-lg {
+  max-width: 900px;
+}
+
+/** Overwrite bootstrap .close button color to work in dark mode **/
+.close {
+  color: var(--primary-text-color);
+}
+
+.selection {
+  margin-left: 0px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  margin-right: 2px;
+  height: 30px;
+  min-width: 100px;
+}
+
+.radio_selection {
+  margin: 2px;
+  height: 12px;
+  width: 20px;
+}
+
+div.hidden {
+  display: none;
+}
+
+div#terms {
+  width: 80%;
+  max-height: 60%;
+}
+
+div.on {
+  margin-left: 20px;
+  white-space: nowrap;
+}
+
+td.data {
+  margin-left: 20px;
+  padding-left: 20px;
+}
+
+input {
+  width: 200px;
+  height: 30px;
+  font-size: 12px;
+  margin: 2px;
+}
+
+.no-margin-list li {
+  margin: 0;
+}
+
+td.dataColumn {
+  margin-left: 20px;
+  padding-left: 20px;
+  color: var(--dataColumn-color);
+}
+
+div.simulationBuilder {
+  border: 2px solid var(--border-color);
+  padding-left: 5px;
+  margin-bottom: 20px;
+}
+
+.steps {
+  border: 2px solid var(--border-color);
+  margin-left: 10px;
+  margin-bottom: 10px;
+  padding: 2px;
+}
+
+#outputPanel > div {
+  border: 1px solid var(--border-color);
+}
+
+.contract,
+.execMessageOK {
+  background-color: var(--output-bgok);
+}
+
+.execMessageKO {
+  background-color: var(--output-bgko);
+}
+
+/* div.python {
+    border-left: 3px solid #aaaaaa;
+    background-color: #ffeeee;
+}
+*/
+
+/* .michelson {
+    background-color: var(--output-bg);
+} */
+
+pre {
+  color: inherit;
+}
+
+input.smallCheck {
+  margin: 0px;
+  padding: 0px;
+  width: 15px;
+}
+
+textarea.smallMultilineArea {
+  width: 100%;
+  height: 400px;
+  font-size: 15px;
+  font-family: monospace;
+}
+
+#shareLink,
+#loadLink {
+  width: 100%;
+  height: 300px;
+  resize: vertical;
+  font-size: 15px;
+  font-family: monospace;
+}
+
+.resize_both {
+  resize: both;
+}
+
+div.michelsonLine {
+  padding-left: 2em;
+  text-indent: -2em;
+}
+
+.white-space-pre,
+.white-space-pre-wrap {
+  font-family: monospace;
+  white-space: pre;
+  overflow-x: scroll;
+}
+
+.white-space-pre-wrap {
+  white-space: pre-wrap;
+}
+
+div.message {
+  border-left: 1px solid var(--border-color);
+  background-color: #fafad2;
+}
+/* div.messageBox {
+    float : left;
+    background-color: #dddddd;
+    padding : 3px;
+    margin-right:5px;
+} */
+
+/* div.event {
+    border-left: 1px solid #aaaaaa;
+    background-color: #f6e1ff;
+} */
+/* div.eventBox {
+    float : left;
+    background-color: #dddddd;
+    padding : 3px;
+    margin-right:5px;
+} */
+
+/* div.scenario {
+    background-color: #fdd598;
+    padding-left : 30px;
+    margin-right:15px;
+} */
+
+/* div.scenario1 {
+    background-color: #fdd598;
+    padding-left : 10px;
+    margin-right:15px;
+    border-left: 2px solid #444444;
+    margin-left: 10px;
+}
+
+div.scenario2 {
+    background-color: #d5fd98;
+    padding-left : 10px;
+    margin-right:15px;
+    border-left: 2px solid #444444;
+    margin-left: 10px;
+}
+
+div.scenario3 {
+    background-color: #fd98d5;
+    padding-left : 10px;
+    margin-right:15px;
+    border-left: 2px solid #444444;
+    margin-left: 10px;
+} */
+
+div.error {
+  border-left: 1px solid #aaaaaa;
+  background-color: var(--output-bgko);
+}
+
+div.effect {
+  border: 1px solid #cccccc;
+  padding: 3px;
+}
+
+div.effectBox {
+  float: left;
+  background-color: #dddddd;
+  padding: 3px;
+}
+
+div.transition {
+  border-left: 3px solid #cccccc;
+  background-color: #eeeeee;
+  padding: 5px;
+}
+
+div.reset {
+  clear: both;
+}
+
+div.subtype {
+  margin-left: 1px;
+  padding: 5px;
+  border: 1px solid #eeeeee;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
+div.indent5 {
+  padding-left: 0ex;
+}
+
+a {
+  color: var(--link-color);
+  background-color: inherit;
+  text-decoration: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: 0.3s;
+  margin: 0px;
+}
+
+a[href]:hover {
+  background-color: var(--button-hover-color);
+  color: var(--primary-text-color);
+}
+
+a.active {
+  font-weight: bold;
+}
+
+a:not([href]):not([tabindex]):focus,
+a:not([href]):not([tabindex]):hover {
+  cursor: default;
+}
+
+/* Mozilla-specific padding fix */
+@-moz-document url-prefix() {
+  .submenu {
+    padding-top: 3px;
+    margin-bottom: 1px;
+  }
+}
+
+.execMessageAlice {
+  margin-right: 10%;
+}
+
+.execMessageBob {
+  margin-left: 10%;
+}
+
+.form-header {
+  border: 1px solid var(--border-color);
+  background-color: var(--menu-bg-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 20px;
+  font-family: monospace;
+  border-radius: 0.3rem 0.3rem 0 0;
+  padding: 0.3rem;
+}
+
+.form-body {
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+  font-family: monospace;
+  padding: 0 0.3rem 0.3rem 0.3rem;
+  margin-block-end: 0;
+}
+
+.form-error {
+  border: 1px solid var(--border-color);
+  background-color: var(--danger-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 10px;
+  font-family: monospace;
+  border-radius: 0 0 0.3rem 0.3rem;
+  padding: 0.2rem;
+  margin-bottom: 0.3rem;
+}
+
+.form-footer {
+  border: 1px solid var(--border-color);
+  background-color: var(--menu-bg-color);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 20px;
+  font-family: monospace;
+  border-radius: 0 0 0.3rem 0.3rem;
+  padding: 0.3rem;
+  padding-right: 50px;
+}
+
+.tab {
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background-color: var(--menu-bg-color);
+}
+
+/* Style the buttons that are used to open the tab content */
+.tab .title {
+  float: left;
+  padding: 10px;
+}
+
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 7px 10px;
+  transition: 0.3s;
+  opacity: 0.6;
+  margin: 3px;
+}
+
+button.button {
+  background-color: var(--button-bg-color);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: 0.3s;
+  opacity: 0.7;
+  color: var(--button-font-color);
+  margin: 2px;
+}
+
+button.button:hover {
+  background-color: var(--button-bg-color);
+  opacity: 1;
+}
+
+.tab button:hover,
+.tab button.active {
+  background-color: var(--button-hover-color);
+  opacity: 1;
+}
+
+/* Style the tab content */
+.tabs {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+}
+.tabcontentalways {
+  padding: 6px 12px;
+  border-top: none;
+}
+.tabcontent {
+  padding: 6px 12px;
+  border-top: none;
+}
+.tabcontentshow {
+  background-color: tabcontenshow-bg-color;
+  display: block;
+  padding: 6px 12px;
+  border: 1px solid #cccccc;
+  border-top: none;
+}
+
+.explorer_button {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.node_explorer_button {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.explorer_button,
+.node_explorer_button,
+.centertextbutton {
+  text-decoration: none;
+  color: var(--link-color);
+  background-color: inherit;
+  border: 1px solid var(--link-color);
+  margin-right: 5px;
+  margin-left: 5px;
+  border-radius: 5px;
+  line-height: 1.1rem;
+  height: 30px;
+  vertical-align: middle;
+}
+
+.extramarginbottom {
+  margin-bottom: 5px;
+}
+
+.centertextbutton[onclick]:hover {
+  background-color: #f1f1f1; /** intentionally always the same color */
+  cursor: pointer;
+}
+
+.centertextbutton:not([onclick]):hover {
+  cursor: default;
+}
+input[type='checkbox']:hover {
+  cursor: pointer;
+}
+
+input[type='checkbox'] {
+  margin-top: 2px;
+  height: 20px;
+  width: 20px;
+}
+
+input[type='text'] {
+  margin: 2px;
+}
+
+#storageDiv {
+}
+
+#storageDivInternal {
+  overflow: auto;
+  max-height: 500px;
+  padding-bottom: 10px;
+}
+
+#storageAddressesDiv {
+  overflow: auto;
+  max-height: 400px;
+}
+
+.recordList {
+  border-collapse: collapse;
+  margin: 2px;
+}
+
+.recordList th {
+  color: #880000;
+  border-collapse: collapse;
+}
+
+.recordList td {
+  padding: 1px;
+  border: 1px solid var(--primary-text-color);
+  border-style: solid;
+  vertical-align: top;
+  padding: 5px;
+}
+
+.bytes {
+  margin: 2px;
+  max-width: 120px;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--code-store-color);
+  text-overflow: ellipsis;
+  font-family: monospace;
+}
+
+.key {
+  margin: 2px;
+  width: 120px;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--key-address-color);
+  text-overflow: ellipsis;
+  font-family: monospace;
+}
+
+.signature {
+  margin: 2px;
+  width: 120px;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #44aaaa;
+  text-overflow: ellipsis;
+  font-family: monospace;
+}
+
+.address {
+  margin: 2px;
+  width: 120px;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--key-address-color);
+  text-overflow: ellipsis;
+  font-family: monospace;
+}
+
+.timestamp {
+  margin: 2px;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--timestamp-color);
+  text-overflow: ellipsis;
+  font-family: monospace;
+}
+
+.mutez {
+  margin: 2px;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #66aa00;
+  text-overflow: ellipsis;
+  font-family: monospace;
+}
+
+#contractId {
+  width: 300px;
+  font-family: monospace;
+}
+
+#accountId {
+  width: 300px;
+  font-family: monospace;
+}
+
+#providerId {
+  width: 300px;
+  font-family: monospace;
+}
+
+.preview {
+  min-height: 100px;
+  overflow: scroll;
+  border: 1px solid black;
+  font-family: monospace;
+  border-radius: 0.3rem;
+  padding: 0.3rem;
+}
+
+.protocolBox {
+  border: 1px solid #ccc;
+  padding: 2px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  border-radius: 5px;
+}
+
+.input-error {
+  color: var(--danger-color);
+  text-align: center;
+}
+
+.load-contract {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2px;
+}
+
+.load-contract button {
+  margin: 0.3rem 0;
+  padding: 0.3rem 0.5rem;
+  align-self: flex-start;
+}
+
+@media (max-width: 568px) {
+  #help,
+  #explorer,
+  #node_explorer,
+  #faucet,
+  #origination,
+  #faq,
+  #wallet {
+    margin: 1rem 0.5rem;
+  }
+  .right-submenu {
+    padding-left: 0.5rem;
+    border-left: none;
+  }
+  .spacer {
+    width: 5rem;
+  }
+}
+
+span.fieldName {
+  display: inline-block;
+  color: #444488;
+  min-width: 100px;
+}
+
+/**
+    * Code Highlighting
+    **/
+span.channel {
+  color: #8888ff;
+}
+
+span.type {
+  color: var(--code-type-color);
+}
+
+span.partialType {
+  color: #ff4444;
+}
+
+span.variable {
+  color: var(--code-variable-color);
+}
+
+span.store {
+  color: var(--code-store-color);
+}
+
+span.param {
+  color: #888800;
+}
+
+span.variable {
+  color: #008800;
+}
+
+span.keyword {
+  color: #bb4488;
+}
+
+span.conditions {
+  color: #55aa55;
+}
+
+span.constant {
+  color: var(--code-constant-color);
+}
+
+span.cons {
+  color: #0000aa;
+}
+
+span.record {
+  color: #4288aa;
+}
+
+span.conditions span {
+  color: #55aa55;
+}
+
+span.gas {
+  color: orange;
+}
+
+span.analysis {
+  color: orange;
+}
+
+span.self {
+  color: #0099aa;
+}
+
+span.comment {
+  color: var(--code-comment-color);
+}
+
+span.stack {
+  color: #0088aa;
+}
+
+span.ctt {
+  color: lightblue;
+}
+
+code,
+span.command {
+  background-color: hsla(0, 0%, 0%, 0.04);
+  color: #444488;
+}
+
+/* Ledger */
+.ledger-icon {
+  height: 20px;
+  margin-top: 5px;
+  background-repeat: no-repeat;
+}
+
+/* Wallet Styles */
+.applied-op-bg {
+  background-color: var(--applied-op-color);
+}
+
+.failed-op-bg {
+  background-color: var(--failed-op-color);
+}
+
+.inputSection {
+  display: flex;
+  justify-content: space-between;
+  align-content: space-between;
+  align-items: center;
+  width: 300px;
+}
+
+select {
+  font-size: 16px;
+  font-family: sans-serif;
+  color: #444;
+  line-height: 1.3;
+  padding: 0.3em 2em 0.2em 0.8em;
+  box-sizing: border-box;
+  margin: 5px;
+  border: 1px solid #aaa;
+  box-shadow: 0 1px 0 1px rgba(0, 0, 0, 0.04);
+  border-radius: 0.5em;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #fff;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'),
+    linear-gradient(to bottom, #ffffff 0%, #e5e5e5 100%);
+  background-repeat: no-repeat, repeat;
+  /* arrow icon position (1em from the right, 50% vertical) , then gradient position*/
+  background-position: right 0.7em top 50%, 0 0;
+  /* icon size, then gradient */
+  background-size: 0.65em auto, 100%;
+}
+.select::-ms-expand {
+  display: none;
+}
+.select:hover {
+  border-color: #888;
+}
+.select:focus {
+  border-color: #aaa;
+  box-shadow: 0 0 1px 3px rgba(59, 153, 252, 0.7);
+  box-shadow: 0 0 0 3px -moz-mac-focusring;
+  color: #222;
+  outline: none;
+}
+.select option {
+  font-weight: normal;
+}
+.select:disabled:hover,
+select[aria-disabled='true'] {
+  border-color: #aaa;
+}
+
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+  margin: auto;
+  margin-bottom: 20px;
+}
+
+/* Beacon & Temple Styles */
+.flexRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-content: center;
+  background-color: var(--button-hover-color);
+  padding: 10px;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/lato/v16/S6uyw4BMUTPHjxAwXiWtFCfQ7A.woff2)
+    format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* latin-ext */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 700;
+  src: url(https://fonts.gstatic.com/s/lato/v16/S6u9w4BMUTPHh6UVSwaPGQ3q5d0N7w.woff2)
+    format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/lato/v16/S6uyw4BMUTPHjx4wXiWtFCc.woff2)
+    format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+    U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 700;
+  src: url(https://fonts.gstatic.com/s/lato/v16/S6u9w4BMUTPHh6UVSwiPGQ3q5d0.woff2)
+    format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+    U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+html,
+body {
+  font-size: 16px;
+  font-family: Lato, sans-serif;
+  font-weight: 400;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+li {
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  /* color: hsla(0, 0%, 0%, 0.8); */
+  font-family: Lato, sans-serif;
+  font-weight: 700;
+  text-rendering: optimizeLegibility;
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: 2.415rem;
+}
+
+h2 {
+  font-size: 1.51572rem;
+  line-height: 2.415rem;
+}
+
+h3 {
+  font-size: 1.31951rem;
+  line-height: 1.61rem;
+}
+
+h4 {
+  font-size: 1rem;
+}
+
+td.pad10 {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+td.code_right {
+  text-align: right;
+  font-family: monospace;
+}
+
+code,
+span.command {
+  font-size: 0.88rem;
+  line-height: 1.61rem;
+
+  border-radius: 3px;
+  font-family: monospace;
+  padding: 0;
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+}
+
+.page-title {
+  text-align: center;
+  margin: 1rem 0 2.5rem 0;
+}
+
+/**
+  * Output Typography
+  **/
+#outputPanel .execMessage *,
+#outputPanel .tabcontent *,
+#types {
+  font-size: 0.9375rem;
+  line-height: 1.1em;
+}
+
+#outputPanel .execMessage h1,
+#outputPanel .tabcontent h1 {
+  font-size: 1.5rem;
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+#outputPanel .execMessage h2,
+#outputPanel .tabcontent h2 {
+  font-size: 1.3rem;
+  font-weight: normal;
+  margin-bottom: 0.2em;
+}
+
+#outputPanel .execMessage h3,
+#outputPanel .tabcontent h3 {
+  font-size: 1.1rem;
+  font-weight: normal;
+  margin-bottom: 0.2em;
+}
+
+#outputPanel .execMessage h4,
+#outputPanel .tabcontent h4 {
+  font-size: 1rem;
+  font-weight: normal;
+  margin-bottom: 0.2em;
+}
+
+#types .type,
+#outputPanel .type,
+.python,
+#outputPanel .python,
+.michelson,
+#outputPanel .michelson,
+#outputPanel .on {
+  font-family: monospace;
+  font-size: 0.9375rem;
+}
+
+.dataColumn,
+.code {
+  font-family: monospace;
+}
+button{font-size:inherit;}</style><script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script><script>// Copyright 2022-2023 Morum LLC, 2019-2022 Smart Chain Arena LLC
+
+function copyMichelson(x) {
+  var range = document.createRange();
+  var children = x.parentNode.parentNode.childNodes;
+  children.forEach(function (child) {
+    if (child.nodeType != Node.TEXT_NODE) {
+      if (child.className.includes('michelson')) {
+        range.selectNode(child);
+        console.log(child);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+      }
+    }
+  });
+}
+
+function openTabLazy(evt, id, global_id) {
+  var i, tabcontent, tablinks;
+
+  tabcontent = evt.currentTarget.parentNode.parentNode.childNodes;
+  for (i = 0; i < tabcontent.length; i++) {
+    if (tabcontent[i].className == 'tabcontent')
+      tabcontent[i].style.display = 'none';
+  }
+  tablinks = evt.currentTarget.parentNode.childNodes;
+  for (i = 0; i < tablinks.length; i++) {
+    if (tablinks[i].nodeType != Node.TEXT_NODE) {
+      tablinks[i].className = tablinks[i].className.replace(
+        ' active',
+        ''
+      );
+    }
+  }
+  tablinks = evt.currentTarget.parentNode.parentNode.childNodes;
+  k = 0;
+  for (i = 0; i < tablinks.length; i++) {
+    if (tablinks[i].nodeType != Node.TEXT_NODE) {
+      if (id + 1 == k) {
+        tablinks[i].style.display = 'block';
+        lazy_tab = window.smartmlCtx.call_exn_handler(
+          'lazy_tab',
+          id,
+          global_id
+        );
+        if (lazy_tab) tablinks[i].innerHTML = lazy_tab;
+      }
+      k += 1;
+    }
+  }
+
+  evt.currentTarget.className += ' active';
+}
+
+function openTab(evt, name) {
+  var i, tabcontent, tablinks;
+
+  tabcontent = evt.currentTarget.parentNode.parentNode.childNodes;
+  for (i = 0; i < tabcontent.length; i++) {
+    if (tabcontent[i].className == 'tabcontent')
+      tabcontent[i].style.display = 'none';
+  }
+  tablinks = evt.currentTarget.parentNode.childNodes;
+  for (i = 0; i < tablinks.length; i++) {
+    if (tablinks[i].nodeType != Node.TEXT_NODE) {
+      tablinks[i].className = tablinks[i].className.replace(
+        ' active',
+        ''
+      );
+    }
+  }
+  tablinks = evt.currentTarget.parentNode.parentNode.childNodes;
+  k = 0;
+  for (i = 0; i < tablinks.length; i++) {
+    if (tablinks[i].nodeType != Node.TEXT_NODE) {
+      if (name + 1 == k) tablinks[i].style.display = 'block';
+      k += 1;
+    }
+  }
+
+  evt.currentTarget.className += ' active';
+}
+
+class SmartmlCtx {
+  constructor() {}
+  call(f, ...rest) {
+    try {
+      return exports[f](...rest);
+    } catch (error) {
+      var result = 0;
+      try {
+        result = this.call('stringOfException', true, error);
+      } catch (_error) {
+        throw error;
+      }
+      if (
+        typeof window.toException === 'function' &&
+        !window.location.pathname.includes('ts-ide')
+      )
+        throw toException(result);
+      else throw result;
+    }
+  }
+  call_exn(f, ...rest) {
+    return exports[f](...rest);
+  }
+  call_exn_handler(f, ...rest) {
+    try {
+      return exports[f](...rest);
+    } catch (error) {
+      try {
+        var result = '';
+        try {
+          result = this.call('stringOfException', false, error);
+        } catch (_error) {
+          showErrorPre(error);
+        }
+        console.log(result);
+        showErrorPre(result);
+      } catch (_error) {
+        showErrorPre(error);
+      }
+    }
+  }
+}
+
+smartmlCtx = new SmartmlCtx();
+in_browser = true;
+// Copyright 2022-2023 Morum LLC, 2019-2022 Smart Chain Arena LLC
+
+/** Set light/dark mode based on user preferences */
+$(document).ready(() => {
+  if (window) {
+    setThemeClass(window.localStorage.getItem('theme', 'light'));
+  }
+});
+
+// Define a new stylesheet for the theme's custom rules
+const sheet = (function () {
+  // Create the <style> tag
+  const style = document.createElement('style');
+
+  // WebKit hack :(
+  style.appendChild(document.createTextNode(''));
+
+  // Add the <style> element to the page
+  document.head.appendChild(style);
+
+  return style.sheet;
+})();
+
+// Replace non-root rules in custom stylesheet
+const replaceRules = (rules) => {
+  for (let i = 0; i < sheet.rules.length; i++) {
+    sheet.deleteRule(i);
+  }
+  sheet.insertRule(`@media all {${rules}}`);
+};
+
+const activateDarkMode = () => {
+  const rootElement = document.querySelector(':root');
+  const darkTheme = {
+    '--primary': '#006dcc',
+    '--primary-text-color': '#fafafa',
+
+    '--background-color': '#212529',
+    '--link-color': '#66AACC',
+    '--button-hover-color': 'slategray',
+    '--menu-bg-color': '#05385C',
+    '--border-color': '#D3D3D3',
+
+    '--output-bgok': '#05364a',
+    '--output-bgko': '#4a3605',
+
+    '--danger-color': '#dc3545',
+    '--dataColumn-color': 'blanchedalmond',
+    '--simulationBuilder-bg-color': '#444488',
+    '--tabcontentshow-bg-color': 'darkgreen',
+
+    '--key-address-color': 'chocolate',
+    '--timestamp-color': 'aqua',
+    '--code-type-color': 'magenta',
+    '--code-variable-color': 'khaki',
+    '--code-store-color': 'greenyellow',
+    '--code-constant-color': 'red',
+    '--code-cons-color': 'hotpink',
+    '--code-comment-color': 'chocolate',
+
+    '--button-bg-color': '#FFF',
+    '--button-font-color': '#000',
+
+    /* Wallet colors */
+    '--applied-op-color': '#94b84d',
+    '--failed-op-color': '#d16864',
+  };
+
+  const darkRules = `
+    button.editor-menu-btn:not([disabled]):hover {
+        color: var(--background-color);
+        background-color: #e8e8e8;
+    }
+
+    .right-submenu button,
+    .pretty-submenu button {
+        background-color: var(--primary-text-color);
+    }
+
+    #outputPanel.empty-output {
+        background: rgba(30, 30, 30, .8) url(logo-transp.png) center/40% no-repeat;
+        background-blend-mode: color;
+    }
+
+    #logo-image {
+        background: url(dm-logo.png) left/75% no-repeat;
+    }
+
+    .modal-content {
+        background-color: var(--menu-bg-color);
+    }
+
+    /** XXX: url of svgs is different here than from stylesheet */
+    #editor-link {
+        background-image: url(./svgs/dm-terminal.svg);
+    }
+
+    #wallet-link {
+        background-image: url(./svgs/wallet-light.svg);
+    }
+
+    #faucet-link {
+        background-image: url(./svgs/dm-faucet.svg);
+    }
+
+    #explorer-link {
+        background-image: url(./svgs/dm-search.svg);
+    }
+
+    #node_explorer-link {
+        background-image: url(./svgs/dm-search.svg);
+    }
+
+    #michelson-link {
+        background-image: url(./svgs/dm-stream.svg);
+    }
+
+    #origination-link {
+        background-image: url(./svgs/dm-stream.svg);
+    }
+
+    #help-link {
+        background-image: url(./svgs/dm-question.svg);
+    }
+
+    #ledger-img {
+        background-image: url(./svgs/ledger-light.svg);
+        background-repeat: no-repeat;
+    }
+    `;
+
+  for (let k in darkTheme) {
+    rootElement.style.setProperty(k, darkTheme[k]);
+  }
+
+  replaceRules(darkRules);
+};
+
+const activateLightMode = () => {
+  const rootElement = document.querySelector(':root');
+  const lightTheme = {
+    '--primary': '#006dcc',
+    '--primary-text-color': '#212529',
+
+    '--background-color': '#fafafa',
+    '--link-color': '#01608C',
+    '--button-hover-color': '#e8e8e8',
+    '--menu-bg-color': '#f1f1f1',
+    '--border-color': '#D3D3D3',
+
+    '--output-bgok': '#f1f1fa',
+    '--output-bgko': '#faf1f1',
+
+    '--danger-color': '#dc3545',
+    '--dataColumn-color': '#290075',
+    '--simulationBuilder-bg-color': '#f0fde1',
+    '--tabcontentshow-bg-color': '#ccffcc',
+
+    '--key-address-color': '#006600',
+    '--timestamp-color': '#6600AA',
+    '--code-type-color': '#331188',
+    '--code-variable-color': '#aa0000',
+    '--code-store-color': '#0000aa',
+    '--code-constant-color': '#000088',
+    '--code-cons-color': '#0000aa',
+    '--code-comment-color': '#006600',
+
+    '--button-bg-color': '#006dcc',
+    '--button-font-color': '#FFF',
+
+    /* Wallet colors */
+    '--applied-op-color': '#e8ffc2',
+    '--failed-op-color': '#ffcfbf',
+  };
+
+  const lightRules = `button.editor-menu-btn:not([disabled]):hover {
+        color: var(--primary-text-color);
+        background-color: var(--background-color);
+    }
+
+    .right-submenu button,
+    .pretty-submenu button {
+        background-color: inherit;
+    }
+
+    #outputPanel.empty-output {
+        background: rgba(255, 255, 255, .9) url(smartPY.only.transp.png) center/40% no-repeat;
+        background-blend-mode: color;
+    }
+
+    #logo-image {
+        background: url(smartPY_horizon.transp.png) left/75% no-repeat;
+    }
+
+    .modal-content {
+        background-color: #fff;
+    }
+
+    /** XXX: url of svgs is different here than from stylesheet */
+    #editor-link {
+        background-image: url(./svgs/terminal.svg);
+    }
+
+    #wallet-link {
+        background-image: url(./svgs/wallet-dark.svg);
+    }
+
+    #faucet-link {
+        background-image: url(./svgs/faucet.svg);
+    }
+
+    #explorer-link {
+        background-image: url(./svgs/search.svg);
+    }
+
+    #node_explorer-link {
+        background-image: url(./svgs/search.svg);
+    }
+
+    #michelson-link {
+        background-image: url(./svgs/stream.svg);
+    }
+
+    #origination-link {
+        background-image: url(./svgs/stream.svg);
+    }
+
+    #help-link {
+        background-image: url(./svgs/question.svg);
+    }
+
+    #ledger-img {
+        background-image: url(./svgs/ledger-dark.svg);
+        background-repeat: no-repeat;
+    }
+    `;
+
+  for (let k in lightTheme) {
+    rootElement.style.setProperty(k, lightTheme[k]);
+  }
+
+  replaceRules(lightRules);
+};
+
+const setThemeClass = (theme) => {
+  if (theme === 'dark') {
+    activateDarkMode();
+  } else {
+    activateLightMode();
+  }
+};
+</script></head><body><div id='outputPanel'><div class='contract'><h3>Balance: 0.000000<img height=20 width=20 src='https://SmartPy.io/static/img/tezos.svg' alt='tz'/></h3>
+<h3>Storage:</h3>
+<div id='storageDivInternal'><table class='recordList'><tr><td class='dataColumn'>Admin</td>
+<td class='dataColumn'>IsPoolRegistered</td>
+<td class='dataColumn'>Metadata</td>
+<td class='dataColumn'>NextPoolNonce</td>
+<td class='dataColumn'>PoolsBalances</td>
+<td class='dataColumn'>PoolsTokens</td>
+<td class='dataColumn'>Proposed_admin</td>
+<td class='dataColumn'>Settings</td></tr><tr><td class='data'><span class='address'>tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B</span></td><td class='data'><table class='recordList'><tr><td class='dataColumn'>Key</td>
+<td class='dataColumn'>Value</td></tr></table></td><td class='data'><table class='recordList'><tr><td class='dataColumn'>Key</td>
+<td class='dataColumn'>Value</td></tr><tr><td class='data'>''</td><td class='data'><span class='bytes'>0x68747470733a2f2f7261772e67697468756275736572636f6e74656e742e636f6d2f63656e7466696e616e63652f53796d6d65747269632e436f7265436f6e7472616374732d76322d54657a6f732f6d61696e2f6d657461646174612f746573746e65742f5661756c742e6a736f6e</span></td></tr></table></td><td class='data'><input type='text' value='1' readonly></input></td><td class='data'><table class='recordList'><tr><td class='dataColumn'>Key</td>
+<td class='dataColumn'>Value</td></tr></table></td><td class='data'><table class='recordList'><tr><td class='dataColumn'>Key</td>
+<td class='dataColumn'>Value</td></tr></table></td><td class='data'><div class='subtype'><select class='selection'><option value='None'>None</option></select></div></td><td class='data'><table class='recordList'><tr><td class='dataColumn'>Paused</td></tr><tr><td class='data'>False</td></tr></table></td></tr></table></div>
+<h3>Code:</h3>
+import smartpy as sp
+<br>
+<br>class Contract(sp.Contract):
+<br><div class='on'><span class='keyword'>def</span> __init__(self)<span class='keyword'>:</span><div class='indent5'>&nbsp;&nbsp;self.init_type(sp.TRecord(admin = sp.TAddress, isPoolRegistered = sp.TBigMap(sp.TPair(sp.TAddress, sp.TNat), sp.TUnit), metadata = sp.TBigMap(sp.TString, sp.TBytes), nextPoolNonce = sp.TNat, poolsBalances = sp.TBigMap(sp.TPair(sp.TAddress, sp.TNat), sp.TMap(sp.TPair(sp.TAddress, sp.TOption(sp.TNat)), sp.TPair(sp.TNat, sp.TNat))), poolsTokens = sp.TBigMap(sp.TPair(sp.TAddress, sp.TNat), sp.TMap(sp.TNat, sp.TPair(sp.TAddress, sp.TOption(sp.TNat)))), proposed_admin = sp.TOption(sp.TAddress), settings = sp.TRecord(paused = sp.TBool).layout("paused")).layout(((("admin", "isPoolRegistered"), ("metadata", "nextPoolNonce")), (("poolsBalances", "poolsTokens"), ("proposed_admin", "settings")))))</div>
+<div class='indent5'>&nbsp;&nbsp;self.init(<span class='variable'>admin</span> = sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='variable'>isPoolRegistered</span> = {},<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='variable'>metadata</span> = {'' : sp.bytes('0x68747470733a2f2f7261772e67697468756275736572636f6e74656e742e636f6d2f63656e7466696e616e63652f53796d6d65747269632e436f7265436f6e7472616374732d76322d54657a6f732f6d61696e2f6d657461646174612f746573746e65742f5661756c742e6a736f6e')},<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='variable'>nextPoolNonce</span> = 1,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='variable'>poolsBalances</span> = {},<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='variable'>poolsTokens</span> = {},<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='variable'>proposed_admin</span> = sp.none,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='variable'>settings</span> = sp.record(paused = False))</div></div><br>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> accept_admin(<span class='self'>self</span>, params)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.verify(sp.some(sp.sender) == <span class='self'>self</span>.data.proposed_admin, <span class='constant'>'NOT_PROPOSED_ADMIN'</span>)
+<br>&nbsp;&nbsp;<span class='self'>self</span>.data.admin = sp.sender
+<br>&nbsp;&nbsp;<span class='self'>self</span>.data.proposed_admin = sp.none</div></div>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> batchSwap(<span class='self'>self</span>, params)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.settings.paused == <span class='constant'>False</span>, <span class='constant'>'ONLY_UNPAUSED'</span>)
+<br>&nbsp;&nbsp;sp.verify(params.funds.sender == sp.source, <span class='constant'>401</span>)
+<br>&nbsp;&nbsp;sp.verify(sp.now <= params.deadline, <span class='constant'>508</span>)
+<br>&nbsp;&nbsp;sp.verify(sp.len(params.assets) == sp.len(params.limits), <span class='constant'>103</span>)
+<br>&nbsp;&nbsp;<span class='local'>compute_Swaps_199</span> = sp.local("<span class='local'>compute_Swaps_199</span>", {}, <span class='type'>sp.TMap(sp.TNat, sp.TInt)</span>)
+<br>&nbsp;&nbsp;<span class='local'>previousTokenCalculated</span> = sp.local("<span class='local'>previousTokenCalculated</span>", (<span class='constant'>sp.address('tz1burnburnburnburnburnburnburjAYjjX')</span>, sp.none))
+<br>&nbsp;&nbsp;<span class='local'>previousAmountCalculated</span> = sp.local("<span class='local'>previousAmountCalculated</span>", <span class='constant'>0</span>)
+<br>&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(params.swaps)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify((params.swaps[<span class='variable'>i</span>].assetInIndex < sp.len(params.assets)) & (params.swaps[<span class='variable'>i</span>].assetOutIndex < sp.len(params.assets)), <span class='constant'>100</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex] != params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex], <span class='constant'>509</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='local'>amount</span> = sp.local("<span class='local'>amount</span>", params.swaps[<span class='variable'>i</span>].amount)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.if params.swaps[<span class='variable'>i</span>].amount == <span class='constant'>0</span>:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(<span class='variable'>i</span> > <span class='constant'>0</span>, <span class='constant'>510</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='local'>compute_Swaps_223</span> = sp.local("<span class='local'>compute_Swaps_223</span>", sp.eif(params.kind == <span class='constant'>7</span>, params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex], params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex]))
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(previousTokenCalculated.value == compute_Swaps_223.value, <span class='constant'>511</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;amount.value = previousAmountCalculated.value
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='local'>compute_Swaps_325</span> = sp.local("<span class='local'>compute_Swaps_325</span>", sp.view("onSwap", sp.record(balanceTokenIn = sp.fst(<span class='self'>self</span>.data.poolsBalances.get(params.swaps[<span class='variable'>i</span>].poolId, message = <span class='constant'>500</span>).get(params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex], message = <span class='constant'>521</span>)) + sp.snd(<span class='self'>self</span>.data.poolsBalances.get(params.swaps[<span class='variable'>i</span>].poolId, message = <span class='constant'>500</span>).get(params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex], message = <span class='constant'>521</span>)), balanceTokenOut = sp.fst(<span class='self'>self</span>.data.poolsBalances.get(params.swaps[<span class='variable'>i</span>].poolId, message = <span class='constant'>500</span>).get(params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex], message = <span class='constant'>521</span>)) + sp.snd(<span class='self'>self</span>.data.poolsBalances.get(params.swaps[<span class='variable'>i</span>].poolId, message = <span class='constant'>500</span>).get(params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex], message = <span class='constant'>521</span>)), request = sp.record(amount = amount.value, kind = params.kind, tokenIn = params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex], tokenOut = params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex])), sp.fst(params.swaps[<span class='variable'>i</span>].poolId), sp.TNat).open_some(message = <span class='constant'>812</span>))
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='local'>compute_Swaps_328</span> = sp.local("<span class='local'>compute_Swaps_328</span>", sp.eif(params.kind == <span class='constant'>7</span>, (amount.value, compute_Swaps_325.value), (compute_Swaps_325.value, amount.value)))
+<br>&nbsp;&nbsp;&nbsp;&nbsp;match_pair_Swaps_328_fst, match_pair_Swaps_328_snd = sp.match_tuple(compute_Swaps_328.value, "match_pair_Swaps_328_fst", "match_pair_Swaps_328_snd")
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='self'>self</span>.data.poolsBalances[params.swaps[<span class='variable'>i</span>].poolId][params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex]] = (sp.fst(<span class='self'>self</span>.data.poolsBalances.get(params.swaps[<span class='variable'>i</span>].poolId, message = <span class='constant'>500</span>).get(params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex], message = <span class='constant'>521</span>)) + <span class='variable'>match_pair_Swaps_328_fst</span>, sp.snd(<span class='self'>self</span>.data.poolsBalances.get(params.swaps[<span class='variable'>i</span>].poolId, message = <span class='constant'>500</span>).get(params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex], message = <span class='constant'>521</span>)))
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='self'>self</span>.data.poolsBalances[params.swaps[<span class='variable'>i</span>].poolId][params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex]] = (sp.as_nat(sp.fst(<span class='self'>self</span>.data.poolsBalances.get(params.swaps[<span class='variable'>i</span>].poolId, message = <span class='constant'>500</span>).get(params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex], message = <span class='constant'>521</span>)) - <span class='variable'>match_pair_Swaps_328_snd</span>), sp.snd(<span class='self'>self</span>.data.poolsBalances.get(params.swaps[<span class='variable'>i</span>].poolId, message = <span class='constant'>500</span>).get(params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex], message = <span class='constant'>521</span>)))
+<br>&nbsp;&nbsp;&nbsp;&nbsp;match_pair_Swaps_269_fst, match_pair_Swaps_269_snd = sp.match_tuple(sp.eif(params.kind == <span class='constant'>7</span>, (amount.value, compute_Swaps_325.value), (compute_Swaps_325.value, amount.value)), "match_pair_Swaps_269_fst", "match_pair_Swaps_269_snd")
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.emit(sp.record(amountIn = <span class='variable'>match_pair_Swaps_269_fst</span>, amountOut = <span class='variable'>match_pair_Swaps_269_snd</span>, poolId = params.swaps[<span class='variable'>i</span>].poolId, tokenIn = (sp.fst(params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex]), sp.snd(params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex])), tokenOut = (sp.fst(params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex]), sp.snd(params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex]))), tag = "Swap")
+<br>&nbsp;&nbsp;&nbsp;&nbsp;previousAmountCalculated.value = compute_Swaps_325.value
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='local'>compute_Swaps_243</span> = sp.local("<span class='local'>compute_Swaps_243</span>", sp.eif(params.kind == <span class='constant'>7</span>, params.assets[params.swaps[<span class='variable'>i</span>].assetOutIndex], params.assets[params.swaps[<span class='variable'>i</span>].assetInIndex]))
+<br>&nbsp;&nbsp;&nbsp;&nbsp;previousTokenCalculated.value = compute_Swaps_243.value
+<br>&nbsp;&nbsp;&nbsp;&nbsp;compute_Swaps_199.value[params.swaps[<span class='variable'>i</span>].assetInIndex] = compute_Swaps_199.value.get(params.swaps[<span class='variable'>i</span>].assetInIndex, default_value = <span class='constant'>0</span>) + sp.to_int(<span class='variable'>match_pair_Swaps_269_fst</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;compute_Swaps_199.value[params.swaps[<span class='variable'>i</span>].assetOutIndex] = compute_Swaps_199.value.get(params.swaps[<span class='variable'>i</span>].assetOutIndex, default_value = <span class='constant'>0</span>) - sp.to_int(<span class='variable'>match_pair_Swaps_269_snd</span>)
+<br>&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(params.assets)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(compute_Swaps_199.value[<span class='variable'>i</span>] <= params.limits[<span class='variable'>i</span>], <span class='constant'>507</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.if compute_Swaps_199.value[<span class='variable'>i</span>] > <span class='constant'>0</span>:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.if sp.as_nat(compute_Swaps_199.value[<span class='variable'>i</span>]) > <span class='constant'>0</span>:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(sp.as_nat(compute_Swaps_199.value[<span class='variable'>i</span>]) > <span class='constant'>0</span>, <span class='constant'>'Zero_Transfer'</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.if sp.snd(params.assets[<span class='variable'>i</span>]) != sp.none:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.list([sp.record(from_ = params.funds.sender, txs = sp.list([sp.record(amount = sp.as_nat(compute_Swaps_199.value[<span class='variable'>i</span>]), to_ = sp.self_address, token_id = sp.snd(params.assets[<span class='variable'>i</span>]).open_some())]))]), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TList(sp.TRecord(from_ = sp.TAddress, txs = sp.TList(sp.TRecord(amount = sp.TNat, to_ = sp.TAddress, token_id = sp.TNat).layout(("to_", ("token_id", "amount"))))).layout(("from_", "txs"))), sp.fst(params.assets[<span class='variable'>i</span>]), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.else:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.record(from_ = params.funds.sender, to_ = sp.self_address, value = sp.as_nat(compute_Swaps_199.value[<span class='variable'>i</span>])), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TRecord(from_ = sp.TAddress, to_ = sp.TAddress, value = sp.TNat).layout(("from_ as from", ("to_ as to", "value"))), sp.fst(params.assets[<span class='variable'>i</span>]), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.if compute_Swaps_199.value[<span class='variable'>i</span>] < <span class='constant'>0</span>:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.if (abs(compute_Swaps_199.value[<span class='variable'>i</span>])) > <span class='constant'>0</span>:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.verify((abs(compute_Swaps_199.value[<span class='variable'>i</span>])) > <span class='constant'>0</span>, <span class='constant'>'Zero_Transfer'</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.if sp.snd(params.assets[<span class='variable'>i</span>]) != sp.none:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.list([sp.record(from_ = sp.self_address, txs = sp.list([sp.record(amount = abs(compute_Swaps_199.value[<span class='variable'>i</span>]), to_ = params.funds.recipient, token_id = sp.snd(params.assets[<span class='variable'>i</span>]).open_some())]))]), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TList(sp.TRecord(from_ = sp.TAddress, txs = sp.TList(sp.TRecord(amount = sp.TNat, to_ = sp.TAddress, token_id = sp.TNat).layout(("to_", ("token_id", "amount"))))).layout(("from_", "txs"))), sp.fst(params.assets[<span class='variable'>i</span>]), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.else:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.record(from_ = sp.self_address, to_ = params.funds.recipient, value = abs(compute_Swaps_199.value[<span class='variable'>i</span>])), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TRecord(from_ = sp.TAddress, to_ = sp.TAddress, value = sp.TNat).layout(("from_ as from", ("to_ as to", "value"))), sp.fst(params.assets[<span class='variable'>i</span>]), entrypoint='transfer').open_some())</div></div>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> exitPool(<span class='self'>self</span>, params)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.settings.paused == <span class='constant'>False</span>, <span class='constant'>'ONLY_UNPAUSED'</span>)
+<br>&nbsp;&nbsp;sp.verify(params.sender == sp.source, <span class='constant'>401</span>)
+<br>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.isPoolRegistered.contains(params.poolId), <span class='constant'>500</span>)
+<br>&nbsp;&nbsp;<span class='local'>compute_PoolBalances_164</span> = sp.local("<span class='local'>compute_PoolBalances_164</span>", self._validateTokensAndGetBalances(sp.record(expectedTokens = params.request.assets, limits = params.request.limits, poolId = params.poolId)))
+<br>&nbsp;&nbsp;<span class='local'>compute_BalanceAllocation_5</span> = sp.local("<span class='local'>compute_BalanceAllocation_5</span>", {}, <span class='type'>sp.TMap(sp.TNat, sp.TNat)</span>)
+<br>&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(compute_PoolBalances_164.value)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;compute_BalanceAllocation_5.value[<span class='variable'>i</span>] = sp.fst(compute_PoolBalances_164.value[<span class='variable'>i</span>]) + sp.snd(compute_PoolBalances_164.value[<span class='variable'>i</span>])
+<br>&nbsp;&nbsp;<span class='local'>compute_PoolBalances_176</span> = sp.local("<span class='local'>compute_PoolBalances_176</span>", sp.view("beforeExitPool", sp.record(balances = compute_BalanceAllocation_5.value, userData = params.request.userData), sp.fst(params.poolId), sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some(message = <span class='constant'>811</span>))
+<br>&nbsp;&nbsp;sptAmountIn, amountsOut, invariant = sp.match_tuple(compute_PoolBalances_176.value, "sptAmountIn", "amountsOut", "invariant")
+<br>&nbsp;&nbsp;sp.transfer(sp.record(amountsOut = <span class='variable'>amountsOut</span>, balances = compute_BalanceAllocation_5.value, invariant = <span class='variable'>invariant</span>, poolId = params.poolId, recoveryModeExit = params.request.userData.recoveryModeExit, sender = params.sender, sptAmountIn = <span class='variable'>sptAmountIn</span>), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TRecord(amountsOut = sp.TMap(sp.TNat, sp.TNat), balances = sp.TMap(sp.TNat, sp.TNat), invariant = sp.TNat, poolId = sp.TPair(sp.TAddress, sp.TNat), recoveryModeExit = sp.TBool, sender = sp.TAddress, sptAmountIn = sp.TNat).layout((("amountsOut", ("balances", "invariant")), (("poolId", "recoveryModeExit"), ("sender", "sptAmountIn")))), sp.fst(params.poolId), entrypoint='afterExitPool').open_some(message = <span class='constant'>'INTERFACE_MISMATCH'</span>))
+<br>&nbsp;&nbsp;sp.verify(sp.len(compute_PoolBalances_164.value) == sp.len(<span class='variable'>amountsOut</span>))
+<br>&nbsp;&nbsp;<span class='local'>compute_PoolBalances_258</span> = sp.local("<span class='local'>compute_PoolBalances_258</span>", {}, <span class='type'>sp.TMap(sp.TNat, sp.TPair(sp.TNat, sp.TNat))</span>)
+<br>&nbsp;&nbsp;sp.for <span class='variable'>x</span> in sp.range(<span class='constant'>0</span>, sp.len(params.request.assets)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(<span class='variable'>amountsOut</span>[<span class='variable'>x</span>] >= params.request.limits[<span class='variable'>x</span>], <span class='constant'>505</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.if <span class='variable'>amountsOut</span>[<span class='variable'>x</span>] > <span class='constant'>0</span>:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(<span class='variable'>amountsOut</span>[<span class='variable'>x</span>] > <span class='constant'>0</span>, <span class='constant'>'Zero_Transfer'</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.if sp.snd(params.request.assets[<span class='variable'>x</span>]) != sp.none:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.list([sp.record(from_ = sp.self_address, txs = sp.list([sp.record(amount = <span class='variable'>amountsOut</span>[<span class='variable'>x</span>], to_ = params.sender, token_id = sp.snd(params.request.assets[<span class='variable'>x</span>]).open_some())]))]), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TList(sp.TRecord(from_ = sp.TAddress, txs = sp.TList(sp.TRecord(amount = sp.TNat, to_ = sp.TAddress, token_id = sp.TNat).layout(("to_", ("token_id", "amount"))))).layout(("from_", "txs"))), sp.fst(params.request.assets[<span class='variable'>x</span>]), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.else:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.record(from_ = sp.self_address, to_ = params.sender, value = <span class='variable'>amountsOut</span>[<span class='variable'>x</span>]), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TRecord(from_ = sp.TAddress, to_ = sp.TAddress, value = sp.TNat).layout(("from_ as from", ("to_ as to", "value"))), sp.fst(params.request.assets[<span class='variable'>x</span>]), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;&nbsp;&nbsp;compute_PoolBalances_258.value[<span class='variable'>x</span>] = (sp.as_nat(sp.fst(compute_PoolBalances_164.value[<span class='variable'>x</span>]) - <span class='variable'>amountsOut</span>[<span class='variable'>x</span>]), sp.snd(compute_PoolBalances_164.value[<span class='variable'>x</span>]))
+<br>&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(params.request.assets)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='self'>self</span>.data.poolsBalances[params.poolId][params.request.assets[<span class='variable'>i</span>]] = compute_PoolBalances_258.value[<span class='variable'>i</span>]
+<br>&nbsp;&nbsp;sp.emit(sp.record(amountsInOrOut = self._castToInt(sp.record(amounts = <span class='variable'>amountsOut</span>, positive = <span class='constant'>False</span>)), poolId = params.poolId, sender = params.sender, tokens = params.request.assets), tag = "PoolBalanceChanged")</div></div>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> joinPool(<span class='self'>self</span>, params)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.settings.paused == <span class='constant'>False</span>, <span class='constant'>'ONLY_UNPAUSED'</span>)
+<br>&nbsp;&nbsp;sp.verify(params.sender == sp.source, <span class='constant'>401</span>)
+<br>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.isPoolRegistered.contains(params.poolId), <span class='constant'>500</span>)
+<br>&nbsp;&nbsp;<span class='local'>compute_PoolBalances_86</span> = sp.local("<span class='local'>compute_PoolBalances_86</span>", self._validateTokensAndGetBalances(sp.record(expectedTokens = params.request.assets, limits = params.request.limits, poolId = params.poolId)))
+<br>&nbsp;&nbsp;<span class='local'>compute_BalanceAllocation_5</span> = sp.local("<span class='local'>compute_BalanceAllocation_5</span>", {}, <span class='type'>sp.TMap(sp.TNat, sp.TNat)</span>)
+<br>&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(compute_PoolBalances_86.value)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;compute_BalanceAllocation_5.value[<span class='variable'>i</span>] = sp.fst(compute_PoolBalances_86.value[<span class='variable'>i</span>]) + sp.snd(compute_PoolBalances_86.value[<span class='variable'>i</span>])
+<br>&nbsp;&nbsp;<span class='local'>compute_PoolBalances_97</span> = sp.local("<span class='local'>compute_PoolBalances_97</span>", sp.view("beforeJoinPool", sp.record(balances = compute_BalanceAllocation_5.value, userData = params.request.userData), sp.fst(params.poolId), sp.TTuple(sp.TNat, sp.TMap(sp.TNat, sp.TNat), sp.TNat)).open_some(message = <span class='constant'>810</span>))
+<br>&nbsp;&nbsp;sptAmountOut, amountsIn, invariant = sp.match_tuple(compute_PoolBalances_97.value, "sptAmountOut", "amountsIn", "invariant")
+<br>&nbsp;&nbsp;sp.transfer(sp.record(amountsIn = <span class='variable'>amountsIn</span>, balances = compute_BalanceAllocation_5.value, invariant = <span class='variable'>invariant</span>, poolId = params.poolId, recipient = params.recipient, sptAmountOut = <span class='variable'>sptAmountOut</span>), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TRecord(amountsIn = sp.TMap(sp.TNat, sp.TNat), balances = sp.TMap(sp.TNat, sp.TNat), invariant = sp.TNat, poolId = sp.TPair(sp.TAddress, sp.TNat), recipient = sp.TAddress, sptAmountOut = sp.TNat).layout((("amountsIn", ("balances", "invariant")), ("poolId", ("recipient", "sptAmountOut")))), sp.fst(params.poolId), entrypoint='afterJoinPool').open_some(message = <span class='constant'>'INTERFACE_MISMATCH'</span>))
+<br>&nbsp;&nbsp;sp.verify(sp.len(compute_PoolBalances_86.value) == sp.len(<span class='variable'>amountsIn</span>))
+<br>&nbsp;&nbsp;<span class='local'>compute_PoolBalances_231</span> = sp.local("<span class='local'>compute_PoolBalances_231</span>", {}, <span class='type'>sp.TMap(sp.TNat, sp.TPair(sp.TNat, sp.TNat))</span>)
+<br>&nbsp;&nbsp;sp.for <span class='variable'>x</span> in sp.range(<span class='constant'>0</span>, sp.len(params.request.assets)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(<span class='variable'>amountsIn</span>[<span class='variable'>x</span>] <= params.request.limits[<span class='variable'>x</span>], <span class='constant'>506</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.if <span class='variable'>amountsIn</span>[<span class='variable'>x</span>] > <span class='constant'>0</span>:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(<span class='variable'>amountsIn</span>[<span class='variable'>x</span>] > <span class='constant'>0</span>, <span class='constant'>'Zero_Transfer'</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.if sp.snd(params.request.assets[<span class='variable'>x</span>]) != sp.none:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.list([sp.record(from_ = params.sender, txs = sp.list([sp.record(amount = <span class='variable'>amountsIn</span>[<span class='variable'>x</span>], to_ = sp.self_address, token_id = sp.snd(params.request.assets[<span class='variable'>x</span>]).open_some())]))]), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TList(sp.TRecord(from_ = sp.TAddress, txs = sp.TList(sp.TRecord(amount = sp.TNat, to_ = sp.TAddress, token_id = sp.TNat).layout(("to_", ("token_id", "amount"))))).layout(("from_", "txs"))), sp.fst(params.request.assets[<span class='variable'>x</span>]), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.else:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.record(from_ = params.sender, to_ = sp.self_address, value = <span class='variable'>amountsIn</span>[<span class='variable'>x</span>]), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TRecord(from_ = sp.TAddress, to_ = sp.TAddress, value = sp.TNat).layout(("from_ as from", ("to_ as to", "value"))), sp.fst(params.request.assets[<span class='variable'>x</span>]), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;&nbsp;&nbsp;compute_PoolBalances_231.value[<span class='variable'>x</span>] = (sp.fst(compute_PoolBalances_86.value[<span class='variable'>x</span>]) + <span class='variable'>amountsIn</span>[<span class='variable'>x</span>], sp.snd(compute_PoolBalances_86.value[<span class='variable'>x</span>]))
+<br>&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(params.request.assets)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='self'>self</span>.data.poolsBalances[params.poolId][params.request.assets[<span class='variable'>i</span>]] = compute_PoolBalances_231.value[<span class='variable'>i</span>]
+<br>&nbsp;&nbsp;sp.emit(sp.record(amountsInOrOut = self._castToInt(sp.record(amounts = <span class='variable'>amountsIn</span>, positive = <span class='constant'>True</span>)), poolId = params.poolId, sender = params.sender, tokens = params.request.assets), tag = "PoolBalanceChanged")</div></div>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> registerPool(<span class='self'>self</span>)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.settings.paused == <span class='constant'>False</span>, <span class='constant'>'ONLY_UNPAUSED'</span>)
+<br>&nbsp;&nbsp;<span class='local'>compute_PoolRegistry_57</span> = sp.local("<span class='local'>compute_PoolRegistry_57</span>", <span class='self'>self</span>.data.nextPoolNonce)
+<br>&nbsp;&nbsp;<span class='self'>self</span>.data.isPoolRegistered[(sp.sender, compute_PoolRegistry_57.value)] = <span class='constant'>sp.unit</span>
+<br>&nbsp;&nbsp;<span class='self'>self</span>.data.nextPoolNonce += <span class='constant'>1</span>
+<br>&nbsp;&nbsp;sp.emit(sp.record(pool = sp.sender, poolId = (sp.sender, compute_PoolRegistry_57.value)), tag = "PoolRegistered")</div></div>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> registerTokens(<span class='self'>self</span>, params)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.set_type(params, sp.TRecord(assetManagers = sp.TOption(sp.TMap(sp.TNat, sp.TAddress)), poolId = sp.TPair(sp.TAddress, sp.TNat), tokens = sp.TMap(sp.TNat, sp.TPair(sp.TAddress, sp.TOption(sp.TNat)))).layout(("assetManagers", ("poolId", "tokens"))))
+<br>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.settings.paused == <span class='constant'>False</span>, <span class='constant'>'ONLY_UNPAUSED'</span>)
+<br>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.isPoolRegistered.contains(params.poolId), <span class='constant'>500</span>)
+<br>&nbsp;&nbsp;sp.verify(sp.sender == sp.fst(params.poolId), <span class='constant'>501</span>)
+<br>&nbsp;&nbsp;sp.if <span class='self'>self</span>.data.poolsTokens.contains(params.poolId):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(params.tokens)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='local'>contains</span> = sp.local("<span class='local'>contains</span>", <span class='constant'>False</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.for <span class='variable'>e</span> in <span class='self'>self</span>.data.poolsTokens[params.poolId].values():
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.if <span class='variable'>e</span> == params.tokens[<span class='variable'>i</span>]:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;contains.value = <span class='constant'>True</span>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(contains.value == <span class='constant'>False</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='self'>self</span>.data.poolsTokens[params.poolId][sp.len(<span class='self'>self</span>.data.poolsTokens[params.poolId])] = params.tokens[<span class='variable'>i</span>]
+<br>&nbsp;&nbsp;sp.else:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='self'>self</span>.data.poolsTokens[params.poolId] = params.tokens
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='self'>self</span>.data.poolsBalances[params.poolId] = sp.set_type_expr({}, sp.TMap(sp.TPair(sp.TAddress, sp.TOption(sp.TNat)), sp.TPair(sp.TNat, sp.TNat)))
+<br>&nbsp;&nbsp;sp.emit(sp.record(poolId = params.poolId, tokens = params.tokens), tag = "TokensRegistered")</div></div>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> run_lambda(<span class='self'>self</span>, params)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.set_type(params, sp.TLambda(sp.TUnit, sp.TList(sp.TOperation), with_storage="read-write", tstorage=sp.TRecord(admin = sp.TAddress, isPoolRegistered = sp.TBigMap(sp.TPair(sp.TAddress, sp.TNat), sp.TUnit), metadata = sp.TBigMap(sp.TString, sp.TBytes), nextPoolNonce = sp.TNat, poolsBalances = sp.TBigMap(sp.TPair(sp.TAddress, sp.TNat), sp.TMap(sp.TPair(sp.TAddress, sp.TOption(sp.TNat)), sp.TPair(sp.TNat, sp.TNat))), poolsTokens = sp.TBigMap(sp.TPair(sp.TAddress, sp.TNat), sp.TMap(sp.TNat, sp.TPair(sp.TAddress, sp.TOption(sp.TNat)))), proposed_admin = sp.TOption(sp.TAddress), settings = sp.TRecord(paused = sp.TBool).layout("paused")).layout(((("admin", "isPoolRegistered"), ("metadata", "nextPoolNonce")), (("poolsBalances", "poolsTokens"), ("proposed_admin", "settings")))), with_operations=True))
+<br>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.admin == sp.set_type_expr(sp.sender, sp.TAddress), <span class='constant'>'ONLY_ADMIN'</span>)
+<br>&nbsp;&nbsp;sp.for <span class='variable'>op</span> in params(<span class='constant'>sp.unit</span>):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.operations().push(<span class='variable'>op</span>)</div></div>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> set_paused(<span class='self'>self</span>, params)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.admin == sp.set_type_expr(sp.sender, sp.TAddress), <span class='constant'>'ONLY_ADMIN'</span>)
+<br>&nbsp;&nbsp;<span class='self'>self</span>.data.settings.paused = params</div></div>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> swap(<span class='self'>self</span>, params)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.settings.paused == <span class='constant'>False</span>, <span class='constant'>'ONLY_UNPAUSED'</span>)
+<br>&nbsp;&nbsp;sp.verify(params.funds.sender == sp.source, <span class='constant'>401</span>)
+<br>&nbsp;&nbsp;sp.verify(sp.now <= params.deadline, <span class='constant'>508</span>)
+<br>&nbsp;&nbsp;sp.verify(params.singleSwap.amount > <span class='constant'>0</span>, <span class='constant'>510</span>)
+<br>&nbsp;&nbsp;sp.verify(params.singleSwap.assetIn != params.singleSwap.assetOut, <span class='constant'>509</span>)
+<br>&nbsp;&nbsp;<span class='local'>compute_Swaps_325</span> = sp.local("<span class='local'>compute_Swaps_325</span>", sp.view("onSwap", sp.record(balanceTokenIn = sp.fst(<span class='self'>self</span>.data.poolsBalances.get(params.singleSwap.poolId, message = <span class='constant'>500</span>).get(params.singleSwap.assetIn, message = <span class='constant'>521</span>)) + sp.snd(<span class='self'>self</span>.data.poolsBalances.get(params.singleSwap.poolId, message = <span class='constant'>500</span>).get(params.singleSwap.assetIn, message = <span class='constant'>521</span>)), balanceTokenOut = sp.fst(<span class='self'>self</span>.data.poolsBalances.get(params.singleSwap.poolId, message = <span class='constant'>500</span>).get(params.singleSwap.assetOut, message = <span class='constant'>521</span>)) + sp.snd(<span class='self'>self</span>.data.poolsBalances.get(params.singleSwap.poolId, message = <span class='constant'>500</span>).get(params.singleSwap.assetOut, message = <span class='constant'>521</span>)), request = sp.record(amount = params.singleSwap.amount, kind = params.singleSwap.kind, tokenIn = params.singleSwap.assetIn, tokenOut = params.singleSwap.assetOut)), sp.fst(params.singleSwap.poolId), sp.TNat).open_some(message = <span class='constant'>812</span>))
+<br>&nbsp;&nbsp;<span class='local'>compute_Swaps_328</span> = sp.local("<span class='local'>compute_Swaps_328</span>", sp.eif(params.singleSwap.kind == <span class='constant'>7</span>, (params.singleSwap.amount, compute_Swaps_325.value), (compute_Swaps_325.value, params.singleSwap.amount)))
+<br>&nbsp;&nbsp;match_pair_Swaps_328_fst, match_pair_Swaps_328_snd = sp.match_tuple(compute_Swaps_328.value, "match_pair_Swaps_328_fst", "match_pair_Swaps_328_snd")
+<br>&nbsp;&nbsp;<span class='self'>self</span>.data.poolsBalances[params.singleSwap.poolId][params.singleSwap.assetIn] = (sp.fst(<span class='self'>self</span>.data.poolsBalances.get(params.singleSwap.poolId, message = <span class='constant'>500</span>).get(params.singleSwap.assetIn, message = <span class='constant'>521</span>)) + <span class='variable'>match_pair_Swaps_328_fst</span>, sp.snd(<span class='self'>self</span>.data.poolsBalances.get(params.singleSwap.poolId, message = <span class='constant'>500</span>).get(params.singleSwap.assetIn, message = <span class='constant'>521</span>)))
+<br>&nbsp;&nbsp;<span class='self'>self</span>.data.poolsBalances[params.singleSwap.poolId][params.singleSwap.assetOut] = (sp.as_nat(sp.fst(<span class='self'>self</span>.data.poolsBalances.get(params.singleSwap.poolId, message = <span class='constant'>500</span>).get(params.singleSwap.assetOut, message = <span class='constant'>521</span>)) - <span class='variable'>match_pair_Swaps_328_snd</span>), sp.snd(<span class='self'>self</span>.data.poolsBalances.get(params.singleSwap.poolId, message = <span class='constant'>500</span>).get(params.singleSwap.assetOut, message = <span class='constant'>521</span>)))
+<br>&nbsp;&nbsp;match_pair_Swaps_269_fst, match_pair_Swaps_269_snd = sp.match_tuple(sp.eif(params.singleSwap.kind == <span class='constant'>7</span>, (params.singleSwap.amount, compute_Swaps_325.value), (compute_Swaps_325.value, params.singleSwap.amount)), "match_pair_Swaps_269_fst", "match_pair_Swaps_269_snd")
+<br>&nbsp;&nbsp;sp.emit(sp.record(amountIn = <span class='variable'>match_pair_Swaps_269_fst</span>, amountOut = <span class='variable'>match_pair_Swaps_269_snd</span>, poolId = params.singleSwap.poolId, tokenIn = (sp.fst(params.singleSwap.assetIn), sp.snd(params.singleSwap.assetIn)), tokenOut = (sp.fst(params.singleSwap.assetOut), sp.snd(params.singleSwap.assetOut))), tag = "Swap")
+<br>&nbsp;&nbsp;sp.verify(sp.eif(params.singleSwap.kind == <span class='constant'>7</span>, <span class='variable'>match_pair_Swaps_269_snd</span> >= params.limit, <span class='variable'>match_pair_Swaps_269_fst</span> <= params.limit), <span class='constant'>507</span>)
+<br>&nbsp;&nbsp;sp.if <span class='variable'>match_pair_Swaps_269_fst</span> > <span class='constant'>0</span>:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(<span class='variable'>match_pair_Swaps_269_fst</span> > <span class='constant'>0</span>, <span class='constant'>'Zero_Transfer'</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.if sp.snd(params.singleSwap.assetIn) != sp.none:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.list([sp.record(from_ = params.funds.sender, txs = sp.list([sp.record(amount = <span class='variable'>match_pair_Swaps_269_fst</span>, to_ = sp.self_address, token_id = sp.snd(params.singleSwap.assetIn).open_some())]))]), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TList(sp.TRecord(from_ = sp.TAddress, txs = sp.TList(sp.TRecord(amount = sp.TNat, to_ = sp.TAddress, token_id = sp.TNat).layout(("to_", ("token_id", "amount"))))).layout(("from_", "txs"))), sp.fst(params.singleSwap.assetIn), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.else:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.record(from_ = params.funds.sender, to_ = sp.self_address, value = <span class='variable'>match_pair_Swaps_269_fst</span>), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TRecord(from_ = sp.TAddress, to_ = sp.TAddress, value = sp.TNat).layout(("from_ as from", ("to_ as to", "value"))), sp.fst(params.singleSwap.assetIn), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;sp.if <span class='variable'>match_pair_Swaps_269_snd</span> > <span class='constant'>0</span>:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(<span class='variable'>match_pair_Swaps_269_snd</span> > <span class='constant'>0</span>, <span class='constant'>'Zero_Transfer'</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.if sp.snd(params.singleSwap.assetOut) != sp.none:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.list([sp.record(from_ = sp.self_address, txs = sp.list([sp.record(amount = <span class='variable'>match_pair_Swaps_269_snd</span>, to_ = params.funds.recipient, token_id = sp.snd(params.singleSwap.assetOut).open_some())]))]), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TList(sp.TRecord(from_ = sp.TAddress, txs = sp.TList(sp.TRecord(amount = sp.TNat, to_ = sp.TAddress, token_id = sp.TNat).layout(("to_", ("token_id", "amount"))))).layout(("from_", "txs"))), sp.fst(params.singleSwap.assetOut), entrypoint='transfer').open_some())
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.else:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.transfer(sp.record(from_ = sp.self_address, to_ = params.funds.recipient, value = <span class='variable'>match_pair_Swaps_269_snd</span>), <span class='constant'>sp.tez(0)</span>, sp.contract(sp.TRecord(from_ = sp.TAddress, to_ = sp.TAddress, value = sp.TNat).layout(("from_ as from", ("to_ as to", "value"))), sp.fst(params.singleSwap.assetOut), entrypoint='transfer').open_some())</div></div>
+<br><div class='on'>
+  @sp.entrypoint
+<br><span class='keyword'>def</span> transfer_admin(<span class='self'>self</span>, params)<span class='keyword'>:</span><br><div class='indent5'>&nbsp;&nbsp;sp.verify(<span class='self'>self</span>.data.admin == sp.set_type_expr(sp.sender, sp.TAddress), <span class='constant'>'ONLY_ADMIN'</span>)
+<br>&nbsp;&nbsp;<span class='self'>self</span>.data.proposed_admin = sp.some(params)</div></div>
+<br>
+<br>&nbsp;&nbsp;@sp.private_lambda()
+<br>&nbsp;&nbsp;def _castToInt(_x0):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='local'>compute_PoolBalances_309</span> = sp.local("<span class='local'>compute_PoolBalances_309</span>", {})
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(<span class='variable'>_x0</span>.amounts)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.if <span class='variable'>_x0</span>.positive:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compute_PoolBalances_309.value[<span class='variable'>i</span>] = sp.to_int(<span class='variable'>_x0</span>.amounts[<span class='variable'>i</span>])
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.else:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compute_PoolBalances_309.value[<span class='variable'>i</span>] = - sp.to_int(<span class='variable'>_x0</span>.amounts[<span class='variable'>i</span>])
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.result(compute_PoolBalances_309.value)
+<br>
+<br>&nbsp;&nbsp;@sp.private_lambda()
+<br>&nbsp;&nbsp;def _validateTokensAndGetBalances(_x2):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(sp.len(<span class='variable'>_x2</span>.expectedTokens) == sp.len(<span class='variable'>_x2</span>.limits))
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='local'>compute_PoolTokens_168</span> = sp.local("<span class='local'>compute_PoolTokens_168</span>", {}, <span class='type'>sp.TMap(sp.TNat, sp.TPair(sp.TAddress, sp.TOption(sp.TNat)))</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='local'>compute_PoolTokens_169</span> = sp.local("<span class='local'>compute_PoolTokens_169</span>", {}, <span class='type'>sp.TMap(sp.TNat, sp.TPair(sp.TNat, sp.TNat))</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(<span class='self'>self</span>.data.poolsTokens[<span class='variable'>_x2</span>.poolId])):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compute_PoolTokens_168.value[<span class='variable'>i</span>] = <span class='self'>self</span>.data.poolsTokens[<span class='variable'>_x2</span>.poolId][<span class='variable'>i</span>]
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compute_PoolTokens_169.value[<span class='variable'>i</span>] = <span class='self'>self</span>.data.poolsBalances.get(<span class='variable'>_x2</span>.poolId, default_value = {}).get(<span class='self'>self</span>.data.poolsTokens[<span class='variable'>_x2</span>.poolId][<span class='variable'>i</span>], default_value = (<span class='constant'>0</span>, <span class='constant'>0</span>))
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(sp.len(compute_PoolTokens_168.value) == sp.len(<span class='variable'>_x2</span>.expectedTokens))
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(sp.len(compute_PoolTokens_168.value) > <span class='constant'>0</span>, <span class='constant'>527</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.for <span class='variable'>i</span> in sp.range(<span class='constant'>0</span>, sp.len(compute_PoolTokens_168.value)):
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sp.verify(compute_PoolTokens_168.value[<span class='variable'>i</span>] == <span class='variable'>_x2</span>.expectedTokens[<span class='variable'>i</span>], <span class='constant'>520</span>)
+<br>&nbsp;&nbsp;&nbsp;&nbsp;sp.result(compute_PoolTokens_169.value)
+<br>
+<br>sp.add_compilation_target("test", Contract())</div></div></div></html>

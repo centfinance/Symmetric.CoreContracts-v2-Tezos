@@ -1,0 +1,50 @@
+{
+  "prim": "Pair",
+  "args": [
+    {
+      "prim": "Pair",
+      "args": [
+        {
+          "prim": "Pair",
+          "args": [ { "string": "tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B" }, { "prim": "Pair", "args": [ { "int": "400000000000000000" }, { "int": "400000000000000000" } ] } ]
+        },
+        {
+          "prim": "Pair",
+          "args": [
+            [],
+            {
+              "prim": "Pair",
+              "args": [
+                { "string": "KT1H2SaqZyCmmHxbsTfwx12YeUzugzj8eN2t" },
+                [
+                  {
+                    "prim": "Elt",
+                    "args": [
+                      { "string": "" },
+                      {
+                        "bytes": "68747470733a2f2f7261772e67697468756275736572636f6e74656e742e636f6d2f63656e7466696e616e63652f53796d6d65747269632e436f7265436f6e7472616374732d76322d54657a6f732f6d61696e2f6d657461646174612f746573746e65742f5765696768746564506f6f6c466163746f72792e6a736f6e"
+                      }
+                    ]
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "prim": "Pair",
+      "args": [
+        { "prim": "Pair", "args": [ { "prim": "None" }, { "string": "KT1AadsFF9ogbKySycWQm5i5avTAgcVwpY3e" } ] },
+        {
+          "prim": "Pair",
+          "args": [
+            { "string": "KT1L6L7n9cq7ExJFDD45PkpPACedufffKRbP" },
+            { "prim": "Pair", "args": [ { "string": "KT19aJTzRK1SC131ZQa7Lr6kDfC4KPm9Kjry" }, { "string": "KT195jeqmRvGR25GTvoecXg25nCdCZubWT6N" } ] }
+          ]
+        }
+      ]
+    }
+  ]
+}
