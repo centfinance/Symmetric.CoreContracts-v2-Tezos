@@ -47,6 +47,11 @@ class Types:
 class PoolBalances(
     PoolTokens,
 ):
+    """
+    Stores the Asset Managers (by Pool and token), and implements the top level Asset Manager and Pool interfaces,
+    such as registering and deregistering tokens, joining and exiting Pools, and informational functions like `getPool`
+    and `getPoolTokens`.
+    """
     def __init__(self):
         PoolTokens.__init__(self)
 
@@ -58,6 +63,23 @@ class PoolBalances(
         recipient,
         request
     ):
+        """
+        Allows a user to join the pool.
+
+        Parameters:
+            poolId (TPair(TAddress, TNat)): Identifier for the pool.
+            sender (TAddress): Address of the user sending the request.
+            recipient (TAddress): Address to receive the resulting tokens.
+            request (t_joinPool_request): Contains user data, assets, and limits for the join operation.
+
+        Notes:
+            - Only non-paused pools are accessible.
+            - The sender should match the source of the request.
+            - The pool specified by poolId should be registered.
+            - Calls to this function might update the pool balances and emit a 'PoolBalanceChanged' event.
+
+        """
+        self.onlyUnpaused()
         sp.verify(sender == sp.source, Errors.SENDER_NOT_ALLOWED)
         self._ensureRegisteredPool(poolId)
         
@@ -120,6 +142,23 @@ class PoolBalances(
         recipient,
         request
     ):
+        """
+        Allows a user to exit the pool.
+
+        Parameters:
+            poolId (TPair(TAddress, TNat)): Identifier for the pool.
+            sender (TAddress): Address of the user sending the request.
+            recipient (TAddress): Address to receive the resulting tokens.
+            request (t_exitPool_request): Contains user data, assets, and limits for the exit operation.
+
+        Notes:
+            - Only non-paused pools are accessible.
+            - The sender should match the source of the request.
+            - The pool specified by poolId should be registered.
+            - Calls to this function might update the pool balances and emit a 'PoolBalanceChanged' event.
+
+        """
+        self.onlyUnpaused()
         sp.verify(sender == sp.source, Errors.SENDER_NOT_ALLOWED )
         self._ensureRegisteredPool(poolId)
         balances = self._validateTokensAndGetBalances(
@@ -182,6 +221,12 @@ class PoolBalances(
         balances,
         amountsIn,
     ):
+        """
+        Transfers `amountsIn` from `sender`, ensuring they are within their accepted limits
+
+        Returns:
+            The Pool's final balances, which are derived from the current balances added to `amountsIn`
+        """
 
         joinBalances = sp.compute(
             sp.map(l={}, tkey=sp.TNat, tvalue=sp.TPair(sp.TNat, sp.TNat)))
@@ -189,18 +234,11 @@ class PoolBalances(
             amountIn = amountsIn[x]
             sp.verify(amountIn <= change.limits[x], Errors.JOIN_ABOVE_MAX)
 
-            # Receive assets from the sender - possibly from Internal Balance.
             asset = change.assets[x]
             AssetTransfersHandler._receiveAsset(asset, amountIn, sender)
-            # TODO: Handle Native Tez
-            # with sp.if_(self._isXTZ(asset)):
-            #     wrappedXtz = wrappedXtz.add(amountIn)
 
             joinBalances[x] = (
                 (sp.fst(balances[x]) + amountIn), sp.snd(balances[x]))
-
-        # TODO: Handle Native Tez
-        # self._handleRemainingXtz(wrappedXtz)
 
         return joinBalances
 
@@ -211,6 +249,12 @@ class PoolBalances(
         balances,
         amountsOut,
     ):
+        """
+        Transfers `amountsOut` from `recipient`, ensuring they are within their accepted limits
+
+        Returns:
+            Returns the Pool's final balances, which are the current `balances` minus `amountsOut`
+        """        
         exitBalances = sp.compute(
             sp.map(l={}, tkey=sp.TNat, tvalue=sp.TPair(sp.TNat, sp.TNat)))
         with sp.for_('x', sp.range(0, sp.len(change.assets))) as x:
@@ -227,6 +271,20 @@ class PoolBalances(
 
     @sp.private_lambda(with_storage='read-only', wrap_call=True)
     def _validateTokensAndGetBalances(self, params):
+        """
+        Returns the total balance for the given `poolId`'s `expectedTokens`.
+
+        Parameters:
+            poolId: The ID of the pool.
+            expectedTokens: List of expected tokens.
+
+        Notes:
+            - `expectedTokens` must exactly match the token array returned by `getPoolTokens` in terms of length, elements, and order.
+            - The Pool must have at least one registered token.
+
+        Returns:
+            A map containing the balances of the pool tokens.
+        """
         sp.verify(sp.len(params.expectedTokens) == sp.len(params.limits))
 
         (actualTokens, balances) = self._getPoolTokens(params.poolId)
@@ -241,6 +299,13 @@ class PoolBalances(
 
     @sp.private_lambda()
     def _castToInt(self, params):
+        """
+        Casts a map of nat values to int, setting the sign of the result based on the `positive` flag.
+
+        Parameters:
+            values (sp.Tmap[sp.TNat, sp.TNat]): List of values to be cast.
+            positive (sp.TBool): Flag to determine the sign of the result.
+        """
         signedValues = sp.compute(sp.map({}))
         with sp.for_('i', sp.range(0, sp.len(params.amounts))) as i:
             with sp.if_(params.positive):

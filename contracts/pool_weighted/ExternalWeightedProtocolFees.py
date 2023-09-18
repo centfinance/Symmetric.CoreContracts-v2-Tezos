@@ -62,6 +62,25 @@ class IExternalWeightedProtocolFees:
 
 
 class ExternalWeightedProtocolFees(sp.Contract):
+    """
+    ExternalWeightedProtocolFees Contract
+
+    This contract implements the IExternalWeightedProtocolFees interface. It calculates protocol fees for joins, exits, and swaps for weighted pools. Also, it fetches the price rate for yield-bearing tokens.
+
+    Attributes:
+        fixedPoint: A big map to handle fixed-point math operations like multiplication, division, and power operations.
+
+    Methods:
+        getPreJoinExitProtocolFees: On-chain view to calculate protocol fees related to pre-join and pre-exit.
+        getPostJoinExitProtocolFees: On-chain view to calculate protocol fees related to post-join and post-exit.
+        getRateProduct: On-chain view to fetch the price rate for yield-bearing tokens.
+
+    Private Methods:
+        _getSwapProtocolFeesPoolPercentage: Calculate the protocol's ownership percentage based on swap fees.
+        _getYieldProtocolFeesPoolPercentage: Calculate the protocol's ownership percentage based on yield.
+        _getRateFactor: Get the rate factor given a weight and provider.
+        _getRateProduct: Calculate the product of rates.
+    """
     def __init__(self):
         sp.Contract.__init__(self)
         self.init(

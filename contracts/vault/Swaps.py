@@ -52,6 +52,18 @@ class ISwaps:
 
 
 class Swaps(PoolBalances):
+    """
+    Implements the Vault's high-level swap functionality.
+  
+    Users can swap tokens with Pools by calling the `swap` and `batchSwap` functions. They need not trust the Pool
+    contracts to do this: all security checks are made by the Vault.
+  
+    The `swap` function executes a single swap, while `batchSwap` can perform multiple swaps in sequence.
+    In each individual swap, tokens of one kind are sent from the sender to the Pool (this is the 'token in'),
+    and tokens of another kind are sent from the Pool to the recipient in exchange (this is the 'token out').
+    More complex swaps, such as one 'token in' to multiple tokens out can be achieved by batching together
+    individual swaps.
+    """
 
     def __init__(self):
         PoolBalances.__init__(self)
@@ -64,6 +76,22 @@ class Swaps(PoolBalances):
         limit,
         deadline,
     ):
+        """
+        Executes a single token swap between a sender and a Pool.
+        
+        Args:
+            singleSwap (ISwaps.SINGLE_SWAP): The details of the swap including pool ID, kind of swap, assets involved, and amount to swap.
+            funds (ISwaps.FUND_MANAGEMENT): Addresses of the sender and recipient of the swap.
+            limit (sp.TNat): Minimum or maximum amount of tokens for the swap, depending on the kind.
+            deadline (sp.TTimestamp): Timestamp by which the swap must be completed, otherwise it will fail.
+            
+        Raises:
+            Errors.SENDER_NOT_ALLOWED: If the sender is not the caller of the function.
+            Errors.SWAP_DEADLINE: If the current time is past the deadline.
+            Errors.UNKNOWN_AMOUNT_IN_FIRST_SWAP: If the swap amount is 0 or not provided.
+            Errors.CANNOT_SWAP_SAME_TOKEN: If input and output tokens are the same.
+            Errors.SWAP_LIMIT: If the swapped amount does not meet the given limit.
+        """
         self.onlyUnpaused()
         sp.verify(funds.sender == sp.source, Errors.SENDER_NOT_ALLOWED )
 
@@ -104,7 +132,6 @@ class Swaps(PoolBalances):
             amountOut,
             funds.recipient,
         )
-        # TODO: Handle remaining Tez
 
     @sp.entry_point(parameter_type=ISwaps.t_batch_swap_params, lazify=False)
     def batchSwap(
@@ -116,6 +143,23 @@ class Swaps(PoolBalances):
         limits,
         deadline,
     ):
+        """
+        Executes multiple token swaps in a sequence between a sender and multiple Pools.
+        
+        Args:
+            kind (sp.TNat): Kind of swap, determining how amounts are calculated.
+            swaps (sp.TMap): A sequence of individual swaps with details for each.
+            assets (sp.TMap): A map of tokens involved in the batch swap.
+            funds (ISwaps.FUND_MANAGEMENT): Addresses of the sender and recipient of the swap.
+            limits (sp.TMap): Minimum or maximum amounts for each token, depending on the kind.
+            deadline (sp.TTimestamp): Timestamp by which all swaps in the batch must be completed, otherwise they will fail.
+            
+        Raises:
+            Errors.SENDER_NOT_ALLOWED: If the sender is not the caller of the function.
+            Errors.SWAP_DEADLINE: If the current time is past the deadline.
+            Errors.INPUT_LENGTH_MISMATCH: If the lengths of assets and limits don't match.
+            Errors.SWAP_LIMIT: If any swapped amount in the batch does not meet the given limits.
+        """
         self.onlyUnpaused()
         
         sp.verify(funds.sender == sp.source, Errors.SENDER_NOT_ALLOWED )
@@ -124,14 +168,15 @@ class Swaps(PoolBalances):
 
         sp.verify(sp.len(assets) == sp.len(limits),
                   Errors.INPUT_LENGTH_MISMATCH)
-
+        # Perform the swaps, updating the Pool token balances and computing the net Vault asset deltas.
         assetDeltas = self._swapWithPools(
             sp.record(
                 swaps=swaps,
                 assets=assets,
                 funds=funds,
                 kind=kind))
-
+        # Process asset deltas, by either transferring assets from the sender (for positive deltas) or to the recipient
+        # (for negative deltas).
         with sp.for_('i', sp.range(0, sp.len(assets))) as i:
             asset = assets[i]
             delta = assetDeltas[i]
@@ -148,6 +193,11 @@ class Swaps(PoolBalances):
                     asset, toSend, funds.recipient)
 
     def _swapWithPools(self, params):
+        """
+        Performs all `swaps`, calling swap hooks on the Pool contracts and updating their balances. Does not cause
+        any transfer of tokens - instead it returns the net Vault token deltas: positive if the Vault should receive
+        tokens, and negative if it should send them.
+        """
         assetDeltas = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TInt))
 
         previousTokenCalculated = sp.local(
@@ -168,6 +218,9 @@ class Swaps(PoolBalances):
             amount = sp.local('amount', params.swaps[i].amount)
 
             with sp.if_(params.swaps[i].amount == sp.nat(0)):
+                # When the amount given is zero, we use the calculated amount for the previous swap, as long as the
+                # current swap's given token is the previous calculated token. This makes it possible to swap a
+                # given amount of token A for token B, and then use the resulting token B amount to swap for token C.
                 sp.verify(i > 0, Errors.UNKNOWN_AMOUNT_IN_FIRST_SWAP)
                 usingPreviousToken = (previousTokenCalculated.value == sp.compute(
                     sp.eif(params.kind == Enums.GIVEN_IN, tokenIn, tokenOut)))
@@ -191,7 +244,8 @@ class Swaps(PoolBalances):
 
             previousTokenCalculated.value = sp.compute(
                 sp.eif(params.kind == Enums.GIVEN_IN, tokenOut, tokenIn))
-
+            
+            # Accumulate Vault deltas across swaps
             assetDeltas[params.swaps[i].assetInIndex] = (assetDeltas.get(
                 params.swaps[i].assetInIndex, default_value=sp.int(0)) + sp.to_int(amountIn))
             assetDeltas[params.swaps[i].assetOutIndex] = (assetDeltas.get(
@@ -200,8 +254,14 @@ class Swaps(PoolBalances):
         return assetDeltas
 
     def _swapWithPool(self, request):
+        """
+        Performs a swap according to the parameters specified in `request`, calling the Pool's contract hook and
+        updating the Pool's balance.
+     
+        Returns the amount of tokens going into or out of the Vault as a result of this swap, depending on the swap kind.
+        """
         pool = sp.fst(request.poolId)
-
+        # Get the calculated amount from the Pool and update its balances
         amountCalculated = self._processMinimalSwapInfoPoolSwapRequest(
             sp.record(
                 request=request,
@@ -245,6 +305,9 @@ class Swaps(PoolBalances):
         return amountCalculated
 
     def _callMinimalSwapInfoPoolOnSwapHook(self, params):
+        """
+        Calls the onSwap hook for a Pool that implements IMinimalSwapInfoPool
+        """
         tokenInTotal = (sp.fst(params.tokenInBalance) +
                         sp.snd(params.tokenInBalance))
         tokenOutTotal = (sp.fst(params.tokenOutBalance) +
@@ -260,7 +323,7 @@ class Swaps(PoolBalances):
                 amount=params.request.amount,
             ),
         )
-
+        # Perform the swap request callback, and compute the new balances for 'token in' and 'token out' after the swap
         amountCalculated = sp.compute(sp.view('onSwap', params.pool,
                                               swapParams, t=sp.TNat).open_some(Errors.ON_SWAP_INVALID))
 

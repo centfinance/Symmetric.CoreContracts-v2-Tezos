@@ -62,10 +62,31 @@ class BaseWeightedPool(
 
     @sp.onchain_view()
     def getInvariant(self):
+        """
+        Returns the current value of the invariant.
+        """
         invariant = self._getInvariant()
         sp.result(invariant)
 
+    ###########
+    # Base Pool Handlers
+    ###########
+
+    ###########
+    # Swap
+    ###########
     def _onSwapGivenIn(self, params):
+        """
+        Called when a swap with the Pool occurs, where the amount of tokens entering the Pool is known.
+        
+        Returns the amount of tokens that will be taken from the Pool in return.
+
+        All amounts inside `swapRequest`, `balanceTokenIn`, and `balanceTokenOut` are upscaled. The swap fee has already
+        been deducted from `swapRequest.amount`.
+
+        The return value is also considered upscaled and will be downscaled (rounding down) before returning it to the
+        Vault.
+        """
         tokens = self.data.tokens
         normalizedWeights = self.data.normalizedWeights
         getTokenValue = self.data.getTokenValue
@@ -90,6 +111,16 @@ class BaseWeightedPool(
         )
 
     def _onSwapGivenOut(self, params):
+        """
+        Called when a swap with the Pool occurs, where the amount of tokens exiting the Pool is known.
+        
+        Returns the amount of tokens that will be granted to the Pool in return.
+
+        All amounts inside `swapRequest`, `balanceTokenIn`, and `balanceTokenOut` are upscaled.
+
+        The return value is also considered upscaled and will be downscaled (rounding up) before applying the swap fee
+        and returning it to the Vault.
+        """
         tokens = self.data.tokens
         normalizedWeights = self.data.normalizedWeights
         getTokenValue = self.data.getTokenValue
@@ -112,10 +143,25 @@ class BaseWeightedPool(
                 amountOut=params.swapRequest.amount,
             )
         )
-
+    ###########
+    # Initialize 
+    ###########
     def _beforeInitializePool(self, params):
+        """
+        Called when the Pool is joined for the first time, i.e., when the SPT total supply is zero.
+        
+        Returns the amount of SPT to mint and the token amounts the Pool will receive in return.
+
+        Minted SPT will be sent to `recipient`, except for `_getMinimumSpt()`, which will be deducted from this amount 
+        and sent to the zero address instead. This ensures that a portion of the SPT remains forever locked there, 
+        preventing the total SPT from ever dropping below that value, and ensuring `_onInitializePool` can only be 
+        called once in the Pool's lifetime.
+
+        The tokens granted to the Pool will be transferred from `sender`. These amounts are considered upscaled and will
+        be downscaled (rounding up) before being returned to the Vault.
+        """
         kind = params.userData.kind
-        # TODO: Use an enum
+
         sp.verify(kind == Enums.INIT, Errors.UNINITIALIZED)
 
         amountsIn = params.userData.amountsIn.open_some()
@@ -125,7 +171,8 @@ class BaseWeightedPool(
 
         upscaledAmounts = sp.compute(self.data.scaling_helpers[0]((
             amountsIn, params.scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
-
+        # Set the initial SPT to the value of the invariant times the number of tokens. This makes SPT supply more
+        # consistent in Pools with similar compositions but different number of tokens.
         invariantAfterJoin = IExternalWeightedMath.calculateInvariant(
             self.data.weightedMathLib,
             sp.record(
@@ -138,12 +185,28 @@ class BaseWeightedPool(
         return (sptAmountOut, upscaledAmounts, invariantAfterJoin)
 
     def _afterInitializePool(self, invariant):
-
+        # Initialization is still a join, so we need to do post-join work. Since we are not paying protocol fees,
+        # and all we need to do is update the invariant
         self.data.entries[Enums.POST_JOIN_EXIT_INVARIANT] = invariant
 
-        # return (sptAmountOut, amountsIn)
 
+    ###########
+    # Join
+    ###########
     def _beforeJoinPool(self, params):
+        """
+        Called whenever the Pool is joined after its first initialization (see `_onInitializePool`).
+
+        Returns:
+            - The amount of SPT to mint.
+            - The token amounts that the Pool will receive in return.
+
+        Minted SPT will be sent to `recipient`.
+
+        Tokens granted to the Pool will be transferred from `sender`. These amounts are considered upscaled and will 
+        be downscaled (rounding up) before being returned to the Vault.
+
+        """
         weights = sp.compute(self.data.normalizedWeights)
 
         (preJoinExitSupply, invariant) = self._beforeJoinExit(
@@ -175,6 +238,11 @@ class BaseWeightedPool(
         )
 
     def _doJoin(self, params):
+        """
+        Dispatch code which decodes the provided userdata to perform the specified join type.
+        Inheriting contracts may override this function to add additional join types or extra conditions to allow
+        or disallow joins under certain circumstances.
+        """
         doJoin = sp.local('doJoin', (0, {}))
         with sp.if_(params.userData.kind == Enums.EXACT_TOKENS_IN_FOR_SPT_OUT):
             doJoin.value = self._joinExactTokensInForSPTOut(params)
@@ -195,7 +263,10 @@ class BaseWeightedPool(
                     userData=params.userData
                 )
             )
-        # TODO: add fail if no kind matches
+
+        with sp.if_(doJoin.value == (0, {})):
+            sp.failwith(Errors.UNHANDLED_JOIN_KIND)
+
         return (sp.fst(doJoin.value), sp.snd(doJoin.value))
 
     def _joinExactTokensInForSPTOut(
@@ -245,11 +316,11 @@ class BaseWeightedPool(
             )
         )
 
-        # // We join in a single token, so we initialize amountsIn with zeros
+        # We join in a single token, so we initialize amountsIn with zeros
         amountsIn = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         with sp.for_('x', sp.range(0, sp.len(params.balances))) as x:
             amountsIn[x] =sp.nat(0)
-        # // And then assign the result to the selected token
+        # And then assign the result to the selected token
         amountsIn[tokenIndex] = amountIn
 
         return (sptAmountOut, amountsIn)
@@ -259,14 +330,30 @@ class BaseWeightedPool(
         params
     ):
         sptAmountOut = params.userData.allT.open_some()
-        # // Note that there is no maximum amountsIn parameter: this is handled by `IVault.joinPool`.
+        # Note that there is no maximum amountsIn parameter: this is handled by `IVault.joinPool`.
 
         amountsIn = sp.compute(BasePoolMath.computeProportionalAmountsIn(
             params.balances, params.totalSupply, sptAmountOut, self.data.fixedPoint))
 
         return (sptAmountOut, amountsIn)
 
+    ###########
+    # Exit
+    ###########
     def _beforeExitPool(self, params):
+        """
+        Called whenever the Pool is exited.
+
+        Returns:
+            - The amount of SPT to burn.
+            - The token amounts for each Pool token that the Pool will grant in return.
+
+        SPT will be burnt from `sender`.
+
+        The Pool will grant tokens to `recipient`. These amounts are considered upscaled and will be downscaled 
+        (rounding down) before being returned to the Vault.
+
+        """
         weights = self.data.normalizedWeights
 
         (preJoinExitSupply, invariant) = self._beforeJoinExit(
@@ -300,6 +387,11 @@ class BaseWeightedPool(
         )
 
     def _doExit(self, params):
+        """
+        Dispatch code which decodes the provided userdata to perform the specified exit type.
+        Inheriting contracts may override this function to add additional exit types or extra conditions to allow
+        or disallow exit under certain circumstances.
+        """
         doExit = sp.local('doExit', (0, {}))
         with sp.if_(params.userData.kind == Enums.EXACT_SPT_IN_FOR_ONE_TOKEN_OUT):
             (doExit.value) = self._exitExactSPTInForTokenOut(
@@ -321,7 +413,9 @@ class BaseWeightedPool(
         with sp.if_(params.userData.kind == Enums.SPT_IN_FOR_EXACT_TOKENS_OUT):
             doExit.value = self._exitSPTInForExactTokensOut(params)
 
-        # TODO: add fail if no kind matches
+        with sp.if_(doExit.value == (0, {})):
+            sp.failwith(Errors.UNHANDLED_EXIT_KIND)
+
         return (sp.fst(doExit.value), sp.snd(doExit.value))
 
     def _exitExactSPTInForTokenOut(
@@ -346,7 +440,8 @@ class BaseWeightedPool(
             )
         )
 
-        # // We join in a single token, so we initialize amountsIn with zeros
+        # This is an exceptional situation in which the fee is charged on a token out instead of a token in.
+        # We exit in a single token, so we initialize amountsOut with zeros
         amountsOut = sp.compute(sp.map({}, tkey=sp.TNat, tvalue=sp.TNat))
         with sp.for_('x', sp.range(0, sp.len(params.balances))) as x:
             amountsOut[x] =sp.nat(0)
@@ -376,7 +471,7 @@ class BaseWeightedPool(
 
         upscaledAmounts = sp.compute(self.data.scaling_helpers[0]((
             amountsOut, params.scalingFactors, self.data.fixedPoint[Enums.MUL_DOWN])))
-
+        # This is an exceptional situation in which the fee is charged on a token out instead of a token in.
         sptAmountIn = IExternalWeightedMath.calcSptInGivenExactTokensOut(
             self.data.weightedMathLib,
             sp.record(
@@ -392,7 +487,10 @@ class BaseWeightedPool(
                   Errors.SPT_OUT_MIN_AMOUNT)
 
         return (sptAmountIn, upscaledAmounts)
-
+    
+    ###########
+    # Recovery Mode
+    ###########
     def _doRecoveryModeExit(
         self,
         params

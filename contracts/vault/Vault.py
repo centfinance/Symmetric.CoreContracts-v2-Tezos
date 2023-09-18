@@ -25,6 +25,23 @@ class Vault(
     Pausable,
     Swaps,
 ):
+    """
+    The `Vault` is Symmetric V2's core contract. A single instance of it exists for the entire network, and it is the
+    entity used to interact with Pools by Liquidity Providers who join and exit them, Traders who swap, and Asset
+    Managers who withdraw and deposit tokens.
+  
+    The `Vault`'s source code is split among a number of sub-contracts, with the goal of improving readability and making
+    understanding the system easier. Most sub-contracts have been marked as `abstract` to explicitly indicate that only
+    the full `Vault` is meant to be deployed.
+  
+    Roughly speaking, these are the contents of each sub-contract:
+    - `PoolBalances`: Pool joins and exits.
+    - `PoolRegistry`: Pool registration, ID management, and basic queries.
+    - `PoolTokens`: Pool token registration and registration, and balance queries.
+    - `Swaps`: Pool swaps.
+    - `Administrable`: Access control
+    - `Pausable: Pause Entrypoints
+    """
     def __init__(
             self,
             owner=sp.address('tz1UGWQQ5YFkZqWgE3gqmPyuwy2R5VGpMM9B'),

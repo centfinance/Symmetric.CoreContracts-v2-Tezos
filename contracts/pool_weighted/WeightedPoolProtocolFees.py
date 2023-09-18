@@ -1,3 +1,15 @@
+"""
+WeightedPoolProtocolFees
+
+This class encapsulates the methods related to protocol fees for the WeightedPool contract. It provides mechanisms to calculate pre-join, post-join, pre-exit, and post-exit protocol fees.
+
+The class interfaces with the ExternalWeightedPoolProtocolFees contract to fetch fee-related values using on-chain views.
+
+Classes:
+- WeightedPoolProtocolFees: Class responsible for protocol fee-related operations in the context of a WeightedPool.
+
+"""
+
 import smartpy as sp
 
 import contracts.interfaces.SymmetricEnums as Enums
@@ -6,6 +18,21 @@ from contracts.pool_weighted.ExternalWeightedProtocolFees import IExternalWeight
 
 
 class WeightedPoolProtocolFees:
+    """
+    WeightedPoolProtocolFees Class
+
+    This class defines methods that interact with protocol fees for the WeightedPool contract. It utilizes the ExternalWeightedPoolProtocolFees contract's on-chain views to fetch and compute various fee-related metrics.
+
+    Attributes:
+        exemptFromYieldFees: Flag to determine if the pool is exempt from yield fees.
+        rateProviders: Optional mapping of token index to rate provider addresses.
+        feeCache: A tuple containing cached values of swap fee and yield fee.
+
+    Methods:
+        __init__: Initializes a new instance of the WeightedPoolProtocolFees class.
+        _getPreJoinExitProtocolFees: Calculates protocol fees related to pre-join and pre-exit.
+        _getPostJoinExitProtocolFees: Calculates protocol fees related to post-join and post-exit.
+    """
     def __init__(
         self,
         exemptFromYieldFees=True,

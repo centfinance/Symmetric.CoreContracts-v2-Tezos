@@ -1,6 +1,5 @@
 import smartpy as sp
 
-# from contracts.interfaces.SymmetricErrors import Errors
 import contracts.utils.math.LogExpMath as LogExpMath
 
 HALF = 500000000000000000
@@ -14,25 +13,27 @@ FOUR = 4 * ONE
 MAX_POW_RELATIVE_ERROR = 10000
 
 
-def add(a, b):
-    c = a + b
-    sp.verify(c >= a)
-    return c
-
-
-def sub(a,  b):
-    # Fixed Point addition is the same as regular checked addition
-    sp.verify(b <= a)
-    c = a - b
-    return sp.as_nat(c)
-
-
 def mulDown(p):
+    """
+    Multiplies two numbers and scales down by ONE.
+    
+    Args:
+        p: Tuple containing the two numbers to be multiplied.
+        
+    Returns:
+        Product of the numbers scaled down.
+    """
     product = sp.fst(p) * sp.snd(p)
     sp.result(product // ONE)
 
 
 def mulUp(p):
+    """
+    Multiply the values of a pair and round up the result.
+    
+    :param p: A tuple (pair) of two numbers
+    :return: Rounded up product of the two numbers
+    """
     product = sp.fst(p) * sp.snd(p)
     # The traditional divUp formula is:
     # divUp(x, y) := (x + y - 1) / y
@@ -50,6 +51,12 @@ def mulUp(p):
 
 
 def divDown(p):
+    """
+    Divide the first value of a pair by the second and round down the result.
+    
+    :param p: A tuple (pair) of two numbers where the second number is non-zero
+    :return: Rounded down division result
+    """
     sp.verify(sp.snd(p) != 0)
     aInflated = sp.fst(p) * ONE
     # mul overflow
@@ -57,6 +64,12 @@ def divDown(p):
 
 
 def divUp(p):
+    """
+    Divide the first value of a pair by the second and round up the result.
+    
+    :param p: A tuple (pair) of two numbers where the second number is non-zero
+    :return: Rounded up division result
+    """
     sp.verify(sp.snd(p) != 0)
     aInflated = sp.fst(p) * ONE
     # mul overflo
@@ -71,71 +84,6 @@ def divUp(p):
     # divUp = sp.local("divUp", 0)
     # with sp.if_(a != 0):
     sp.result((sp.as_nat(aInflated + sp.snd(p) - 1)) // sp.snd(p))
-
-
-def square_root(x):
-    """Calculates the square root of a given integer
-
-    Args:
-        x : integer whose square root is to be determined
-    Returns:
-        square root of x
-    """
-
-    sp.verify(x >= 0, "Negative_Value")
-
-    y = sp.local('y', x)
-
-    with sp.while_(y.value * y.value > x):
-
-        y.value = (x // y.value + y.value) // 2
-
-    sp.verify((y.value * y.value <= x) & (x < (y.value + 1) * (y.value + 1)))
-
-    return y.value
-
-
-def nth_root(x, n):
-    """Calculates the nth root of a given integer
-
-    Args:
-        x: integer whose nth root is to be determined
-        n: the degree of the root
-    Returns:
-        nth root of x
-    """
-
-    sp.verify(x >= 0, "Negative_Value")
-    sp.verify(n > 0, "Invalid_Root_Degree")
-
-    # Base cases
-    with sp.if_(x == 0):
-        sp.result(0)
-    with sp.if_(n == 1):
-        sp.result(x)
-
-    y = sp.local('y', x)
-
-    # Initialization of y
-    y.value = x // n
-
-    # Newton-Raphson method
-    while True:
-        y_next = sp.local('y_next', ((n - 1) * y.value +
-                          x // (y.value ** (n - 1))) // n)
-
-        with sp.if_(abs(y_next.value - y.value) <= 1):
-            break
-        y.value = y_next.value
-
-    sp.verify(y.value ** n <= x)
-
-    return y.value
-
-# /**
-#  * @dev Returns x^y, assuming both are fixed point numbers, rounding down. The  is guaranteed to not be above
-#  * the true value (that is, the error def expected - actual is always positive).
-#  */
 
 
 def powDown(p):
@@ -186,11 +134,6 @@ def pow(p):
 
     sp.result(powResult.value)
 
-# /**
-#  * @dev Returns x^y, assuming both are fixed point numbers, rounding up. The  is guaranteed to not be below
-#  * the true value (that is, the error def expected - actual is always negative).
-#  */
-
 
 def powUp(p):
     # Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple to implement and occur often in 50/50
@@ -217,15 +160,17 @@ def powUp(p):
 
     sp.result(powUp.value)
 
-# /**
-#  * @dev Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
-#  *
-#  * Useful when computing the complement for values with some level of relative error, as it strips this error and
-#  * prevents intermediate negative values.
-#  */
-
 
 def complement(x):
+    """
+    Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
+    
+    Args:
+        x: Integer whose complement is to be found.
+        
+    Returns:
+        Complement of x.
+    """
     # Equivalent to:
     #  = (x < ONE) ? (ONE - x) : 0;
     return sp.eif(

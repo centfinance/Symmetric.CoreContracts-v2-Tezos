@@ -122,6 +122,39 @@ class WeightedPool(
     WeightedPoolProtocolFees,
     BaseWeightedPool,
 ):
+    """
+    WeightedPool - A Tezos Smart Contract for managing a weighted pool of tokens.
+
+    This class implements a basic weighted pool with immutable weights. Each token in the pool is associated with a 
+    weight, which determines its proportion in the pool. This design allows the pool to maintain a fixed ratio 
+    between tokens, providing predictable liquidity behavior.
+
+    Attributes:
+    - MAX_TOKENS: Maximum number of tokens that can be managed by the pool.
+    
+    Features:
+    - Immutable weights: Once set, the weights of the tokens can't be modified.
+    - Protocol fees: The pool integrates with protocol-level fees, both for swaps and yield.
+    - Recovery mode: Allows the contract to enter a safe state in case of detected issues.
+    
+    Entry Points:
+    - updateProtocolFeePercentageCache: Updates the cached protocol fee percentages.
+    
+    On-Chain Views:
+    - getActualSupply: Computes the effective token supply accounting for pending protocol fees.
+    
+    Internal Functions:
+    - _afterInitializePool: Handles logic after the pool initialization.
+    - _beforeJoinExit: Pre-processes data before join or exit actions.
+    - _beforeOnJoinExit: Processes data right before on-chain join or exit actions.
+    - _afterJoinExit: Processes data after join or exit actions.
+    - _beforeProtocolFeeCacheUpdate: Executes logic before updating the protocol fee cache.
+    - _onDisableRecoveryMode: Disables the recovery mode and resets protocol fee-related values.
+
+    Note:
+    When using this contract, it's essential to keep track of protocol fees and understand the significance of token 
+    weights. For most use-cases, it's advised to use the `getActualSupply` function over the `totalSupply()`.
+    """
     MAX_TOKENS = 8
 
     def __init__(
@@ -185,6 +218,25 @@ class WeightedPool(
 
     @sp.entry_point(lazify = False)
     def updateProtocolFeePercentageCache(self):
+        """
+        Update the protocol fee percentages cache.
+
+        Fetches the swap fee percentage and yield fee percentage from the protocol fees collector and
+        updates the contract's fee cache. This operation should be done periodically to ensure that the
+        protocol fee percentages are up-to-date.
+
+        This method performs a series of actions:
+        1. Calls the _beforeProtocolFeeCacheUpdate method which pays any due protocol fees to ensure that
+           changes to the fee cache only affect future operations and not past fees.
+        2. Fetches the swap fee percentage and yield fee percentage from the protocol fees collector.
+        3. Updates the feeCache with the fetched values.
+
+        Pre-conditions:
+        - The contract must not be paused.
+
+        Post-conditions:
+        - The feeCache in the contract storage is updated with the latest values from the protocol fees collector.
+        """
         self._beforeProtocolFeeCacheUpdate()
 
         swapFee = IProtocolFeesCollector.getSwapFeePercentage(self.data.protocolFeesCollector)
@@ -198,6 +250,8 @@ class WeightedPool(
         self,
         invariant,
     ):
+        # Initialize `_athRateProduct` if the Pool will pay protocol fees on yield.
+        # Not initializing this here properly will cause all joins/exits to revert.
         with sp.if_(self.data.exemptFromYieldFees == False):
 
             self.data.entries[Enums.ATH_RATE_PRODUCT] = IExternalWeightedProtocolFees.getRateProduct(
@@ -243,6 +297,8 @@ class WeightedPool(
             supplyBeforeFeeCollection
         )
         protocolFeesToBeMinted, athRateProduct = sp.match_pair(pair)
+        # We then update the recorded value of `athRateProduct` to ensure we only collect fees on yield once.
+        # A zero value for `athRateProduct` represents that it is unchanged so we can skip updating it.
         with sp.if_(athRateProduct > 0):
             self.data.entries[Enums.ATH_RATE_PRODUCT] = sp.compute(athRateProduct)
 
@@ -272,6 +328,16 @@ class WeightedPool(
 
     @sp.onchain_view()
     def getActualSupply(self):
+        """
+        Returns the effective SPT supply.
+        
+        This would be equivalent to the `totalSupply`, but the Pool owes debt to the Protocol in the form of unminted
+        SPT. This SPT will be minted immediately before the next join or exit operation. It's imperative to account for
+        these because even if they aren't minted yet, they will effectively be included in any Pool operation that
+        involves SPT.
+        
+        For most use-cases, this function should be used over the `totalSupply()`.
+        """
         supply = sp.compute(self.data.totalSupply)
 
         invariant = self._getInvariant()
@@ -285,6 +351,15 @@ class WeightedPool(
         sp.result(supply + protocolFeesToBeMinted)
 
     def _beforeProtocolFeeCacheUpdate(self):
+        # The `getRate()` function depends on the actual supply, which in turn depends on the cached protocol fee
+        # percentages. Changing these would therefore result in the rate changing, which is not acceptable as this is a
+        # sensitive value.
+        # Because of this, we pay any due protocol fees *before* updating the cache, making it so that the new
+        # percentages only affect future operation of the Pool, and not past fees. As a result, `getRate()` is
+        # unaffected by the cached protocol fee percentages changing.
+
+        # Given that this operation is state-changing and relatively complex, we only allow it as long as the Pool is
+        # not paused.
         self.onlyUnpaused()
 
         supply = sp.compute(self.data.totalSupply)
@@ -298,15 +373,19 @@ class WeightedPool(
         )
 
         self._payProtocolFees(protocolFeesToBeMinted)
-
+        # With the fees paid, we now store the current invariant and update the ATH rate product (if necessary),
+        # marking the Pool as free of protocol debt.
         self.data.entries[Enums.POST_JOIN_EXIT_INVARIANT] = invariant
 
         with sp.if_(self.data.entries[Enums.ATH_RATE_PRODUCT] > 0):
             self.data.entries[Enums.ATH_RATE_PRODUCT] = athRateProduct
 
     def _onDisableRecoveryMode(self):
+        # Update the postJoinExitInvariant to the value of the currentInvariant, zeroing out any protocol swap fees.
         self.data.entries[Enums.POST_JOIN_EXIT_INVARIANT] = self._getInvariant()
-
+        # If the Pool has any protocol yield fees accrued then we update the athRateProduct to zero these out.
+        # If the current rate product is less than the athRateProduct then we do not perform this update.
+        # This prevents the Pool from paying protocol fees on the same yield twice if the rate product were to drop.
         with sp.if_(self.data.exemptFromYieldFees == False):
             athRateProduct = self.data.entries[Enums.ATH_RATE_PRODUCT]
             rateProduct = IExternalWeightedProtocolFees.getRateProduct(

@@ -139,6 +139,27 @@ class IExternalWeightedMath:
 
 
 class ExternalWeightedMath(sp.Contract):
+    """
+    ExternalWeightedMath - A Tezos Smart Contract for Calculations in Weighted Pools.
+
+    The ExternalWeightedMath contract provides fundamental mathematical functions that underpin the mechanics 
+    of a weighted pool. It manages token swaps, joins, and exits by interfacing with the weighted math library.
+    These calculations are critical for ensuring liquidity and stability within the pool.
+
+    Functions:
+    - calcOutGivenIn: Calculates the amount out based on a given amount in.
+    - calcInGivenOut: Calculates the required amount in for a given amount out.
+    - calculateInvariant: Computes the invariant for a set of balances.
+    - calcSptOutGivenExactTokensIn: Determines the SPT out given exact tokens in.
+    - calcSptInGivenExactTokensOut: Determines the SPT in given exact tokens out.
+    - calcTokenInGivenExactSptOut: Calculates the amount of a token to be provided for an exact SPT out.
+    - calcTokenOutGivenExactSptIn: Calculates the amount of a token to be taken out for an exact SPT in.
+
+    Notes:
+    The mathematical functions provided by this contract are essential for maintaining the correct 
+    proportions and amounts of tokens within a weighted pool. The calculations ensure that swaps, 
+    joins, and exits are executed with precision, preserving the pool's stability.
+    """
     def __init__(self):
         sp.Contract.__init__(self)
         self.init(

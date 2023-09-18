@@ -106,11 +106,3 @@ class AssetTransfersHandler:
                 sp.snd(asset),
             )
 
-    def _handleRemainingTez(amountUsed):
-        amount = sp.utils.mutez_to_nat(sp.amount)
-        sp.verify(amount >= amountUsed, Errors.INSUFFICIENT_ETH)
-
-        excess = sp.as_nat(amount - amountUsed)
-        with sp.if_(excess > 0):
-            mutez = sp.utils.nat_to_mutez(amount)
-            sp.send(sp.source, mutez)

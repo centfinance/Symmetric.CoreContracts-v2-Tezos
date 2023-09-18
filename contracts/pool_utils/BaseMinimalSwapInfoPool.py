@@ -23,6 +23,9 @@ class Types:
 
 
 class BaseMinimalSwapInfoPool(BasePool):
+    """
+    Extension of `BasePool`, adding a handler for `IMinimalSwapInfoPool.onSwap`.
+    """
     def __init__(
         self,
         owner,
@@ -40,6 +43,9 @@ class BaseMinimalSwapInfoPool(BasePool):
             protocolFeesCollector,
         )
 
+    ###########
+    # Swap Hook
+    ###########
     @sp.onchain_view()
     def onSwap(
         self,
@@ -66,6 +72,7 @@ class BaseMinimalSwapInfoPool(BasePool):
 
         swapAmount = sp.local('swapAmount', 0)
         with sp.if_(params.request.kind == Enums.GIVEN_IN):
+            # Fees are subtracted before scaling, to reduce the complexity of the rounding direction analysis.
             swapAmount.value = self._subtractSwapFeeAmount(
                 params.request.amount)
             # upscale
@@ -82,7 +89,7 @@ class BaseMinimalSwapInfoPool(BasePool):
                 currentBalanceTokenIn=balanceTokenIn,
                 currentBalanceTokenOut=balanceTokenOut,
             ))
-
+            # amountOut tokens are exiting the Pool, so we round down.
             swapAmount.value = self.data.fixedPoint[Enums.DIV_DOWN]((
                 amountOut, scalingFactorTokenOut))
 
@@ -103,9 +110,10 @@ class BaseMinimalSwapInfoPool(BasePool):
                 currentBalanceTokenOut=balanceTokenOut,
             ))
 
+            # amountIn tokens are entering the Pool, so we round up.
             downscaleAmount = self.data.fixedPoint[Enums.DIV_UP]((
                 amountIn, scalingFactorTokenIn))
-
+            # Fees are added after scaling happens, to reduce the complexity of the rounding direction analysis.
             swapAmount.value = self._addSwapFeeAmount(downscaleAmount)
 
         sp.result(swapAmount.value)

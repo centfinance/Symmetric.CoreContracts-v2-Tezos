@@ -27,10 +27,6 @@ class BasePoolFactory:
             self.data.lastPool = pool
             self.data.isPoolFromFactory[pool] = sp.unit
 
-            # initializePool = sp.contract(sp.TUnit, self.data.lastPool, "initializePool").open_some(
-            #     "INITIALIZE_FAIL")
-            # sp.transfer(sp.unit, sp.tez(0), initializePool)
-
             sp.emit(pool, with_type=True, tag='PoolCreated')
 
         self._create = _create
