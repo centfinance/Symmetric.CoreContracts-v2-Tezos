@@ -3,6 +3,9 @@
 
 This repository contains the Symmetric Protocol V2 core smart contracts for Tezos, including the `Vault` and Weighted Pools, along with their tests, configuration, and deployment information. The contracts are written in Python using [SmartPy](https://smartpy.io)
 
+## Documentation
+https://symmetric.gitbook.io/tezos-contracts/
+
 ## Pre-requisites
 This package requires the following software to be installed on your system:
 
