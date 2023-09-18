@@ -264,7 +264,7 @@ class BaseWeightedPool(
                 )
             )
 
-        with sp.if_(doJoin.value == (0, {})):
+        with sp.if_(sp.fst(doJoin.value) == 0):
             sp.failwith(Errors.UNHANDLED_JOIN_KIND)
 
         return (sp.fst(doJoin.value), sp.snd(doJoin.value))
@@ -413,7 +413,7 @@ class BaseWeightedPool(
         with sp.if_(params.userData.kind == Enums.SPT_IN_FOR_EXACT_TOKENS_OUT):
             doExit.value = self._exitSPTInForExactTokensOut(params)
 
-        with sp.if_(doExit.value == (0, {})):
+        with sp.if_(sp.fst(doExit.value) == 0):
             sp.failwith(Errors.UNHANDLED_EXIT_KIND)
 
         return (sp.fst(doExit.value), sp.snd(doExit.value))

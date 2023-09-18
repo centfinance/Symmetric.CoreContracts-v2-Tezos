@@ -9,7 +9,7 @@
     "deploy:all": "ts-node deploy.ts",
     "sandbox": "taq start sandbox",
     "types": "taq generate types",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node runTest.js"
   },
   "keywords": [],
   "author": "Symmetric Finance",
